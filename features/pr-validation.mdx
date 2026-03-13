@@ -1,0 +1,28 @@
+---
+title: "PR validation via user stories"
+description: "Automatically generate and execute user stories for every pull request"
+---
+
+Arga generates step-by-step user stories for each pull request by connecting context from your development tools. Every story runs in an isolated sandbox that mirrors production.
+
+## How it works
+
+1. A developer opens a PR on GitHub.
+2. Arga pulls context from connected sources — the PR diff, linked Jira/Linear tickets, related Slack threads, Sentry errors, and observability data from Grafana or CloudWatch.
+3. Arga's agents synthesize this context into concrete user stories that exercise the changed code paths.
+4. Each story executes in an isolated sandbox with [digital twins](/concepts/digital-twins) handling external service calls.
+5. Results are reported back to the PR as a check, with detailed logs for any failures.
+
+## What gets tested
+
+- **Happy paths** derived from the feature description and linked tickets
+- **Edge cases** informed by Sentry error patterns and observability data
+- **Regressions** validated through [session replay](/concepts/session-replay) of previously reported bugs
+
+## Requirements
+
+To get the most out of PR validation, connect your context sources during [onboarding](/integrations). The more context Arga has, the more thorough the generated user stories will be.
+
+<Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
+  See PR validation on a real codebase. Schedule a 30-minute walkthrough.
+</Card>

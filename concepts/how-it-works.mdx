@@ -1,0 +1,48 @@
+---
+title: "How Arga works"
+description: "An overview of Arga's testing architecture"
+---
+
+Arga connects to your existing development workflow and automatically validates every pull request by generating and executing real user stories.
+
+## The testing pipeline
+
+<Steps>
+  <Step title="Connect your tools">
+    Arga integrates with your context sources — Slack, Jira, GitHub, Sentry, Grafana, AWS CloudWatch, PostHog — to understand what your software does and how users interact with it.
+  </Step>
+  <Step title="Generate user stories">
+    For each PR, Arga's agents analyze the change in the context of your product and generate step-by-step user stories that exercise the modified code paths.
+  </Step>
+  <Step title="Spin up an isolated sandbox">
+    Each PR runs in a remote sandbox that mirrors your production environment. External service calls are handled by [digital twins](/concepts/digital-twins) so nothing touches your real infrastructure.
+  </Step>
+  <Step title="Execute and validate">
+    Arga replays the user stories against the sandbox, using [full-stack session replay](/concepts/session-replay) to reconstruct exact application states. It verifies that the PR behaves correctly and flags regressions.
+  </Step>
+</Steps>
+
+## Key primitives
+
+Arga's testing is built on two core primitives:
+
+<CardGroup cols={2}>
+  <Card title="Digital twins" icon="clone" href="/concepts/digital-twins">
+    Stateful, behavioural clones of external tools (Stripe, Slack, Discord, etc.) that replicate API endpoints, edge cases, and observable behaviours. These let Arga validate edits to external API calls or agent behaviour without touching real services.
+  </Card>
+  <Card title="Session replay" icon="video" href="/concepts/session-replay">
+    Snapshots of your program at each user interaction point, capturing every function call. Arga reconstructs state by replaying events to ensure testing happens in the exact same state as when a user encountered the bug.
+  </Card>
+</CardGroup>
+
+## Beyond code: testing AI agents
+
+Arga's sandbox architecture naturally extends to AI agent testing. By placing agents in a controlled environment with digital twins, you can:
+
+- Observe agent behaviour without real-world side effects
+- Proactively red-team agents to discover unsafe or unexpected actions
+- Validate that agents interact correctly with external APIs
+
+<Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
+  See the full pipeline in action. Schedule a 30-minute walkthrough.
+</Card>

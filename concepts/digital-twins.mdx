@@ -1,0 +1,41 @@
+---
+title: "Digital twins"
+description: "Stateful, behavioural clones of external services for safe testing"
+---
+
+A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
+
+## Why digital twins?
+
+When your code interacts with external services, testing against the real service is risky, slow, and unreliable. Traditional mocks are static and don't capture the statefulness of real APIs. Digital twins solve both problems.
+
+| Approach | Stateful | Behavioural | Edge cases | Safe |
+|----------|----------|-------------|------------|------|
+| Real service | Yes | Yes | Yes | No |
+| Static mocks | No | No | No | Yes |
+| Digital twins | Yes | Yes | Yes | Yes |
+
+## Properties
+
+<AccordionGroup>
+  <Accordion title="Stateful" icon="database">
+    The twin remembers state before an API call and updates state after the call completes. If you create a Stripe customer, subsequent calls reflect that customer's existence — just like the real Stripe API.
+  </Accordion>
+  <Accordion title="Behavioural" icon="arrows-spin">
+    The twin reacts the same way the real service would to an API call, including error responses, rate limits, and side effects. A payment to a non-existent customer returns the same error code Stripe would.
+  </Accordion>
+</AccordionGroup>
+
+## Supported services
+
+Arga currently provides digital twins for common third-party services. We're continuously expanding coverage based on client needs.
+
+If you rely on a service not yet supported, [book a demo](https://cal.com/akiratong/30min?overlayCalendar=true) and we'll discuss building a twin for your stack.
+
+## How Arga uses digital twins
+
+During PR validation, Arga routes all external API calls from your sandbox through the appropriate digital twin. This means:
+
+1. **No real side effects** — A PR that sends a Slack notification or charges a Stripe card won't do either during testing.
+2. **Deterministic results** — Tests produce consistent outcomes regardless of external service availability.
+3. **Edge case coverage** — Twins can simulate failure modes (timeouts, rate limits, malformed responses) that are hard to trigger against real services.

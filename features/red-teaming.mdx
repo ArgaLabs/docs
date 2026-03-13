@@ -1,0 +1,48 @@
+---
+title: "Red-teaming and fuzzing"
+description: "Proactively discover edge cases and vulnerabilities in your software and AI agents"
+---
+
+Arga proactively red-teams your software and AI agents by exploring edge cases, adversarial inputs, and failure modes in a safe sandbox environment.
+
+## For software
+
+Arga fuzzes your application with adversarial inputs and unexpected interaction patterns to uncover bugs that normal testing misses. Because all external calls route through [digital twins](/concepts/digital-twins), this happens safely without affecting real services.
+
+**What Arga looks for:**
+
+- Unhandled error states and edge cases
+- Race conditions and state corruption
+- Unexpected behaviour under simulated failures (timeouts, rate limits, malformed responses)
+
+## For AI agents
+
+AI agents present unique risks — they can take unexpected actions, chain tools in harmful ways, or leak sensitive information. Arga places agents in controlled environments and probes their behaviour with adversarial prompts and unusual scenarios.
+
+**What Arga tests:**
+
+- Prompt injection and jailbreak resistance
+- Correct handling of ambiguous or conflicting instructions
+- Appropriate boundaries on tool use and data access
+- Graceful degradation when external services fail
+
+## How it works
+
+<Steps>
+  <Step title="Define boundaries">
+    Specify what your agent or application should and shouldn't do. Arga uses these constraints as test oracles.
+  </Step>
+  <Step title="Generate adversarial scenarios">
+    Arga's agents create targeted test scenarios designed to push boundaries and expose weaknesses.
+  </Step>
+  <Step title="Execute in sandbox">
+    Scenarios run against your code in an isolated environment with digital twins, so nothing touches production.
+  </Step>
+  <Step title="Report findings">
+    Arga surfaces failures, unexpected behaviours, and near-misses with detailed execution traces.
+  </Step>
+</Steps>
+
+<Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
+  See red-teaming in action. Schedule a 30-minute walkthrough.
+</Card>

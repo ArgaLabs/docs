@@ -1,0 +1,38 @@
+---
+title: "Full-stack session replay"
+description: "Reconstruct exact application state from user interactions"
+---
+
+Full-stack session replay captures the state of your program at every user interaction point, recording every function call. Arga then reconstructs state by replaying these events, ensuring that testing happens in the exact same conditions as when a user encountered a bug.
+
+## Key concepts
+
+<AccordionGroup>
+  <Accordion title="Snapshot" icon="camera">
+    A snapshot is the complete state of your program at a specific point during a user interaction. It captures variable values, database state, in-memory caches, and any context needed to reproduce the exact moment.
+  </Accordion>
+  <Accordion title="Stateful replay" icon="database">
+    The program remembers state before an API call and updates state after the call completes. When Arga replays a session, each step builds on the previous one, maintaining the same state transitions as the original interaction.
+  </Accordion>
+  <Accordion title="Behavioural fidelity" icon="arrows-spin">
+    During replay, the program reacts the same way the real service would to an API call. Combined with [digital twins](/concepts/digital-twins), this means external service interactions are faithfully reproduced without touching real infrastructure.
+  </Accordion>
+</AccordionGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Capture">
+    As a user interacts with your application, Arga takes snapshots at each interaction point and records every function call in the execution path.
+  </Step>
+  <Step title="Reconstruct">
+    When testing a PR, Arga replays the captured events in sequence, rebuilding the exact application state that existed when a bug was encountered.
+  </Step>
+  <Step title="Validate">
+    With the state reconstructed, Arga runs the modified code against the same conditions to verify that the fix resolves the issue without introducing regressions.
+  </Step>
+</Steps>
+
+## Why this matters
+
+Traditional testing validates code in isolation. Session replay validates code in the exact context where problems occur. This eliminates "works on my machine" issues and ensures that fixes address the root cause, not just symptoms.
