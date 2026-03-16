@@ -9,6 +9,15 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Book a demo",
+          "icon": "calendar",
+          "href": "https://cal.com/akiratong/30min?overlayCalendar=true"
+        }
+      ]
+    },
     "tabs": [
       {
         "tab": "Documentation",
@@ -21,7 +30,8 @@
             ]
           },
           {
-            "group": "Core concepts",
+            "group": "Context",
+            "icon": "circle-arrow-right",
             "pages": [
               "concepts/how-it-works",
               "concepts/digital-twins",
@@ -32,8 +42,6 @@
             "group": "Features",
             "pages": [
               "features/validate-modes",
-              "features/pr-validation",
-              "features/agent-testing",
               "features/red-teaming"
             ]
           },
@@ -46,16 +54,7 @@
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Book a demo",
-          "href": "https://cal.com/akiratong/30min?overlayCalendar=true",
-          "icon": "calendar"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
