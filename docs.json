@@ -31,6 +31,7 @@
           {
             "group": "Features",
             "pages": [
+              "features/validate-modes",
               "features/pr-validation",
               "features/agent-testing",
               "features/red-teaming"
@@ -39,6 +40,7 @@
           {
             "group": "Setup",
             "pages": [
+              "cli-and-mcp",
               "integrations"
             ]
           }

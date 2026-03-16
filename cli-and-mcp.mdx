@@ -1,0 +1,161 @@
+---
+title: "CLI and MCP"
+description: "Use the Arga CLI to authenticate, start validations, and connect your IDE"
+---
+
+The `arga` CLI gives you a local entry point into Arga. You can use it to:
+
+- authenticate your machine with Arga
+- start URL and PR validations from the terminal
+- install Arga's MCP server into supported coding agents
+
+## Install the CLI
+
+Install `arga-cli` with your preferred Python tool:
+
+```bash
+uv tool install arga-cli
+```
+
+```bash
+pipx install arga-cli
+```
+
+```bash
+pip install arga-cli
+```
+
+After installation, verify the command is available:
+
+```bash
+arga --help
+```
+
+## Authenticate from the terminal
+
+Use device login to authorize the CLI:
+
+```bash
+arga login
+arga whoami
+```
+
+`arga login` opens the browser so you can approve the device. `arga whoami` confirms the saved credential and prints the current GitHub login and workspace.
+
+To remove the local credential later:
+
+```bash
+arga logout
+```
+
+Each `arga login` creates a device-scoped key. Arga stores that credential at:
+
+```bash
+~/.config/arga/config.json
+```
+
+That design lets you revoke one terminal or machine without rotating every other local integration.
+
+## Start validations from the CLI
+
+### Validate a deployed URL
+
+Use `arga test url` for a one-off run against a deployed app:
+
+```bash
+arga test url --url https://demo-app.com --prompt "test the login flow"
+```
+
+You can also use the equivalent `validate` namespace:
+
+```bash
+arga validate url --url https://demo-app.com --prompt "test checkout"
+```
+
+If the target requires login, pass credentials together:
+
+```bash
+arga test url \
+  --url https://demo-app.com \
+  --prompt "log in and create an order" \
+  --email test@company.com \
+  --password supersecret
+```
+
+Provide both `--email` and `--password` together, or leave both out.
+
+### Validate a pull request
+
+Use `arga validate pr` to start a PR validation run:
+
+```bash
+arga validate pr --repo arga-labs/validation-server --pr 182
+```
+
+## Install Arga MCP into your IDE
+
+Once you are logged in, install MCP with:
+
+```bash
+arga mcp install
+```
+
+The installer detects supported local agent targets and writes or updates an `arga-context` MCP server entry.
+
+### Supported targets
+
+- `~/.cursor/mcp.json`
+- `~/.claude/mcp.json`
+- `~/.config/codex/mcp.json`
+
+### What gets installed
+
+Arga configures an MCP server that points at:
+
+```text
+<api-url>/mcp
+```
+
+with an authorization header based on your saved CLI credential.
+
+```json
+{
+  "mcpServers": {
+    "arga-context": {
+      "url": "https://api.argalabs.com/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-api-key>"
+      }
+    }
+  }
+}
+```
+
+The installer preserves any existing `mcpServers` entries and merges in the Arga server definition.
+
+## Use a custom API URL
+
+By default, the CLI targets `https://api.argalabs.com`.
+
+To point it at a different environment, pass `--api-url`:
+
+```bash
+arga login --api-url http://localhost:8000
+arga mcp install --api-url http://localhost:8000
+arga test url --api-url http://localhost:8000 --url https://demo-app.com --prompt "test checkout"
+arga validate pr --api-url http://localhost:8000 --repo arga-labs/validation-server --pr 182
+```
+
+You can also set `ARGA_API_URL`:
+
+```bash
+export ARGA_API_URL=http://localhost:8000
+arga login
+arga mcp install
+```
+
+## When to use the CLI vs the app
+
+- Use the web app when you want to browse runs, configure repositories, or work in the full Validate UI.
+- Use the CLI when you want to kick off validations quickly from a terminal or install MCP into your coding agent.
+- Use MCP when you want Cursor, Claude Code, or Codex to query Arga directly from your editor.
