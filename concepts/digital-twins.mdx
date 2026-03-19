@@ -39,3 +39,11 @@ During PR validation, Arga routes all external API calls from your sandbox throu
 1. **No real side effects** — A PR that sends a Slack notification or charges a Stripe card won't do either during testing.
 2. **Deterministic results** — Tests produce consistent outcomes regardless of external service availability.
 3. **Edge case coverage** — Twins can simulate failure modes (timeouts, rate limits, malformed responses) that are hard to trigger against real services.
+
+## Authentication handling
+
+When requests are routed through a digital twin, Arga controls which headers are forwarded to the twin.
+
+For most twins, the `Authorization` header is stripped from proxied requests because the twin doesn't need real credentials — it simulates the service regardless of auth tokens.
+
+The **Slack twin** is an exception. Slack API calls include the `Authorization` header when forwarded to the twin, allowing the twin to validate token-scoped behaviour such as bot-token versus user-token permission differences. This means your sandbox tests exercise the same authentication paths your code uses in production, without touching the real Slack API.
