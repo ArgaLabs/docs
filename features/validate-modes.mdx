@@ -99,10 +99,12 @@ Arga first performs reconnaissance, proposes attack campaigns, and then runs the
 
 ## Runner options
 
-Two workflows let you choose how Arga executes the run:
+**Test my app** and **Scan my app** let you choose how Arga executes the run:
 
-- **Visual-based** uses the browser-driven runner. Choose this for interactive flows and visual regressions.
-- **DOM-based** uses the DOM-focused runner. Choose this for structured page state inspection and campaign execution.
+- **Visual** (`visual`) uses the browser-driven runner. Choose this for interactive flows and visual regressions. This is the default.
+- **DOM** (`dom`) uses the DOM-focused runner. Choose this for structured page state inspection and campaign execution.
+
+In the web app, select the runner when configuring a run. From the [CLI](/cli-and-mcp), pass `--runner-mode visual` or `--runner-mode dom`.
 
 ## Which mode should you choose?
 
