@@ -40,7 +40,7 @@ arga login
 arga whoami
 ```
 
-`arga login` opens the browser so you can approve the device. `arga whoami` confirms the saved credential and prints the current GitHub login and workspace.
+`arga login` opens the browser so you can approve the device. `arga whoami` confirms the saved credential and prints the current GitHub login, workspace, and billing plan.
 
 To remove the local credential later:
 
@@ -96,6 +96,8 @@ arga test url \
 Provide both `--email` and `--password` together, or leave both out.
 
 ### Validate a pull request
+
+<Note>PR validation requires a paid plan. Run `arga whoami` to check your current billing plan.</Note>
 
 Use `arga validate pr` to start a PR validation run:
 
