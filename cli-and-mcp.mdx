@@ -40,7 +40,7 @@ arga login
 arga whoami
 ```
 
-`arga login` opens the browser so you can approve the device. `arga whoami` confirms the saved credential and prints the current GitHub login, workspace, and billing plan.
+`arga login` opens the browser so you can approve the device. `arga whoami` confirms the saved credential and prints your current GitHub login, email, email verification status, workspace, and billing plan.
 
 To remove the local credential later:
 
@@ -55,6 +55,20 @@ Each `arga login` creates a device-scoped key. Arga stores that credential at:
 ```
 
 That design lets you revoke one terminal or machine without rotating every other local integration.
+
+## Verify your email
+
+After you log in with GitHub, you can verify an email address on your Arga account. Email verification is optional but may be required for certain features.
+
+### Request a verification code
+
+From the Arga web app, submit the email address you want to verify. Arga sends a six-digit code to that address. Codes expire after 10 minutes, and you can request a new code once per minute.
+
+### Confirm the code
+
+Enter the six-digit code you received. You have up to five attempts per code. If you exceed five attempts, request a new code.
+
+Once verified, `arga whoami` includes your confirmed email and shows the verification status.
 
 ## Start validations from the CLI
 
