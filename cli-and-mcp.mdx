@@ -153,6 +153,156 @@ with an authorization header based on your saved CLI credential.
 
 The installer preserves any existing `mcpServers` entries and merges in the Arga server definition.
 
+### Available MCP tools
+
+Once installed, the `arga-context` MCP server exposes the following tools to your coding agent.
+
+<AccordionGroup>
+  <Accordion title="list_connected_sources">
+    List all tool sources you have connected (GitHub, Slack, Jira, etc.).
+
+    **Parameters:** None
+
+    **Returns:** A list of connected providers and their display names.
+  </Accordion>
+
+  <Accordion title="investigate_bug">
+    Investigate a bug by searching all connected sources and tracing the root cause.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `description` | `string` | Yes | — | Free-text description of the bug to investigate. |
+    | `error_message` | `string` | No | `""` | The literal error message, if available. |
+    | `trace_id` | `string` | No | `""` | A distributed-tracing trace ID to correlate across services. |
+    | `sentry_issue_id` | `string` | No | `""` | A Sentry issue ID to focus the investigation on. |
+    | `time_window` | `string` | No | `"last 24 hours"` | Human-readable time window to scope the search. |
+
+    **Returns:** A markdown investigation report with analysis and linked source references.
+  </Accordion>
+
+  <Accordion title="search_context">
+    Search for context across all connected tools using natural language.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | Yes | — | Natural-language search query. |
+    | `sources` | `string` | No | `""` | Comma-separated list of providers to restrict the search to (e.g. `"github,slack"`). Searches all sources if empty. |
+
+    **Returns:** A formatted response with the answer and linked source references.
+  </Accordion>
+
+  <Accordion title="get_source_detail">
+    Fetch a specific record from a connected source by its identifier.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `source_type` | `string` | Yes | — | The type of record to fetch. |
+    | `identifier` | `string` | Yes | — | A type-specific identifier string. |
+
+    **Supported source types:**
+
+    | Source type | Identifier format |
+    |-------------|-------------------|
+    | `github_pr` | `owner/repo/pr_number` |
+    | `github_commit` | `owner/repo/sha` |
+    | `jira_issue` | Issue key (e.g. `PROJ-123`) |
+    | `linear_issue` | Issue ID |
+    | `sentry_issue` | Issue ID |
+    | `sentry_events` | Issue ID |
+    | `slack_thread` | `channel_id/thread_ts` |
+
+    **Returns:** A detail view with the record title, URL, and summary.
+  </Accordion>
+
+  <Accordion title="search_github">
+    Search GitHub pull requests, issues, and code.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | Yes | — | The search query string. |
+    | `repo` | `string` | No | `""` | Optional repository filter in `owner/repo` format. |
+
+    **Returns:** Up to 8 matching results sorted by date.
+  </Accordion>
+
+  <Accordion title="search_linear">
+    Search Linear issues.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | Yes | — | The search query string. |
+
+    **Returns:** Up to 8 matching issues sorted by date.
+  </Accordion>
+
+  <Accordion title="search_slack">
+    Search Slack messages and threads.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | Yes | — | The search query string. |
+    | `channel` | `string` | No | `""` | Optional channel name or ID to restrict the search. |
+    | `date_range` | `string` | No | `""` | Optional date range filter. |
+
+    **Returns:** Up to 8 matching messages sorted by date.
+  </Accordion>
+
+  <Accordion title="search_sentry">
+    Search Sentry issues.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | Yes | — | The search query string. |
+    | `project` | `string` | No | `""` | Optional Sentry project slug to restrict the search. |
+
+    **Returns:** Up to 8 matching issues sorted by date.
+  </Accordion>
+
+  <Accordion title="search_grafana">
+    Search Grafana dashboards or alerts.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | No | `""` | Search query for dashboards. |
+    | `state` | `string` | No | `""` | Alert state filter (e.g. `"alerting"`, `"ok"`). |
+
+    If both parameters are empty, all alerts are returned.
+
+    **Returns:** Up to 8 matching dashboards or alerts sorted by date.
+  </Accordion>
+
+  <Accordion title="search_posthog">
+    Search PostHog exceptions or run a HogQL query.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `query` | `string` | No | `""` | Free-text search for PostHog exceptions. |
+    | `hogql` | `string` | No | `""` | A raw HogQL query to execute. Takes precedence over `query` if both are provided. |
+
+    At least one of `query` or `hogql` must be provided.
+
+    **Returns:** Up to 8 matching results sorted by date.
+  </Accordion>
+</AccordionGroup>
+
 ## Use a custom API URL
 
 By default, the CLI targets `https://api.argalabs.com`.
