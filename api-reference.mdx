@@ -82,7 +82,6 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `A prompt is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
-| `403` | User does not have a paid billing plan (if applicable). |
 
 ---
 
@@ -268,7 +267,7 @@ The response includes the full run state. Key fields:
 | `event_log_json` | `array \| null` | Chronological event log for the run. |
 | `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
 | `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for visual validation. |
-| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs, each containing a worker key, title, status, summary, issues, and results. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, and `results_json`. |
 | `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
