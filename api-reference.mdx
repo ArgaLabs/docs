@@ -83,6 +83,102 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 
+### Cancel a URL validation
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/{run_id}/cancel
+```
+
+Cancel a running URL validation.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Response**
+
+```json
+{"status": "cancelled"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | Validation run not found. |
+
+### Stream URL validation results
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /validate/{run_id}/results
+```
+
+Server-sent event (SSE) stream of live validation step results. Each event is a JSON object sent as `data: {JSON}\n\n`.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Create Linear issues from validation results
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/{run_id}/create-linear-issues
+```
+
+Create Linear issues from the failing steps of a validation run. Requires an active [Linear integration](/integrations).
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `team_id` | `string` | No | Linear team to create issues in. Uses the default team if omitted. |
+| `step_numbers` | `array` | No | Specific step numbers to create issues for. Creates issues for all failing steps if omitted. |
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "issues": [
+    {
+      "step_number": 3,
+      "issue_id": "LIN-123",
+      "url": "https://linear.app/team/issue/LIN-123"
+    }
+  ]
+}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Validation error (e.g. no Linear integration connected). |
+| `401` | Invalid or expired token. |
+
 ---
 
 ## PR validation
@@ -103,6 +199,7 @@ Start an automatic validation run for a pull request.
 |-------|------|----------|-------------|
 | `repo` | `string` | Yes | Repository in `owner/repo` format. |
 | `pr_number` | `integer` | Yes | Pull request number. |
+| `frontend_url` | `string` | No | Frontend URL to use for the validation. Defaults to the configured PR frontend URL. |
 | `context_notes` | `string` | No | Additional instructions or context for the validation. |
 
 **Example request**
@@ -245,21 +342,35 @@ The response includes the full run state. Key fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | `string` | Run identifier. |
+| `session_id` | `string \| null` | Chat session associated with the run. |
 | `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
+| `pr_url` | `string` | Pull request URL, if applicable. |
+| `frontend_url` | `string` | URL of the frontend used during the run. |
 | `run_type` | `string` | Type of run. |
 | `mode` | `string \| null` | Runner mode used (`visual` or `dom`). |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
+| `surface_urls` | `object \| null` | Map of surface names to URLs exposed by the sandbox. |
+| `twins` | `array \| null` | List of digital twin identifiers active for the run. |
+| `runtime_profile` | `object \| null` | Runtime configuration used for the run. |
+| `context_notes` | `string \| null` | Additional context provided when the run was created. |
 | `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
 | `git_branch` | `string \| null` | Branch name. |
 | `commit_sha` | `string \| null` | Commit SHA. |
 | `github_pr_number` | `integer \| null` | Pull request number. |
+| `github_check_run_id` | `string \| null` | GitHub check run identifier. |
+| `github_check_run_url` | `string \| null` | URL of the GitHub check run. |
+| `event_log_json` | `array \| null` | Ordered list of lifecycle events for the run. |
 | `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
-| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle used for visual testing. |
+| `auto_visual_reports` | `array \| null` | Reports from auto visual story runs. Each object includes `worker_key`, `title`, `status`, `issues`, and timing fields. |
 | `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
-| `step_summaries` | `array \| null` | Summarized step results. |
+| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `worker_progress` | `array \| null` | Progress updates from individual workers. |
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
+| `login_identifier` | `string \| null` | Identifier used for login during the run. |
+| `step_summaries` | `array \| null` | Summarized step results. Each object includes `title`, `status`, `details`, and `step_number`. |
 
 **Errors**
 
@@ -462,6 +573,40 @@ Cancel a running scan.
 |--------|--------|
 | `404` | Red-team run not found. |
 
+### Create Linear issues from scan findings
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /redteam/{run_id}/create-linear-issues
+```
+
+Create Linear issues from the findings of a red-team scan. Requires an active [Linear integration](/integrations).
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the red-team run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `team_id` | `string` | No | Linear team to create issues in. Uses the default team if omitted. |
+
+**Response**
+
+Returns an array of created issue objects.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Validation error (e.g. no Linear integration connected). |
+| `401` | Invalid or expired token. |
+| `404` | Red-team run not found. |
+
 ---
 
 ## Authentication endpoints
@@ -524,8 +669,38 @@ Poll the status of a pending device authorization.
 | Status | Detail |
 |--------|--------|
 | `404` | Device session not found. |
-| `409` | Device code already used. |
-| `410` | Device code expired. |
+| `409` | Device code already used. Run `arga login` again. |
+| `410` | Device code expired. Run `arga login` again. |
+
+### Approve device authorization
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /auth/device/approve
+```
+
+Approve a pending device authorization request. This is called from the browser after the user logs in and confirms the device code.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `device_code` | `string` | Yes | The device code to approve. |
+
+**Response**
+
+```json
+{"status": "approved"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Device session not found. |
+| `409` | Device code already used or already approved. |
+| `410` | Device code expired. Run `arga login` again. |
 
 ### Get current user
 
