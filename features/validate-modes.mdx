@@ -59,7 +59,7 @@ Use **Automatic GitHub validation** when you want Arga to run on every pull requ
 5. Choose a trigger mode:
    - **Pull requests**
    - **Commits to branch**
-6. Optionally enable PR comments and the post-validation scan.
+6. Configure options. **PR comments** are enabled by default. You can also add **custom instructions** that apply to every run for this repository.
 7. Save the validation settings.
 
 ### What to expect
@@ -95,8 +95,10 @@ Use **Scan my app** when you want Arga to behave more like a red team than a scr
 2. Enter the target URL.
 3. Add one or more roles that Arga should use while probing the app.
 4. Optionally attach credentials for authenticated roles.
-5. Choose a runner.
-6. Click **Start scan**.
+5. Optionally provide a **focus** description to narrow the scan scope (for example, `"focus on the payment flow"`).
+6. Set an **action budget** to control how many actions the scan performs. The default is `200`.
+7. Choose a runner.
+8. Click **Start scan**.
 
 ### What to expect
 
@@ -110,6 +112,8 @@ Arga first performs reconnaissance, proposes attack campaigns, and then runs the
 - **DOM** (`dom`) uses the DOM-focused runner. Choose this for structured page state inspection and campaign execution.
 
 In the web app, select the runner when configuring a run. From the [CLI](/cli-and-mcp), pass `--runner-mode visual` or `--runner-mode dom`.
+
+For scans, the runner mode determines how each campaign is executed. Arga may use both visual and DOM campaigns within a single scan depending on the attack plan.
 
 ## Which mode should you choose?
 
