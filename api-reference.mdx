@@ -22,6 +22,22 @@ Arga supports two token types:
 
 Both token types use the same `Authorization: Bearer <token>` header. Endpoints below note which token types they accept.
 
+## Health check
+
+```bash
+GET /health
+```
+
+Returns the API server status. No authentication required.
+
+**Response**
+
+```json
+{"status": "ok", "version": "0.1.0"}
+```
+
+---
+
 ## URL validation
 
 ### Start a URL validation
@@ -43,7 +59,7 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. See [runner options](/features/validate-modes#runner-options). |
+| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server selects the runner automatically. See [runner options](/features/validate-modes#runner-options). |
 
 **Example request**
 
@@ -54,7 +70,7 @@ curl -X POST https://api.argalabs.com/validate/url \
   -d '{
     "url": "https://staging.example.com",
     "prompt": "test the login flow",
-    "runner_mode": "visual"
+    "runner_mode": "dom"
   }'
 ```
 
@@ -83,6 +99,87 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 | `403` | User does not have a paid billing plan (if applicable). |
+
+### Cancel a validation run
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/{run_id}/cancel
+```
+
+Cancel a running validation.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Response**
+
+```json
+{"status": "cancelled"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Validation run not found` |
+
+### Stream validation results
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /validate/{run_id}/results
+```
+
+Server-sent event (SSE) stream of live validation step results. Each event is a JSON object sent as `data: {JSON}\n\n`.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Approve a validation story
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/{run_id}/approve
+```
+
+Approve the generated validation story and dispatch the run for execution. You can optionally include a modified story or attack plan.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `story_json` | `object` | Yes | The validation story to approve. |
+| `attack_plan_json` | `object` | No | Override attack plan. If omitted, the generated plan is used. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `409` | Run cannot be approved in its current status. |
 
 ---
 
@@ -225,7 +322,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 GET /runs/{run_id}
 ```
 
-Get full details of a validation or scan run.
+Get full details of a validation or scan run. This endpoint is also available at `GET /validate/{run_id}` (JWT only).
 
 **Path parameters**
 
