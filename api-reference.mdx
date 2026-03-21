@@ -103,6 +103,7 @@ Start an automatic validation run for a pull request.
 |-------|------|----------|-------------|
 | `repo` | `string` | Yes | Repository in `owner/repo` format. |
 | `pr_number` | `integer` | Yes | Pull request number. |
+| `frontend_url` | `string` | No | Base URL of the frontend under test. Defaults to `http://localhost:3000`. |
 | `context_notes` | `string` | No | Additional instructions or context for the validation. |
 
 **Example request**
@@ -245,21 +246,35 @@ The response includes the full run state. Key fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | `string` | Run identifier. |
+| `session_id` | `string \| null` | Chat session associated with this run. |
 | `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
+| `pr_url` | `string` | Pull request URL, if applicable. |
+| `frontend_url` | `string` | Base URL of the frontend under test. |
 | `run_type` | `string` | Type of run. |
 | `mode` | `string \| null` | Runner mode used (`visual` or `dom`). |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
+| `surface_urls` | `object \| null` | Map of service names to their URLs in the sandbox. |
+| `twins` | `array \| null` | List of digital twin services used in the run. |
+| `runtime_profile` | `object \| null` | Runtime profile configuration for the run. |
+| `context_notes` | `string \| null` | Additional context provided when the run was created. |
 | `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
 | `git_branch` | `string \| null` | Branch name. |
 | `commit_sha` | `string \| null` | Commit SHA. |
 | `github_pr_number` | `integer \| null` | Pull request number. |
+| `github_check_run_id` | `string \| null` | GitHub check run identifier. |
+| `github_check_run_url` | `string \| null` | URL of the GitHub check run. |
+| `event_log_json` | `array \| null` | Chronological event log for the run. |
 | `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
-| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for visual validation. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs, each containing a worker key, title, status, summary, issues, and results. |
 | `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
-| `step_summaries` | `array \| null` | Summarized step results. |
+| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. |
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
+| `login_identifier` | `string \| null` | Login identifier used during the run. |
+| `step_summaries` | `array \| null` | Summarized step results. |
 
 **Errors**
 
@@ -393,6 +408,7 @@ Approve the attack plan and start execution. You can optionally provide a modifi
 | `404` | Red-team run not found. |
 | `409` | Cannot approve run in its current status. |
 | `409` | Scan plan is not ready yet. |
+| `409` | No attack plan available and none provided in the request. |
 
 ### Get the scan report
 
@@ -407,11 +423,16 @@ Get the final report after a scan completes.
 | Field | Type | Description |
 |-------|------|-------------|
 | `anomalies` | `array` | List of findings. |
+| `anomalies[].campaign_name` | `string` | Name of the campaign that produced this finding. |
 | `anomalies[].severity` | `string` | Severity level: `critical`, `high`, `medium`, `low`, or `info`. |
 | `anomalies[].category` | `string` | Attack category (e.g. `auth`, `xss`, `data_leak`). |
 | `anomalies[].title` | `string` | Short finding title. |
 | `anomalies[].description` | `string` | Detailed description. |
 | `anomalies[].reproduction_steps` | `array` | Steps to reproduce. |
+| `anomalies[].violated_invariant` | `string \| null` | The invariant rule that was violated, if applicable. |
+| `anomalies[].screenshot_url` | `string \| null` | URL of a screenshot showing the finding. |
+| `anomalies[].evidence_urls` | `array` | URLs of additional evidence artifacts. |
+| `anomalies[].request_detail` | `string \| null` | HTTP request details associated with the finding. |
 | `anomalies[].agent_type` | `string` | Runner that found this: `dom` or `visual`. |
 | `coverage` | `object` | Scan coverage summary. |
 | `coverage.routes_visited` | `array` | Routes the scan explored. |
