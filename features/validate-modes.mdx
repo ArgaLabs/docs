@@ -75,13 +75,15 @@ Use **Sandbox testing** when you want to validate a change flow in an isolated e
 1. Open **Validate** and select **Sandbox testing**.
 2. Choose the repository to deploy.
 3. Select the branch to deploy. The default is `main`, but you can pick any branch from the repository.
-4. Select the twins you want in the sandbox, such as `stripe`, `slack`, or `github`.
+4. Select the twins you want in the sandbox. Arga currently supports `discord`, `slack`, `stripe`, and `unified`.
 5. Describe the scenario you want to exercise.
 6. Start the sandbox deployment.
 
 ### What to expect
 
 Arga launches a sandbox deployment of the selected branch with the configured twins and runs the target scenario without touching live external systems.
+
+If your app talks to Unified, select `unified`. If it talks directly to a provider, select the matching provider twin when available.
 
 ## Scan my app
 

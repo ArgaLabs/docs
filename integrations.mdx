@@ -23,6 +23,21 @@ Arga currently supports the following context sources for generating user storie
 
 The more context sources you connect, the more thorough and accurate your generated user stories will be.
 
+## Sandbox twins
+
+Context integrations help Arga understand your stack. Sandbox twins help Arga safely stand in for external services during validation runs.
+
+Arga currently supports these twins in sandbox environments:
+
+| Twin | Purpose |
+| ---- | ------- |
+| `discord` | Stand in for Discord APIs during sandbox validation. |
+| `slack` | Stand in for Slack Web API calls during sandbox validation. |
+| `stripe` | Stand in for Stripe API calls during sandbox validation. |
+| `unified` | Stand in for the Unified API when your app talks to `api.unified.to` instead of directly to the upstream provider. |
+
+For more detail on how twins work, see [Digital twins](/concepts/digital-twins).
+
 ## Onboarding information
 
 To get set up with Arga, we need to understand your current tooling. Here's what we'll cover during onboarding:
