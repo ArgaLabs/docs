@@ -39,9 +39,20 @@ AI agents present unique risks — they can take unexpected actions, chain tools
     Scenarios run against your code in an isolated environment with digital twins, so nothing touches production.
   </Step>
   <Step title="Report findings">
-    Arga surfaces failures, unexpected behaviours, and near-misses with detailed execution traces.
+    Arga surfaces failures, unexpected behaviours, and near-misses with detailed execution traces. Findings are categorized by severity (`critical`, `high`, `medium`, `low`, `info`) and attack category.
   </Step>
 </Steps>
+
+## Scan options
+
+When starting a scan, you can configure the following options:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| **Focus** | A text description to narrow the scan scope (e.g. `"focus on authentication flows"`). | Scan the entire application |
+| **Action budget** | The maximum number of actions Arga performs across all campaigns. | `200` |
+| **Runner mode** | Choose `visual` for browser-driven execution or `dom` for DOM-focused campaign execution. | Both modes used as needed |
+| **Credentials** | One or more roles with login credentials for testing authenticated surfaces. | None |
 
 <Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
   See red-teaming in action. Schedule a 30-minute walkthrough.
