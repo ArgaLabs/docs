@@ -82,6 +82,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `A prompt is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
+| `403` | User does not have a paid billing plan (if applicable). |
 
 ---
 
@@ -137,7 +138,7 @@ curl -X POST https://api.argalabs.com/validation/pr \
 
 | Status | Detail |
 |--------|--------|
-| `400` | Invalid repository format. |
+| `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
 | `403` | Automatic PR validation is available on paid plans only. |
 
@@ -210,7 +211,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 
 | Status | Detail |
 |--------|--------|
-| `400` | Invalid repository format. |
+| `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
 | `403` | Automatic PR validation is available on paid plans only. |
 
@@ -281,7 +282,7 @@ The response includes the full run state. Key fields:
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Validation run not found. |
+| `404` | `Validation run not found` |
 
 ---
 
@@ -349,7 +350,7 @@ curl -X POST https://api.argalabs.com/redteam/start \
 
 | Status | Detail |
 |--------|--------|
-| `400` | Invalid or private URL. |
+| `400` | `A valid public http(s) URL is required.` |
 | `401` | Invalid or expired token. |
 
 ### Get the attack plan
@@ -369,12 +370,14 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
 | `dom_campaigns` | `array` | DOM-based attack campaigns. |
 | `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. |
+| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. |
 | `total_action_budget` | `integer` | Total action budget across all campaigns. |
 
 **Errors**
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
 | `404` | Red-team run not found. |
 | `409` | Scan plan is not ready yet. |
 
@@ -405,10 +408,10 @@ Approve the attack plan and start execution. You can optionally provide a modifi
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
 | `404` | Red-team run not found. |
 | `409` | Cannot approve run in its current status. |
 | `409` | Scan plan is not ready yet. |
-| `409` | No attack plan available and none provided in the request. |
 
 ### Get the scan report
 
@@ -447,6 +450,7 @@ Get the final report after a scan completes.
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
 | `404` | Red-team run not found. |
 
 ### Stream scan results
@@ -461,6 +465,7 @@ Server-sent event (SSE) stream of live scan results. Each event is a JSON object
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
 | `404` | Red-team run not found. |
 
 ### Cancel a scan
@@ -481,7 +486,111 @@ Cancel a running scan.
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
 | `404` | Red-team run not found. |
+
+### Create Linear issues from scan findings
+
+<Note>Requires JWT authentication. Requires a [Linear integration](/integrations).</Note>
+
+```bash
+POST /redteam/{run_id}/create-linear-issues
+```
+
+Create Linear issues from red-team scan findings.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the red-team scan run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `team_id` | `string` | No | Linear team ID. If omitted, the default team is used. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/redteam/a1b2c3d4-e5f6-7890-abcd-ef1234567890/create-linear-issues \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"team_id": null}'
+```
+
+**Response**
+
+Returns an array of created issue objects.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid run or Linear configuration. |
+| `401` | Invalid or expired token. |
+
+---
+
+## Create Linear issues from validation failures
+
+<Note>Requires JWT authentication. Requires a [Linear integration](/integrations).</Note>
+
+```bash
+POST /validate/{run_id}/create-linear-issues
+```
+
+Create Linear issues from failed validation steps.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `team_id` | `string` | No | Linear team ID. If omitted, the default team is used. |
+| `step_numbers` | `array of integer` | No | Specific step numbers to create issues for. If omitted, issues are created for all failed steps. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/create-linear-issues \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"step_numbers": [1, 3]}'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "issues": [
+    {
+      "issue_id": "LIN-123",
+      "step_number": 1,
+      "title": "Login button unresponsive"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+| `issues` | `array` | List of created Linear issue objects. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid run or Linear configuration. |
+| `401` | Invalid or expired token. |
 
 ---
 
@@ -545,8 +654,8 @@ Poll the status of a pending device authorization.
 | Status | Detail |
 |--------|--------|
 | `404` | Device session not found. |
-| `409` | Device code already used. |
-| `410` | Device code expired. |
+| `409` | `Device code already used. Run arga login again.` |
+| `410` | `Device code expired. Run arga login again.` |
 
 ### Get current user
 
@@ -605,10 +714,10 @@ Send a six-digit verification code to the specified email address. Codes expire 
 
 | Status | Detail |
 |--------|--------|
-| `400` | Invalid email address. |
+| `400` | `Enter a valid email address` |
 | `401` | Invalid or expired token. |
-| `409` | Email is already verified. |
-| `429` | Rate limited. Wait before requesting another code. |
+| `409` | `Email is already verified` |
+| `429` | `Wait before requesting another verification code` |
 
 ### Confirm email verification
 
@@ -637,11 +746,12 @@ Verify an email address using the six-digit code. You have up to five attempts p
 
 | Status | Detail |
 |--------|--------|
-| `400` | Invalid email address or code format. |
-| `400` | Invalid verification code. |
+| `400` | `Enter a valid email address` |
+| `400` | `Enter a valid 6-digit code` |
+| `400` | `Invalid verification code` |
 | `401` | Invalid or expired token. |
-| `404` | No active verification code found. |
-| `429` | Too many attempts. Request a new code. |
+| `404` | `No active verification code found for that email` |
+| `429` | `Too many verification attempts. Request a new code` |
 
 ### List CLI devices
 
