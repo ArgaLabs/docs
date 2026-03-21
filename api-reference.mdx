@@ -1,0 +1,677 @@
+---
+title: "API reference"
+description: "HTTP API endpoints for programmatic access to Arga validations, scans, and authentication"
+---
+
+The Arga API lets you start validations, retrieve run results, and manage authentication programmatically. All endpoints are available at `https://api.argalabs.com`.
+
+## Authentication
+
+Every authenticated endpoint accepts a Bearer token in the `Authorization` header:
+
+```bash
+Authorization: Bearer <token>
+```
+
+Arga supports two token types:
+
+| Token type | How to obtain | Format |
+|------------|--------------|--------|
+| **API key** | Run `arga login` from the [CLI](/cli-and-mcp) to create a device-scoped key. | Prefixed with `arga_sk_` |
+| **JWT** | Returned after completing the GitHub OAuth flow in the web app. | Standard JWT |
+
+Both token types use the same `Authorization: Bearer <token>` header. Endpoints below note which token types they accept.
+
+## URL validation
+
+### Start a URL validation
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/url
+```
+
+Start a browser validation run against a deployed URL.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `string` | Yes | Target URL to validate. Must be a public HTTP or HTTPS URL. |
+| `prompt` | `string` | Yes | Natural-language description of what to test. |
+| `credentials` | `object` | No | Login credentials for the target app. |
+| `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
+| `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
+| `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. See [runner options](/features/validate-modes#runner-options). |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/url \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://staging.example.com",
+    "prompt": "test the login flow",
+    "runner_mode": "visual"
+  }'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "queued",
+  "session_id": "f0e1d2c3-b4a5-6789-0abc-def123456789"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the validation run. |
+| `status` | `string` | Initial run status. Always `queued`. |
+| `session_id` | `string` | Chat session associated with this run. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A valid public http(s) URL is required.` |
+| `400` | `A prompt is required.` |
+| `400` | `Email and password must both be provided.` |
+| `401` | Invalid or expired token. |
+
+---
+
+## PR validation
+
+### Start a PR validation
+
+<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+
+```bash
+POST /validation/pr
+```
+
+Start an automatic validation run for a pull request.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repo` | `string` | Yes | Repository in `owner/repo` format. |
+| `pr_number` | `integer` | Yes | Pull request number. |
+| `context_notes` | `string` | No | Additional instructions or context for the validation. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validation/pr \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo": "acme/web-app",
+    "pr_number": 42,
+    "context_notes": "focus on the checkout flow changes"
+  }'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "queued"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the validation run. |
+| `status` | `string` | Initial run status. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid repository format. |
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+
+### List PR validation runs
+
+<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+
+```bash
+GET /validation/runs
+```
+
+List PR and branch validation runs with pagination and optional filtering.
+
+**Query parameters**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `repo` | `string` | No | — | Filter by repository in `owner/repo` format. |
+| `query` | `string` | No | — | Search by branch name or PR number. |
+| `limit` | `integer` | No | `10` | Number of results per page. Range: `1`–`100`. |
+| `offset` | `integer` | No | `0` | Pagination offset. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+```json
+{
+  "items": [
+    {
+      "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "status": "complete",
+      "repo": "acme/web-app",
+      "pr_number": 42,
+      "branch": "feature/checkout",
+      "commit_sha": "abc1234",
+      "trigger_type": "pr",
+      "created_at": "2026-03-21T12:00:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 5,
+  "offset": 0,
+  "has_more": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | `array` | List of validation run summaries. |
+| `items[].run_id` | `string` | Unique identifier for the run. |
+| `items[].status` | `string` | Current run status. |
+| `items[].repo` | `string` | Repository in `owner/repo` format. |
+| `items[].pr_number` | `integer \| null` | Pull request number, if applicable. |
+| `items[].branch` | `string \| null` | Branch name. |
+| `items[].commit_sha` | `string \| null` | Commit SHA that triggered the run. |
+| `items[].trigger_type` | `string \| null` | How the run was triggered (e.g. `pr`, `branch`, `manual`). |
+| `items[].created_at` | `string` | ISO 8601 timestamp. |
+| `total` | `integer` | Total number of matching runs. |
+| `limit` | `integer` | Page size used. |
+| `offset` | `integer` | Current offset. |
+| `has_more` | `boolean` | Whether more results are available. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid repository format. |
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+
+---
+
+## Get run details
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /runs/{run_id}
+```
+
+Get full details of a validation or scan run.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+The response includes the full run state. Key fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Run identifier. |
+| `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
+| `run_type` | `string` | Type of run. |
+| `mode` | `string \| null` | Runner mode used (`visual` or `dom`). |
+| `prompt` | `string \| null` | The prompt that initiated the run. |
+| `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
+| `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
+| `git_branch` | `string \| null` | Branch name. |
+| `commit_sha` | `string \| null` | Commit SHA. |
+| `github_pr_number` | `integer \| null` | Pull request number. |
+| `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
+| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
+| `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
+| `step_summaries` | `array \| null` | Summarized step results. |
+| `created_at` | `string \| null` | ISO 8601 timestamp. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | Validation run not found. |
+
+---
+
+## Red-team scans
+
+### Start a scan
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /redteam/start
+```
+
+Start a red-team scan against a deployed application.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | `string` | Yes | — | Target URL to scan. Must be a public HTTP or HTTPS URL. |
+| `focus` | `string` | No | — | Text description to narrow the scan scope. |
+| `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
+| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
+| `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
+| `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
+| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
+| `credentials[].permissions_description` | `string` | No | `""` | Description of what this role can access. |
+| `manifest` | `object` | No | — | Application manifest describing routes, roles, and invariants. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/redteam/start \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://staging.example.com",
+    "focus": "authentication and payment flows",
+    "action_budget": 150,
+    "credentials": [
+      {
+        "name": "admin",
+        "credentials": {"email": "admin@example.com", "password": "test123"},
+        "permissions_description": "Full admin access"
+      }
+    ]
+  }'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "planning"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the scan run. |
+| `status` | `string` | Initial status. Always `planning`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid or private URL. |
+| `401` | Invalid or expired token. |
+
+### Get the attack plan
+
+```bash
+GET /redteam/{run_id}/plan
+```
+
+Retrieve the generated attack plan for review before execution.
+
+**Response**
+
+The attack plan includes the target manifest, campaigns, and action budgets. Key fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
+| `dom_campaigns` | `array` | DOM-based attack campaigns. |
+| `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. |
+| `total_action_budget` | `integer` | Total action budget across all campaigns. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Red-team run not found. |
+| `409` | Scan plan is not ready yet. |
+
+### Approve the attack plan
+
+```bash
+POST /redteam/{run_id}/approve
+```
+
+Approve the attack plan and start execution. You can optionally provide a modified plan to override the generated one.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `attack_plan_json` | `object` | No | Override attack plan. If omitted, the generated plan is used. |
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "queued"
+}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Red-team run not found. |
+| `409` | Cannot approve run in its current status. |
+| `409` | Scan plan is not ready yet. |
+
+### Get the scan report
+
+```bash
+GET /redteam/{run_id}/report
+```
+
+Get the final report after a scan completes.
+
+**Response**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `anomalies` | `array` | List of findings. |
+| `anomalies[].severity` | `string` | Severity level: `critical`, `high`, `medium`, `low`, or `info`. |
+| `anomalies[].category` | `string` | Attack category (e.g. `auth`, `xss`, `data_leak`). |
+| `anomalies[].title` | `string` | Short finding title. |
+| `anomalies[].description` | `string` | Detailed description. |
+| `anomalies[].reproduction_steps` | `array` | Steps to reproduce. |
+| `anomalies[].agent_type` | `string` | Runner that found this: `dom` or `visual`. |
+| `coverage` | `object` | Scan coverage summary. |
+| `coverage.routes_visited` | `array` | Routes the scan explored. |
+| `coverage.routes_not_visited` | `array` | Routes that were not reached. |
+| `coverage.roles_tested` | `array` | Roles that were used. |
+| `coverage.categories_tested` | `array` | Attack categories that were tested. |
+| `total_actions` | `integer` | Total actions performed. |
+| `duration_seconds` | `number` | Scan duration in seconds. |
+| `has_blocking_findings` | `boolean` | Whether critical or high severity findings were discovered. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Red-team run not found. |
+
+### Stream scan results
+
+```bash
+GET /redteam/{run_id}/results
+```
+
+Server-sent event (SSE) stream of live scan results. Each event is a JSON object sent as `data: {JSON}\n\n`.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Red-team run not found. |
+
+### Cancel a scan
+
+```bash
+POST /redteam/{run_id}/cancel
+```
+
+Cancel a running scan.
+
+**Response**
+
+```json
+{"status": "cancelled"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Red-team run not found. |
+
+---
+
+## Authentication endpoints
+
+### Start device authorization
+
+```bash
+POST /auth/device/start
+```
+
+Begin the CLI device authorization flow. Returns a device code for the user to approve in the browser.
+
+**Request body** (optional)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `device_name` | `string` | No | Label for this device. |
+
+**Response**
+
+```json
+{
+  "device_code": "abc123...",
+  "verification_url": "https://app.argalabs.com/cli"
+}
+```
+
+### Poll device authorization
+
+```bash
+POST /auth/device/poll
+```
+
+Poll the status of a pending device authorization.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `device_code` | `string` | Yes | The device code returned from the start endpoint. |
+
+**Response (pending)**
+
+```json
+{"status": "pending"}
+```
+
+**Response (approved)**
+
+```json
+{
+  "api_key": "arga_sk_...",
+  "cli_api_key_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "device_name": "CLI device"
+}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | Device session not found. |
+| `409` | Device code already used. |
+| `410` | Device code expired. |
+
+### Get current user
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /auth/me
+```
+
+Return the authenticated user's profile.
+
+**Response**
+
+```json
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "github_login": "octocat",
+  "email": "octocat@example.com",
+  "email_verified": true,
+  "avatar_url": "https://avatars.githubusercontent.com/u/1",
+  "workspace": "Acme Labs",
+  "api_key": "arga_sk_...",
+  "billing_plan": "paid"
+}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Request email verification
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /auth/email/request-verification
+```
+
+Send a six-digit verification code to the specified email address. Codes expire after 10 minutes. You can request a new code once per minute.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | `string` | Yes | Email address to verify. |
+
+**Response**
+
+```json
+{"status": "sent", "email": "user@example.com"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid email address. |
+| `401` | Invalid or expired token. |
+| `409` | Email is already verified. |
+| `429` | Rate limited. Wait before requesting another code. |
+
+### Confirm email verification
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /auth/email/verify
+```
+
+Verify an email address using the six-digit code. You have up to five attempts per code.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | `string` | Yes | Email address to verify. |
+| `code` | `string` | Yes | Six-digit verification code. |
+
+**Response**
+
+```json
+{"status": "verified", "email": "user@example.com"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid email address or code format. |
+| `400` | Invalid verification code. |
+| `401` | Invalid or expired token. |
+| `404` | No active verification code found. |
+| `429` | Too many attempts. Request a new code. |
+
+### List CLI devices
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /auth/cli/devices
+```
+
+List all CLI API key devices for the current user.
+
+**Response**
+
+```json
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "device_name": "Work laptop",
+    "key_preview": "arga_sk_abc1...xyz9",
+    "created_at": "2026-03-21T12:00:00Z",
+    "last_used_at": "2026-03-21T14:30:00Z",
+    "revoked_at": null
+  }
+]
+```
+
+### Revoke a CLI device
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /auth/cli/devices/{cli_api_key_id}/revoke
+```
+
+Revoke a CLI API key.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `cli_api_key_id` | `string` | UUID of the CLI API key to revoke. |
+
+**Response**
+
+```json
+{"status": "revoked"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | CLI device not found. |

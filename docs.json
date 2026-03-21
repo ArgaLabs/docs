@@ -51,7 +51,8 @@
             "group": "Setup",
             "pages": [
               "cli-and-mcp",
-              "integrations"
+              "integrations",
+              "api-reference"
             ]
           }
         ]
