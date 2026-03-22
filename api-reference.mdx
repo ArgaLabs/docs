@@ -173,11 +173,28 @@ Approve the generated validation story and dispatch the run for execution. You c
 | `story_json` | `object` | Yes | The validation story to approve. |
 | `attack_plan_json` | `object` | No | Override attack plan. If omitted, the generated plan is used. |
 
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "running",
+  "environment_url": "https://env-abc123.argalabs.com"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+| `status` | `string` | Updated run status after approval. |
+| `environment_url` | `string \| null` | URL of the provisioned sandbox environment, if applicable. |
+
 **Errors**
 
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
+| `409` | `Validation run not found` |
 | `409` | `Cannot approve run in status: {status}` (includes the current run status) |
 
 ---
@@ -364,7 +381,7 @@ The response includes the full run state. Key fields:
 | `event_log_json` | `array \| null` | Chronological event log for the run. |
 | `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
 | `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for visual validation. |
-| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, and `results_json`. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, `results_json`, `started_at`, and `completed_at`. |
 | `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
@@ -407,6 +424,12 @@ Start a red-team scan against a deployed application.
 | `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
 | `credentials[].permissions_description` | `string` | No | `""` | Description of what this role can access. |
 | `manifest` | `object` | No | — | Application manifest describing routes, roles, and invariants. |
+| `manifest.url` | `string` | Yes | — | Base URL of the application. |
+| `manifest.routes` | `array` | No | `[]` | List of route entries. Each includes `path`, `description`, `auth_required` (boolean, default `false`), and `required_role`. |
+| `manifest.roles` | `array` | No | `[]` | List of role definitions (same shape as `credentials`). |
+| `manifest.invariants` | `array` | No | `[]` | Security invariants. Each includes `rule` (text description) and `category` (one of `auth`, `xss`, `data_leak`, `500`, `access_control`, `csrf`, `injection`, `idor`, `open_redirect`). |
+| `manifest.input_fields` | `array` | No | `[]` | Input targets. Each includes `route`, `selector`, `description`, and `field_type`. |
+| `manifest.known_flows` | `array` | No | `[]` | Known user flows. Each includes `name` and `steps` (list of objects with `action`, `route`, `details`). |
 
 **Example request**
 
@@ -466,7 +489,7 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
 | `dom_campaigns` | `array` | DOM-based attack campaigns. |
 | `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. |
-| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. |
+| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. Each shard includes `shard_key`, `worker_kind` (`dom` or `visual`), `dom_campaign_names`, `visual_campaign_names`, `route_scope`, `target_role`, `attack_categories`, and `action_budget`. |
 | `total_action_budget` | `integer` | Total action budget across all campaigns. |
 
 **Errors**
