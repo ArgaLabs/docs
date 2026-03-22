@@ -178,7 +178,7 @@ Approve the generated validation story and dispatch the run for execution. You c
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `409` | Run cannot be approved in its current status. |
+| `409` | `Cannot approve run in status: {status}` (includes the current run status) |
 
 ---
 
@@ -474,8 +474,8 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Red-team run not found. |
-| `409` | Scan plan is not ready yet. |
+| `404` | `Red-team run not found` |
+| `409` | `Scan plan is not ready yet` |
 
 ### Approve the attack plan
 
@@ -505,9 +505,9 @@ Approve the attack plan and start execution. You can optionally provide a modifi
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Red-team run not found. |
-| `409` | Cannot approve run in its current status. |
-| `409` | Scan plan is not ready yet. |
+| `404` | `Red-team run not found` |
+| `409` | `Cannot approve run in status {status}` (includes the current run status) |
+| `409` | `Scan plan is not ready yet` |
 
 ### Get the scan report
 
@@ -547,7 +547,7 @@ Get the final report after a scan completes.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Red-team run not found. |
+| `404` | `Red-team run not found` |
 
 ### Stream scan results
 
@@ -562,7 +562,7 @@ Server-sent event (SSE) stream of live scan results. Each event is a JSON object
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Red-team run not found. |
+| `404` | `Red-team run not found` |
 
 ### Cancel a scan
 
@@ -583,7 +583,7 @@ Cancel a running scan.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | Red-team run not found. |
+| `404` | `Red-team run not found` |
 
 ### Create Linear issues from scan findings
 
@@ -749,9 +749,9 @@ Poll the status of a pending device authorization.
 
 | Status | Detail |
 |--------|--------|
-| `404` | Device session not found. |
-| `409` | `Device code already used. Run arga login again.` |
-| `410` | `Device code expired. Run arga login again.` |
+| `404` | `Device session not found` |
+| `409` | `` Device code already used. Run `arga login` again. `` |
+| `410` | `` Device code expired. Run `arga login` again. `` |
 
 ### Get current user
 
@@ -772,7 +772,7 @@ Return the authenticated user's profile.
   "email": "octocat@example.com",
   "email_verified": true,
   "avatar_url": "https://avatars.githubusercontent.com/u/1",
-  "workspace": "Acme Labs",
+  "workspace": "Arga Labs",
   "api_key": "arga_sk_...",
   "billing_plan": "paid"
 }
@@ -901,4 +901,4 @@ Revoke a CLI API key.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `404` | CLI device not found. |
+| `404` | `CLI device not found` |
