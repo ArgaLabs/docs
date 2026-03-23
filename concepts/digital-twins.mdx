@@ -3,7 +3,7 @@ title: "Digital twins"
 description: "Stateful, behavioural clones of external services for safe testing"
 ---
 
-A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
+A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, Google Drive, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
 
 ## Why digital twins?
 
@@ -33,9 +33,10 @@ Arga currently supports these sandbox twins:
 | Twin | What it stands in for | Notes |
 | ---- | --------------------- | ----- |
 | `discord` | Discord APIs | Exposed as a sandbox surface in the UI. |
+| `google_drive` | Google Drive API (`www.googleapis.com`, `content.googleapis.com`) | Exposed as a sandbox surface in the UI. Intercepts Google Drive v3 file operations including list, get, create, update, and delete. |
 | `slack` | Slack Web API | Exposed as a sandbox surface in the UI. Preserves the `Authorization` header so you can test token-scoped behavior. |
 | `stripe` | Stripe APIs | Available for sandbox routing. Not shown as a separate sandbox surface in the UI. |
-| `unified` | Unified API (`api.unified.to`) | Exposed as a sandbox surface in the UI. Use this when your app talks to Unified rather than directly to the upstream service. The current seeded providers in this twin are Slack and Google Mail. |
+| `unified` | Unified API (`api.unified.to`) | Exposed as a sandbox surface in the UI. Use this when your app talks to Unified rather than directly to the upstream service. The current seeded providers in this twin are Slack, Google Mail, and Google Drive. |
 
 Twins and integrations are different:
 
