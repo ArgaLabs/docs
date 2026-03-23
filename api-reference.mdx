@@ -226,6 +226,64 @@ Approve the generated validation story and dispatch the run for execution. The r
 
 ---
 
+## PR validation story
+
+### Start a PR validation with story generation
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/start
+```
+
+Start a validation run for a pull request and stream story generation progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `pr_url` | `string` | Yes | — | Full GitHub pull request URL. |
+| `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
+| `context_notes` | `string` | No | — | Additional instructions or context for the validation. |
+| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
+| `repo` | `string` | No | — | Repository in `owner/repo` format. Auto-derived from `pr_url` when omitted. |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/validate/start \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pr_url": "https://github.com/acme/web-app/pull/42",
+    "frontend_url": "http://localhost:3000",
+    "context_notes": "focus on the checkout flow changes"
+  }'
+```
+
+**SSE events**
+
+| Event type | Description |
+|------------|-------------|
+| `investigating` | The agent is inspecting the PR. Includes `tool` and `hop` fields. |
+| `sources_found` | Relevant source files identified. Includes `sources` array. |
+| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_text` | Human-readable story text. Includes `content` and `run_id`. |
+| `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
+| `done` | Story generation complete. Includes `run_id`. |
+| `error` | An error occurred during story generation. Includes `message`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `GitHub integration required for validation.` |
+| `400` | Invalid runtime profile for the pull request. |
+| `401` | Invalid or expired token. |
+| `404` | `Session not found` (when `session_id` is provided but not found) |
+
+---
+
 ## Sandbox deployment
 
 ### Deploy a branch
@@ -318,6 +376,7 @@ curl -N -X POST https://api.argalabs.com/validate/deploy-pr \
 |--------|--------|
 | `400` | `Unable to determine repository from PR URL.` |
 | `400` | `GitHub integration required for deployment.` |
+| `400` | Invalid runtime profile for the pull request (e.g. missing or malformed configuration). |
 | `401` | Invalid or expired token. |
 
 ---
@@ -801,6 +860,8 @@ curl -X POST https://api.argalabs.com/redteam/start \
 
 ### Get the attack plan
 
+<Note>Requires JWT authentication.</Note>
+
 ```bash
 GET /redteam/{run_id}/plan
 ```
@@ -828,6 +889,8 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | `409` | `Scan plan is not ready yet` |
 
 ### Approve the attack plan
+
+<Note>Requires JWT authentication.</Note>
 
 ```bash
 POST /redteam/{run_id}/approve
@@ -860,6 +923,8 @@ Approve the attack plan and start execution. You can optionally provide a modifi
 | `409` | `Scan plan is not ready yet` |
 
 ### Get the scan report
+
+<Note>Requires JWT authentication.</Note>
 
 ```bash
 GET /redteam/{run_id}/report
@@ -901,6 +966,8 @@ Get the final report after a scan completes.
 
 ### Stream scan results
 
+<Note>Requires JWT authentication.</Note>
+
 ```bash
 GET /redteam/{run_id}/results
 ```
@@ -915,6 +982,8 @@ Server-sent event (SSE) stream of live scan results. Each event is a JSON object
 | `404` | `Red-team run not found` |
 
 ### Cancel a scan
+
+<Note>Requires JWT authentication.</Note>
 
 ```bash
 POST /redteam/{run_id}/cancel
