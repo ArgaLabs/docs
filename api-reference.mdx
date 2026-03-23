@@ -59,7 +59,7 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server selects the runner automatically. See [runner options](/features/validate-modes#runner-options). |
+| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. Defaults to `visual` when omitted. See [runner options](/features/validate-modes#runner-options). |
 
 **Example request**
 
@@ -158,7 +158,7 @@ Server-sent event (SSE) stream of live validation step results. Each event is a 
 POST /validate/{run_id}/approve
 ```
 
-Approve the generated validation story and dispatch the run for execution. You can optionally include a modified story or attack plan.
+Approve the generated validation story and dispatch the run for execution. The run must be in `awaiting_approval` or `generating_story` status. You can optionally include a modified story or attack plan.
 
 **Path parameters**
 
@@ -252,6 +252,172 @@ curl -X POST https://api.argalabs.com/validation/pr \
 | Status | Detail |
 |--------|--------|
 | `400` | `Repository must be provided as owner/repo.` |
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+
+### Install GitHub App for a repository
+
+<Note>Requires JWT authentication. Requires a paid plan.</Note>
+
+```bash
+POST /validation/github/install
+```
+
+Install or re-install the Arga GitHub App webhook for a repository so that Arga can listen for PR and push events.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repo` | `string` | Yes | Repository in `owner/repo` format. |
+
+**Response**
+
+```json
+{
+  "repo": "acme/web-app",
+  "webhook_id": "123456",
+  "enabled": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `repo` | `string` | Repository in `owner/repo` format. |
+| `webhook_id` | `string` | Identifier for the installed webhook. |
+| `enabled` | `boolean` | Whether the installation is active. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Invalid repository or configuration. |
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+| `409` | GitHub re-authorization required. |
+
+### Get repository validation config
+
+<Note>Requires JWT authentication. Requires a paid plan.</Note>
+
+```bash
+GET /validation/github/config
+```
+
+Retrieve the current validation configuration for a repository.
+
+**Query parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `repo` | `string` | Yes | Repository in `owner/repo` format. |
+
+**Response**
+
+```json
+{
+  "repo": "acme/web-app",
+  "installed": true,
+  "installation_id": "12345",
+  "enabled": true,
+  "trigger_mode": "pr",
+  "branch": null,
+  "default_branch": "main",
+  "custom_instructions": null,
+  "comment_on_pr": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `repo` | `string` | Repository in `owner/repo` format. |
+| `installed` | `boolean` | Whether the GitHub App is installed for this repository. |
+| `installation_id` | `string \| null` | GitHub App installation identifier. |
+| `enabled` | `boolean` | Whether automatic validation is enabled. |
+| `trigger_mode` | `string` | Trigger mode: `pr` or `branch`. Defaults to `pr`. |
+| `branch` | `string \| null` | Branch name when using `branch` trigger mode. |
+| `default_branch` | `string \| null` | Default branch of the repository. |
+| `custom_instructions` | `string \| null` | Custom instructions applied to every validation run. |
+| `comment_on_pr` | `boolean` | Whether Arga posts a comment summary on pull requests. Defaults to `true`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+
+### Save repository validation config
+
+<Note>Requires JWT authentication. Requires a paid plan.</Note>
+
+```bash
+POST /validation/github/config
+```
+
+Create or update the validation configuration for a repository. The GitHub App must be installed before you can save settings.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
+| `trigger_mode` | `string` | Yes | — | Trigger mode: `pr` or `branch`. |
+| `branch` | `string` | No | — | Branch name. Required when `trigger_mode` is `branch`. |
+| `custom_instructions` | `string` | No | — | Custom instructions applied to every validation run. |
+| `comment_on_pr` | `boolean` | No | `true` | Whether Arga posts a comment summary on pull requests. |
+
+**Response**
+
+Returns the same shape as [Get repository validation config](#get-repository-validation-config).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Choose a branch for branch-triggered validation.` |
+| `401` | Invalid or expired token. |
+| `403` | Automatic PR validation is available on paid plans only. |
+| `409` | `Install the Arga GitHub App on this repository before saving validation settings.` |
+
+### List enabled repositories
+
+<Note>Requires JWT authentication. Requires a paid plan.</Note>
+
+```bash
+GET /validation/github/enabled
+```
+
+List all repositories with automatic validation enabled for the current user.
+
+**Response**
+
+```json
+[
+  {
+    "repo": "acme/web-app",
+    "installation_id": "12345",
+    "trigger_mode": "pr",
+    "branch": null,
+    "default_branch": "main",
+    "comment_on_pr": true
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `repo` | `string` | Repository in `owner/repo` format. |
+| `installation_id` | `string \| null` | GitHub App installation identifier. |
+| `trigger_mode` | `string` | Trigger mode: `pr` or `branch`. |
+| `branch` | `string \| null` | Branch name when using `branch` trigger mode. |
+| `default_branch` | `string \| null` | Default branch of the repository. |
+| `comment_on_pr` | `boolean` | Whether Arga posts a comment summary on pull requests. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
 | `401` | Invalid or expired token. |
 | `403` | Automatic PR validation is available on paid plans only. |
 
@@ -487,8 +653,8 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | Field | Type | Description |
 |-------|------|-------------|
 | `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
-| `dom_campaigns` | `array` | DOM-based attack campaigns. |
-| `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. |
+| `dom_campaigns` | `array` | DOM-based attack campaigns. Each object includes `name`, `attack_category`, `target_routes` (default `[]`), `target_role`, `flow_steps` (default `[]`), `interaction_goals` (default `[]`), `payloads` (default `[]`), and `action_budget` (default `50`). |
+| `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. Each object includes `name`, `attack_category`, `flow_steps` (default `[]`), `target_role`, `invariants_to_probe` (default `[]`), and `action_budget` (default `50`). |
 | `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. Each shard includes `shard_key`, `worker_kind` (`dom` or `visual`), `dom_campaign_names`, `visual_campaign_names`, `route_scope`, `target_role`, `attack_categories`, and `action_budget`. |
 | `total_action_budget` | `integer` | Total action budget across all campaigns. |
 
