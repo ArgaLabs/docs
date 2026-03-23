@@ -729,14 +729,14 @@ The response includes the full run state. Key fields:
 | `event_log_json` | `array \| null` | Chronological event log for the run. |
 | `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
 | `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for visual validation. |
-| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, `results_json`, `started_at`, and `completed_at`. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, `results_json`, `started_at`, and `completed_at`. Each `issues` entry includes `step_number` (`integer \| null`), `description` (`string`), `error_detail` (`string \| null`), and `screenshot_url` (`string \| null`). |
 | `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
-| `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. |
+| `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. Each object includes `worker_key` (`string`), `worker_kind` (`string`), `status` (`string`), `shard` (`object \| null`), `summary` (`object \| null`), `error_message` (`string \| null`), `anomaly_count` (`integer`), `started_at` (`string \| null`), and `completed_at` (`string \| null`). |
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
 | `login_identifier` | `string \| null` | Login identifier used during the run. |
-| `step_summaries` | `array \| null` | Summarized step results. |
+| `step_summaries` | `array \| null` | Summarized step results. Each object includes `title` (`string`), `status` (`string \| null`), `details` (`string \| null`), `step_number` (`integer \| null`), and `step_numbers` (`array of integer \| null`). |
 
 **Errors**
 
@@ -1200,7 +1200,7 @@ Approve a pending device authorization request. Call this from the browser after
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `Device session not found` |
-| `409` | `Device code already used` |
+| `409` | `` Device code already used. Run `arga login` again. `` |
 | `409` | `Device code already approved` |
 | `410` | `` Device code expired. Run `arga login` again. `` |
 
