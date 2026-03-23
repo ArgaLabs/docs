@@ -99,6 +99,33 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 
+### Check runner status
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /validate/runner-status
+```
+
+Check whether the runner infrastructure is connected and available.
+
+**Response**
+
+```json
+{"connected": true, "mode": "ephemeral"}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `connected` | `boolean` | Whether the runner is available. |
+| `mode` | `string` | Runner execution mode. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
 ### Cancel a validation run
 
 <Note>Requires JWT authentication.</Note>
@@ -196,6 +223,102 @@ Approve the generated validation story and dispatch the run for execution. The r
 | `401` | Invalid or expired token. |
 | `409` | `Validation run not found` |
 | `409` | `Cannot approve run in status: {status}` (includes the current run status) |
+
+---
+
+## Sandbox deployment
+
+### Deploy a branch
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/deploy
+```
+
+Deploy a branch to an isolated sandbox environment. Returns a server-sent event (SSE) stream. The response includes `X-Session-Id` and `X-Run-Id` headers.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
+| `branch` | `string` | Yes | — | Branch to deploy. |
+| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `discord`, `slack`, `stripe`, `unified`). |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/validate/deploy \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo": "acme/web-app",
+    "branch": "feature/checkout",
+    "twins": ["slack", "stripe"]
+  }'
+```
+
+**SSE events**
+
+| Event type | Description |
+|------------|-------------|
+| `run_created` | Sandbox run created. Includes `run_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `error` | An error occurred during deployment. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A repository is required.` |
+| `400` | `A branch is required.` |
+| `400` | `GitHub integration required for deployment.` |
+| `401` | Invalid or expired token. |
+
+### Deploy a pull request
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/deploy-pr
+```
+
+Deploy a pull request to an isolated sandbox environment. Returns a server-sent event (SSE) stream. The response includes `X-Session-Id` and `X-Run-Id` headers.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pr_url` | `string` | Yes | Full GitHub pull request URL. |
+| `repo` | `string` | No | Repository in `owner/repo` format. Auto-derived from `pr_url` when omitted. |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/validate/deploy-pr \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pr_url": "https://github.com/acme/web-app/pull/42"
+  }'
+```
+
+**SSE events**
+
+| Event type | Description |
+|------------|-------------|
+| `run_created` | Sandbox run created. Includes `run_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `error` | An error occurred during deployment. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Unable to determine repository from PR URL.` |
+| `400` | `GitHub integration required for deployment.` |
+| `401` | Invalid or expired token. |
 
 ---
 
@@ -562,6 +685,44 @@ The response includes the full run state. Key fields:
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `Validation run not found` |
+
+### Get a run artifact
+
+<Note>Accepts JWT authentication, a `token` query parameter, or a session cookie.</Note>
+
+```bash
+GET /validate/{run_id}/artifacts/{filename}
+```
+
+Retrieve an artifact (such as a screenshot) from a validation or scan run. Returns a redirect to a signed download URL that expires after 60 minutes.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+| `filename` | `string` | Path of the artifact within the run (e.g. `screenshot.png`). |
+
+**Example request**
+
+```bash
+curl -L "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/artifacts/screenshot.png" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -o screenshot.png
+```
+
+**Response**
+
+`302` redirect to a signed URL for the artifact.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | `Authentication required` |
+| `404` | `Validation run not found` |
+| `404` | `Artifact not found` |
+| `500` | `Failed to retrieve artifact` |
 
 ---
 
@@ -940,6 +1101,38 @@ Poll the status of a pending device authorization.
 |--------|--------|
 | `404` | `Device session not found` |
 | `409` | `` Device code already used. Run `arga login` again. `` |
+| `410` | `` Device code expired. Run `arga login` again. `` |
+
+### Approve device authorization
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /auth/device/approve
+```
+
+Approve a pending device authorization request. Call this from the browser after the user confirms the device code.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `device_code` | `string` | Yes | The device code to approve. |
+
+**Response**
+
+```json
+{"status": "approved"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Device session not found` |
+| `409` | `Device code already used` |
+| `409` | `Device code already approved` |
 | `410` | `` Device code expired. Run `arga login` again. `` |
 
 ### Get current user
