@@ -1154,6 +1154,237 @@ curl -X POST https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567
 
 ---
 
+## Chat
+
+### Check chat access
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /chat/access
+```
+
+Check whether chat requires a password and whether the current request is authorized.
+
+**Headers**
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| `X-Chat-Password` | `string` | No | Chat password, if the instance requires one. |
+
+**Response**
+
+```json
+{"password_required": false, "authorized": true}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `password_required` | `boolean` | Whether the chat feature requires a password. |
+| `authorized` | `boolean` | Whether the provided password (if any) is valid. Always `true` when no password is required. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Send a message
+
+<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
+
+```bash
+POST /chat/message
+```
+
+Send a message to the investigation agent. Returns a streaming SSE response by default.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `content` | `string` | Yes | — | The message to send. |
+| `session_id` | `string` | No | — | UUID of an existing chat session. A new session is created when omitted. |
+| `stream` | `boolean` | No | `true` | Whether to return a streaming SSE response. |
+| `repo` | `string` | No | — | Repository in `owner/repo` format to scope GitHub searches. |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/chat/message \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "What errors are users seeing in Sentry this week?",
+    "stream": true
+  }'
+```
+
+**SSE events** (when `stream` is `true`)
+
+| Event type | Description |
+|------------|-------------|
+| `investigating` | The agent is calling a tool. Includes `tool` and `hop` fields. |
+| `sources_found` | Relevant sources identified. Includes `sources` array. |
+| `curating` | The agent is filtering results. Includes `total_results` field. |
+| `curated` | Filtering complete. Includes `kept` and `dropped` counts. |
+| `answer_delta` | Incremental text chunk. Includes `delta` field. |
+| `answer_done` | Answer complete. Includes `sources` array and `hops_used` count. |
+| `done` | Message fully persisted. Includes `message_id`. |
+| `error` | An error occurred. Includes `message`. |
+
+The response includes an `X-Session-Id` header with the session UUID.
+
+**Response** (when `stream` is `false`)
+
+```json
+{
+  "session_id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
+  "message_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "content": "Based on the Sentry data...",
+  "sources": [],
+  "hops_used": 3
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `session_id` | `string` | UUID of the chat session. |
+| `message_id` | `string` | UUID of the assistant's response message. |
+| `content` | `string` | The agent's response text. |
+| `sources` | `array` | Sources referenced in the response. |
+| `hops_used` | `integer` | Number of tool-use hops the agent performed. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `No tools connected. Connect at least one integration to start investigating.` |
+| `401` | Invalid or expired token. |
+| `404` | `Session not found` (when `session_id` is provided but not found) |
+
+### List chat sessions
+
+<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
+
+```bash
+GET /chat/sessions
+```
+
+List the current user's chat sessions, ordered by most recent first. Returns up to 50 sessions.
+
+**Response**
+
+```json
+[
+  {
+    "id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
+    "title": "Sentry error investigation",
+    "created_at": "2026-03-21T12:00:00",
+    "message_count": 5,
+    "mode": "chat",
+    "latest_validation_run": null
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Session UUID. |
+| `title` | `string \| null` | Auto-generated session title based on the first message. |
+| `created_at` | `string` | ISO 8601 timestamp. |
+| `message_count` | `integer` | Number of messages in the session. |
+| `mode` | `string` | Session mode (e.g. `chat`). |
+| `latest_validation_run` | `object \| null` | Summary of the most recent validation run in this session, if any. Includes `run_id`, `status`, `run_type`, `mode`, `pr_url`, `repo_full_name`, `git_branch`, `commit_sha`, `github_pr_number`, and `created_at`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Get a chat session
+
+<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
+
+```bash
+GET /chat/sessions/{session_id}
+```
+
+Retrieve a chat session with its full message history and associated validation runs.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `session_id` | `string` | UUID of the chat session. |
+
+**Response**
+
+```json
+{
+  "id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
+  "title": "Sentry error investigation",
+  "created_at": "2026-03-21T12:00:00",
+  "mode": "chat",
+  "messages": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "role": "user",
+      "content": "What errors are users seeing?",
+      "sources": [],
+      "created_at": "2026-03-21T12:00:00"
+    }
+  ],
+  "validation_runs": []
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Session UUID. |
+| `title` | `string \| null` | Session title. |
+| `created_at` | `string` | ISO 8601 timestamp. |
+| `mode` | `string` | Session mode. |
+| `messages` | `array` | Chronological list of messages. Each includes `id`, `role` (`user` or `assistant`), `content`, `sources`, and `created_at`. |
+| `validation_runs` | `array` | Validation runs associated with this session. Uses the same shape as the [run details](#get-run-details) response. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Session not found` |
+
+### Delete a chat session
+
+<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
+
+```bash
+DELETE /chat/sessions/{session_id}
+```
+
+Delete a chat session and all associated messages.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `session_id` | `string` | UUID of the chat session. |
+
+**Response**
+
+`204 No Content`
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Session not found` |
+
+---
+
 ## Authentication endpoints
 
 ### Start device authorization
