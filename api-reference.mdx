@@ -1347,7 +1347,7 @@ Retrieve a chat session with its full message history and associated validation 
 | `created_at` | `string` | ISO 8601 timestamp. |
 | `mode` | `string` | Session mode. |
 | `messages` | `array` | Chronological list of messages. Each includes `id`, `role` (`user` or `assistant`), `content`, `sources`, and `created_at`. |
-| `validation_runs` | `array` | Validation runs associated with this session. Uses the same shape as the [run details](#get-run-details) response. |
+| `validation_runs` | `array` | Validation runs associated with this session. Each object includes `id`, `session_id`, `status`, `pr_url`, `frontend_url`, `run_type`, `mode`, `prompt`, `environment_url`, `surface_urls`, `raw_surface_urls`, `twins`, `runtime_profile`, `context_notes`, `event_log_json`, `story_json`, `attack_plan_json`, `redteam_report_json`, `results_json`, `worker_progress`, `created_at`, `login_identifier`, and `step_summaries`. This is a subset of the [run details](#get-run-details) response — it does not include `repo_full_name`, `git_branch`, `commit_sha`, `github_pr_number`, `github_check_run_id`, `github_check_run_url`, `auto_story_bundle_json`, or `auto_visual_reports`. |
 
 **Errors**
 
