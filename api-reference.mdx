@@ -126,6 +126,45 @@ Check whether the runner infrastructure is connected and available.
 |--------|--------|
 | `401` | Invalid or expired token. |
 
+### List available twins
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /validate/twins
+```
+
+List the digital twin services available for sandbox deployments. Returns an array sorted by UI visibility, then alphabetically by label.
+
+**Response**
+
+```json
+[
+  {
+    "name": "box",
+    "label": "Box",
+    "show_in_ui": true
+  },
+  {
+    "name": "notion",
+    "label": "Notion",
+    "show_in_ui": true
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Twin identifier used in the `twins` array when deploying a sandbox. |
+| `label` | `string` | Human-readable display name. |
+| `show_in_ui` | `boolean` | Whether this twin is shown in the web UI by default. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
 ### Cancel a validation run
 
 <Note>Requires JWT authentication.</Note>
@@ -302,7 +341,7 @@ Deploy a branch to an isolated sandbox environment. Returns a server-sent event 
 |-------|------|----------|---------|-------------|
 | `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
 | `branch` | `string` | Yes | — | Branch to deploy. |
-| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `slack`, `stripe`, `unified`). |
+| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`). |
 
 **Example request**
 

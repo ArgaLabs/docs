@@ -3,7 +3,7 @@ title: "Digital twins"
 description: "Stateful, behavioural clones of external services for safe testing"
 ---
 
-A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, Google Drive, Google Calendar, Box, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
+A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, Google Drive, Google Calendar, Box, Notion, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
 
 ## Why digital twins?
 
@@ -37,6 +37,7 @@ Arga currently supports these sandbox twins:
 | `dropbox` | Dropbox API v2 | Exposed as a sandbox surface in the UI. Supports storage file operations (list, get, create, update, delete), Dropbox SDK passthrough routes (e.g. `files/list_folder`, `files/upload`), webhook deliveries, and event replay. |
 | `google_calendar` | Google Calendar API (`www.googleapis.com`, `calendar.googleapis.com`) | Exposed as a sandbox surface in the UI. Intercepts Google Calendar v3 operations including calendars, events, free/busy queries, and webhook deliveries. |
 | `google_drive` | Google Drive API (`www.googleapis.com`, `content.googleapis.com`) | Exposed as a sandbox surface in the UI. Intercepts Google Drive v3 file operations including list, get, create, update, and delete. |
+| `notion` | Notion API (`api.notion.com`, `notion.so`) | Exposed as a sandbox surface in the UI. Intercepts Notion API operations for pages, databases, blocks, users, and search. |
 | `slack` | Slack Web API | Exposed as a sandbox surface in the UI. Preserves the `Authorization` header so you can test token-scoped behavior. |
 | `stripe` | Stripe APIs | Available for sandbox routing. Not shown as a separate sandbox surface in the UI. |
 | `unified` | Unified API (`api.unified.to`) | Exposed as a sandbox surface in the UI. Use this when your app talks to Unified rather than directly to the upstream service. The current seeded providers in this twin are Slack, Google Mail, Google Drive, Google Calendar, Box, Notion, and Dropbox. |
