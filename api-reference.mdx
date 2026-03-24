@@ -1717,7 +1717,8 @@ Create a Stripe checkout session to subscribe to a paid plan. Returns a URL to r
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `409` | User already has a paid subscription. |
-| `503` | Stripe is not configured. |
+| `502` | `Stripe checkout session did not return a URL` |
+| `503` | `Stripe secret key is not configured` or `Stripe price ID is not configured` |
 
 ### Confirm a checkout session
 
@@ -1752,7 +1753,7 @@ Confirm a completed Stripe checkout session and activate the subscription for th
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `403` | Checkout session does not belong to the current user. |
-| `503` | Stripe is not configured. |
+| `503` | `Stripe secret key is not configured` |
 
 ### Create a billing portal session
 
@@ -1778,7 +1779,7 @@ Create a Stripe billing portal session so the user can manage their subscription
 
 | Status | Detail |
 |--------|--------|
-| `400` | User does not have a Stripe customer record yet. |
+| `400` | `User does not have a Stripe customer yet` |
 | `401` | Invalid or expired token. |
-| `502` | Stripe billing portal did not return a URL. |
-| `503` | Stripe is not configured. |
+| `502` | `Stripe billing portal did not return a URL` |
+| `503` | `Stripe secret key is not configured` |
