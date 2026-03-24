@@ -1393,3 +1393,392 @@ Revoke a CLI API key.
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `CLI device not found` |
+
+---
+
+## Integrations
+
+### List integrations
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /integrations/
+```
+
+List all supported integration providers and their connection status for the current user.
+
+**Response**
+
+```json
+[
+  {
+    "provider": "github",
+    "connected": true,
+    "metadata": {"login": "octocat"},
+    "connected_at": "2026-03-21T12:00:00"
+  },
+  {
+    "provider": "sentry",
+    "connected": false,
+    "metadata": {},
+    "connected_at": null
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider` | `string` | Integration provider name (e.g. `github`, `slack`, `jira`, `linear`, `sentry`, `grafana`, `posthog`, `discord`). |
+| `connected` | `boolean` | Whether the integration is currently connected. |
+| `metadata` | `object` | Provider-specific metadata. Sensitive fields like tokens are excluded. |
+| `connected_at` | `string \| null` | ISO 8601 timestamp when the integration was connected. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Connect an API key integration
+
+<Note>Requires JWT authentication. Only available for providers that use API keys: `sentry`, `grafana`, `posthog`.</Note>
+
+```bash
+POST /integrations/{provider}/connect
+```
+
+Connect a provider that uses an API key or token instead of OAuth.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `provider` | `string` | Provider name. Must be one of: `sentry`, `grafana`, `posthog`. |
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `token` | `string` | Yes | — | API key or access token for the provider. |
+| `metadata` | `object` | No | `{}` | Additional provider-specific configuration (e.g. organization slug, project ID). |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/integrations/sentry/connect \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "sntrys_...",
+    "metadata": {"organization_slug": "my-org"}
+  }'
+```
+
+**Response** (`201 Created`)
+
+```json
+{"status": "connected", "provider": "sentry"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | Provider uses OAuth — use `/auth/{provider}/connect` instead. |
+| `400` | Invalid credentials for the provider. |
+| `401` | Invalid or expired token. |
+
+### Disconnect an integration
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+DELETE /integrations/{provider}
+```
+
+Disconnect and remove a provider integration for the current user.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `provider` | `string` | Provider name to disconnect. |
+
+**Response**
+
+`204 No Content`
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Get GitHub connection status
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /integrations/github/status
+```
+
+Check the current status of the GitHub integration, including whether reauthentication is needed and which OAuth scopes are missing.
+
+**Response**
+
+```json
+{
+  "status": "connected",
+  "metadata": {"login": "octocat", "granted_scopes": "repo,read:org"},
+  "connected_at": "2026-03-21T12:00:00",
+  "missing_scopes": []
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Connection status: `connected`, `disconnected`, or `reauth_required`. |
+| `metadata` | `object` | GitHub-specific metadata such as login and granted scopes. |
+| `connected_at` | `string \| null` | ISO 8601 timestamp when GitHub was connected. |
+| `missing_scopes` | `array of string` | OAuth scopes that are required but not yet granted. Empty when all scopes are present or when using GitHub App authentication. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### List GitHub repositories
+
+<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
+
+```bash
+GET /integrations/github/repos
+```
+
+List repositories the authenticated user has push access to, ordered by most recent activity.
+
+**Response**
+
+```json
+[
+  {
+    "full_name": "acme/web-app",
+    "description": "Main web application",
+    "private": true,
+    "pushed_at": "2026-03-21T14:00:00Z"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `full_name` | `string` | Repository in `owner/repo` format. |
+| `description` | `string` | Repository description. |
+| `private` | `boolean` | Whether the repository is private. |
+| `pushed_at` | `string \| null` | ISO 8601 timestamp of the most recent push. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | GitHub not connected. |
+| `401` | Invalid or expired token. |
+| `409` | GitHub reauthentication required. |
+
+### List GitHub branches
+
+<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
+
+```bash
+GET /integrations/github/{owner}/{repo}/branches
+```
+
+List branches for a repository the authenticated user can access.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `owner` | `string` | Repository owner. |
+| `repo` | `string` | Repository name. |
+
+**Response**
+
+```json
+[
+  {
+    "name": "main",
+    "protected": true
+  },
+  {
+    "name": "feature/checkout",
+    "protected": false
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Branch name. |
+| `protected` | `boolean` | Whether the branch is protected. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | GitHub not connected. |
+| `401` | Invalid or expired token. |
+| `409` | GitHub reauthentication required. |
+
+### List GitHub pull requests
+
+<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
+
+```bash
+GET /integrations/github/{owner}/{repo}/pulls
+```
+
+List open pull requests for a repository, ordered by most recently updated.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `owner` | `string` | Repository owner. |
+| `repo` | `string` | Repository name. |
+
+**Response**
+
+```json
+[
+  {
+    "number": 42,
+    "title": "Add checkout flow",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/acme/web-app/pull/42",
+    "updated_at": "2026-03-21T14:30:00Z",
+    "author": "octocat",
+    "head_ref": "feature/checkout",
+    "base_ref": "main"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `number` | `integer` | Pull request number. |
+| `title` | `string` | Pull request title. |
+| `state` | `string` | Pull request state (e.g. `open`). |
+| `draft` | `boolean` | Whether the pull request is a draft. |
+| `html_url` | `string` | URL of the pull request on GitHub. |
+| `updated_at` | `string \| null` | ISO 8601 timestamp of the last update. |
+| `author` | `string \| null` | GitHub login of the pull request author. |
+| `head_ref` | `string \| null` | Source branch name. |
+| `base_ref` | `string \| null` | Target branch name. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | GitHub not connected. |
+| `401` | Invalid or expired token. |
+| `409` | GitHub reauthentication required. |
+
+---
+
+## Billing
+
+### Create a checkout session
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /billing/stripe/checkout
+```
+
+Create a Stripe checkout session to subscribe to a paid plan. Returns a URL to redirect the user to Stripe's hosted checkout page.
+
+**Response**
+
+```json
+{"url": "https://checkout.stripe.com/c/pay/cs_..."}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | `string` | Stripe-hosted checkout URL. Redirect the user to this URL to complete payment. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `409` | User already has a paid subscription. |
+| `503` | Stripe is not configured. |
+
+### Confirm a checkout session
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /billing/stripe/checkout/confirm
+```
+
+Confirm a completed Stripe checkout session and activate the subscription for the current user.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `session_id` | `string` | Yes | Stripe checkout session ID returned after successful payment. |
+
+**Response**
+
+```json
+{"billing_plan": "paid", "status": "complete"}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `billing_plan` | `string` | Updated billing plan for the user (e.g. `paid`, `free`). |
+| `status` | `string` | Checkout session status. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `403` | Checkout session does not belong to the current user. |
+| `503` | Stripe is not configured. |
+
+### Create a billing portal session
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /billing/stripe/portal
+```
+
+Create a Stripe billing portal session so the user can manage their subscription, update payment methods, or cancel.
+
+**Response**
+
+```json
+{"url": "https://billing.stripe.com/p/session/..."}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | `string` | Stripe-hosted billing portal URL. Redirect the user to this URL. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | User does not have a Stripe customer record yet. |
+| `401` | Invalid or expired token. |
+| `502` | Stripe billing portal did not return a URL. |
+| `503` | Stripe is not configured. |
