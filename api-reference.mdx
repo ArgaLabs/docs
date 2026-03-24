@@ -752,7 +752,7 @@ The response includes the full run state. Key fields:
 | `pr_url` | `string` | Pull request URL, if applicable. |
 | `frontend_url` | `string` | Base URL of the frontend under test. |
 | `run_type` | `string` | Type of run. |
-| `mode` | `string \| null` | Runner mode used (`visual` or `dom`). |
+| `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). This is distinct from the runner mode (`visual` or `dom`), which is found inside `runtime_profile`. |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `surface_urls` | `object \| null` | Map of service names to their proxied URLs in the sandbox. |
@@ -847,14 +847,14 @@ Start a red-team scan against a deployed application.
 | `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
 | `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
 | `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
-| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
+| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs (string keys and string values) for login fields. |
 | `credentials[].permissions_description` | `string` | No | `""` | Description of what this role can access. |
 | `manifest` | `object` | No | — | Application manifest describing routes, roles, and invariants. |
 | `manifest.url` | `string` | Yes | — | Base URL of the application. |
 | `manifest.routes` | `array` | No | `[]` | List of route entries. Each includes `path`, `description`, `auth_required` (boolean, default `false`), and `required_role`. |
-| `manifest.roles` | `array` | No | `[]` | List of role definitions (same shape as `credentials`). |
+| `manifest.roles` | `array` | No | `[]` | List of role definitions. Each includes `name`, `credentials` (key-value string pairs, defaults to `{}`), and `permissions_description` (defaults to `""`). |
 | `manifest.invariants` | `array` | No | `[]` | Security invariants. Each includes `rule` (text description) and `category` (one of `auth`, `xss`, `data_leak`, `500`, `access_control`, `csrf`, `injection`, `idor`, `open_redirect`). |
-| `manifest.input_fields` | `array` | No | `[]` | Input targets. Each includes `route`, `selector`, `description`, and `field_type`. |
+| `manifest.input_fields` | `array` | No | `[]` | Input targets. Each includes `route`, `selector` (defaults to `""`), `description` (defaults to `""`), and `field_type` (defaults to `"text"`). |
 | `manifest.known_flows` | `array` | No | `[]` | Known user flows. Each includes `name` and `steps` (list of objects with `action`, `route`, `details`). |
 
 **Example request**
@@ -917,7 +917,7 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 | `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
 | `dom_campaigns` | `array` | DOM-based attack campaigns. Each object includes `name`, `attack_category`, `target_routes` (default `[]`), `target_role`, `flow_steps` (default `[]`), `interaction_goals` (default `[]`), `payloads` (default `[]`), and `action_budget` (default `50`). |
 | `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. Each object includes `name`, `attack_category`, `flow_steps` (default `[]`), `target_role`, `invariants_to_probe` (default `[]`), and `action_budget` (default `50`). |
-| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. Each shard includes `shard_key`, `worker_kind` (`dom` or `visual`), `dom_campaign_names`, `visual_campaign_names`, `route_scope`, `target_role`, `attack_categories`, and `action_budget`. |
+| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. Each shard includes `shard_key`, `worker_kind` (`dom` or `visual`), `dom_campaign_names`, `visual_campaign_names`, `route_scope`, `target_role`, `attack_categories`, and `action_budget` (defaults to `50`). |
 | `total_action_budget` | `integer` | Total action budget across all campaigns. |
 
 **Errors**
