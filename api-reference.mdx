@@ -149,6 +149,11 @@ List the digital twin services available for sandbox deployments. Returns an arr
     "name": "notion",
     "label": "Notion",
     "show_in_ui": true
+  },
+  {
+    "name": "unstructured",
+    "label": "Unstructured",
+    "show_in_ui": true
   }
 ]
 ```
@@ -341,7 +346,7 @@ Deploy a branch to an isolated sandbox environment. Returns a server-sent event 
 |-------|------|----------|---------|-------------|
 | `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
 | `branch` | `string` | Yes | — | Branch to deploy. |
-| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`). |
+| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
 
 **Example request**
 
