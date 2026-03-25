@@ -326,6 +326,61 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 | `401` | Invalid or expired token. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
+### Start a branch validation with story generation
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/start-branch
+```
+
+Start a validation run for a branch and stream story generation progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers. This is the branch equivalent of [Start a PR validation with story generation](#start-a-pr-validation-with-story-generation) — it deploys and validates a branch directly instead of a pull request.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
+| `branch` | `string` | Yes | — | Branch to deploy and validate. |
+| `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
+| `context_notes` | `string` | No | — | Additional instructions or context for the validation. |
+| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/validate/start-branch \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo": "acme/web-app",
+    "branch": "feature/checkout",
+    "frontend_url": "http://localhost:3000",
+    "context_notes": "focus on the checkout flow changes"
+  }'
+```
+
+**SSE events**
+
+| Event type | Description |
+|------------|-------------|
+| `investigating` | The agent is inspecting the branch. Includes `tool` and `hop` fields. |
+| `sources_found` | Relevant source files identified. Includes `sources` array. |
+| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_text` | Human-readable story text. Includes `content` and `run_id`. |
+| `done` | Story generation complete. Includes `run_id`. |
+| `error` | An error occurred during story generation. Includes `message`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `GitHub integration required for validation.` |
+| `400` | `A branch is required.` |
+| `400` | Invalid repository or runtime profile configuration. |
+| `401` | Invalid or expired token. |
+| `404` | `Session not found` (when `session_id` is provided but not found) |
+
 ---
 
 ## Sandbox deployment
