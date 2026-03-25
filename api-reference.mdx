@@ -1632,7 +1632,7 @@ Return the authenticated user's profile.
 POST /auth/email/request-verification
 ```
 
-Send a six-digit verification code to the specified email address. Codes expire after 10 minutes. You can request a new code once per minute.
+Send a six-digit verification code to the specified email address. Codes expire after 5 minutes. You can request a new code once every 2 minutes.
 
 **Request body**
 
@@ -1654,6 +1654,8 @@ Send a six-digit verification code to the specified email address. Codes expire 
 | `401` | Invalid or expired token. |
 | `409` | `Email is already verified` |
 | `429` | `Wait before requesting another verification code` |
+| `502` | `Failed to send verification email` |
+| `503` | `Email verification is not configured` |
 
 ### Confirm email verification
 
