@@ -1056,7 +1056,7 @@ The attack plan includes the target manifest, campaigns, and action budgets. Key
 POST /redteam/{run_id}/approve
 ```
 
-Approve the attack plan and start execution. You can optionally provide a modified plan to override the generated one.
+Approve the attack plan and start execution. The run must be in `awaiting_approval` or `planning` status. You can optionally provide a modified plan to override the generated one — if the run is still in `planning` status you must provide an `attack_plan_json`.
 
 **Request body**
 
@@ -1090,7 +1090,7 @@ Approve the attack plan and start execution. You can optionally provide a modifi
 GET /redteam/{run_id}/report
 ```
 
-Get the final report after a scan completes.
+Get the final report after a scan completes. If the scan is still in progress and no report is available yet, the response is an empty object `{}`.
 
 **Response**
 
