@@ -371,6 +371,8 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 | `done` | Story generation complete. Includes `run_id`. |
 | `error` | An error occurred during story generation. Includes `message`. |
 
+<Note>Unlike [Start a PR validation with story generation](#start-a-pr-validation-with-story-generation), this endpoint does not emit `attack_plan_draft` events.</Note>
+
 **Errors**
 
 | Status | Detail |
