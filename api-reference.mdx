@@ -1632,13 +1632,13 @@ Return the authenticated user's profile.
 POST /auth/email/request-verification
 ```
 
-Send a six-digit verification code to the specified email address. Codes expire after 10 minutes. You can request a new code once per minute.
+Send a six-digit verification code to the specified email address. You can use this endpoint to verify a new email or to change the email on your account — provide the new address and complete verification to update it. Codes expire after 10 minutes. You can request a new code once per minute.
 
 **Request body**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `email` | `string` | Yes | Email address to verify. |
+| `email` | `string` | Yes | Email address to verify. Can be a new address to change the email on your account. |
 
 **Response**
 
@@ -1652,7 +1652,7 @@ Send a six-digit verification code to the specified email address. Codes expire 
 |--------|--------|
 | `400` | `Enter a valid email address` |
 | `401` | Invalid or expired token. |
-| `409` | `Email is already verified` |
+| `409` | `Email is already verified` — returned when the provided email matches the current verified email on the account. |
 | `429` | `Wait before requesting another verification code` |
 
 ### Confirm email verification
@@ -1663,7 +1663,7 @@ Send a six-digit verification code to the specified email address. Codes expire 
 POST /auth/email/verify
 ```
 
-Verify an email address using the six-digit code. You have up to five attempts per code.
+Verify an email address using the six-digit code. If the verified address differs from the current email on the account, the account email is updated to the new address. You have up to five attempts per code.
 
 **Request body**
 
