@@ -59,7 +59,7 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. Defaults to `visual` when omitted. See [runner options](/features/validate-modes#runner-options). |
+| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server applies its default runner configuration. See [runner options](/features/validate-modes#runner-options). |
 
 **Example request**
 
@@ -401,7 +401,7 @@ Deploy a branch to an isolated sandbox environment. Returns a server-sent event 
 |-------|------|----------|---------|-------------|
 | `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
 | `branch` | `string` | Yes | — | Branch to deploy. |
-| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
+| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `app`, `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
 
 **Example request**
 
