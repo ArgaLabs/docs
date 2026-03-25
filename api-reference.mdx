@@ -956,7 +956,7 @@ curl -X POST https://api.argalabs.com/redteam/start-branch \
 
 | Status | Detail |
 |--------|--------|
-| `400` | `GitHub integration required for app scan planning.` |
+| `400` | `GitHub integration required for check planning.` |
 | `400` | `A branch is required.` |
 | `400` | Invalid repository or runtime profile configuration. |
 | `401` | Invalid or expired token. |
@@ -2015,7 +2015,7 @@ Create a Stripe checkout session to subscribe to a paid plan. Returns a URL to r
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `409` | User already has a paid subscription. |
+| `409` | `User already has a paid subscription` |
 | `502` | `Stripe checkout session did not return a URL` |
 | `503` | `Stripe secret key is not configured` or `Stripe price ID is not configured` |
 
