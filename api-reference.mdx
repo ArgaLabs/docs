@@ -1784,6 +1784,8 @@ Check the current status of the GitHub integration, including whether reauthenti
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
+| `409` | GitHub reauthentication required. |
+| `502` | GitHub API error. |
 
 ### List GitHub repositories
 
@@ -1822,6 +1824,7 @@ List repositories the authenticated user has push access to, ordered by most rec
 | `400` | GitHub not connected. |
 | `401` | Invalid or expired token. |
 | `409` | GitHub reauthentication required. |
+| `502` | GitHub API error. |
 
 ### List GitHub branches
 
@@ -1867,6 +1870,7 @@ List branches for a repository the authenticated user can access.
 | `400` | GitHub not connected. |
 | `401` | Invalid or expired token. |
 | `409` | GitHub reauthentication required. |
+| `502` | GitHub API error. |
 
 ### List GitHub pull requests
 
@@ -1922,6 +1926,7 @@ List open pull requests for a repository, ordered by most recently updated.
 | `400` | GitHub not connected. |
 | `401` | Invalid or expired token. |
 | `409` | GitHub reauthentication required. |
+| `502` | GitHub API error. |
 
 ---
 
