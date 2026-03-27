@@ -842,7 +842,7 @@ The response includes the full run state. Key fields:
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `surface_urls` | `object \| null` | Map of service names to their proxied URLs in the sandbox. |
-| `raw_surface_urls` | `object \| null` | Map of service names to their direct URLs in the sandbox, bypassing the sandbox proxy. Only present for sandbox runs. |
+| `raw_surface_urls` | `object \| null` | Reserved for future use. Currently always `null`. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
 | `runtime_profile` | `object \| null` | Runtime profile configuration for the run. |
 | `context_notes` | `string \| null` | Additional context provided when the run was created. |
@@ -873,7 +873,7 @@ The response includes the full run state. Key fields:
 
 ### Get a run artifact
 
-<Note>Accepts JWT authentication, a `token` query parameter, or a session cookie.</Note>
+<Note>Accepts JWT authentication or a `token` query parameter.</Note>
 
 ```bash
 GET /validate/{run_id}/artifacts/{filename}
