@@ -423,8 +423,20 @@ curl -N -X POST https://api.argalabs.com/validate/deploy \
 | Event type | Description |
 |------------|-------------|
 | `run_created` | Sandbox run created. Includes `run_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `provisioning` | The sandbox environment is being set up. Includes `message`. |
+| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
+| `deployment_building` | Building the application image. Includes `job_id`. |
+| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
+| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
 | `error` | An error occurred during deployment. |
+
+The `environment_ready` event payload includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
+| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
 
 **Errors**
 
@@ -468,8 +480,20 @@ curl -N -X POST https://api.argalabs.com/validate/deploy-pr \
 | Event type | Description |
 |------------|-------------|
 | `run_created` | Sandbox run created. Includes `run_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `provisioning` | The sandbox environment is being set up. Includes `message`. |
+| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
+| `deployment_building` | Building the application image. Includes `job_id`. |
+| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
+| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
 | `error` | An error occurred during deployment. |
+
+The `environment_ready` event payload includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
+| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
 
 **Errors**
 
