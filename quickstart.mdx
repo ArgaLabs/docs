@@ -26,10 +26,12 @@ Get Arga running against your app in three steps — no demo required.
 
     The wizard will:
     1. Ask which services your app integrates with (Stripe, Slack, Discord, etc.)
-    2. Scan your `.env` and rewrite API keys to point at twins
+    2. Back up your `.env` to `.env.arga-backup` and rewrite API keys to point at twins
     3. Provision ephemeral twin instances (typically under a minute)
 
-    When it finishes, start your app normally — all API calls to selected services now route through twins.
+    When it finishes, start your app normally — all API calls to selected services now route through twins. Twin sessions last **10 minutes** by default. To restore your original environment, run `cp .env.arga-backup .env`.
+
+    If provisioning fails, your `.env` has already been updated. You can re-run `npx arga-wizard` to retry, or restore from the backup.
 
     See the full [twins quickstart guide](/features/twins-quickstart) for details on available twins, environment variables, and session management.
   </Step>
