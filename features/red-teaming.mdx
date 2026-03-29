@@ -3,11 +3,13 @@ title: "Red-teaming and fuzzing"
 description: "Proactively discover edge cases and vulnerabilities in your software and AI agents"
 ---
 
-Arga proactively red-teams your software and AI agents by exploring edge cases, adversarial inputs, and failure modes in a safe sandbox environment.
+Arga proactively red-teams your software and AI agents by exploring edge cases, adversarial inputs, and failure modes in a safe environment with [digital twins](/concepts/digital-twins).
+
+Red-teaming is built into Arga's **Staging Validate** workflow. When Arga generates a test plan for your staging environment, it includes adversarial scenarios alongside functional tests — so you get security and resilience coverage as part of a single validation run.
 
 ## For software
 
-Arga fuzzes your application with adversarial inputs and unexpected interaction patterns to uncover bugs that normal testing misses. Because all external calls route through [digital twins](/concepts/digital-twins), this happens safely without affecting real services.
+Arga fuzzes your application with adversarial inputs and unexpected interaction patterns to uncover bugs that normal testing misses. Because all external calls route through digital twins, this happens safely without affecting real services.
 
 **What Arga looks for:**
 
@@ -28,31 +30,37 @@ AI agents present unique risks — they can take unexpected actions, chain tools
 
 ## How it works
 
+Red-teaming runs as part of a [Staging Validate](/features/validate-modes#staging-validate) session:
+
 <Steps>
-  <Step title="Define boundaries">
-    Specify what your agent or application should and shouldn't do. Arga uses these constraints as test oracles.
+  <Step title="Start a Staging Validate run">
+    Enter your staging URL and optionally describe a focus area. Arga probes the environment and provisions the appropriate twins.
   </Step>
-  <Step title="Generate adversarial scenarios">
-    Arga's agents create targeted test scenarios designed to push boundaries and expose weaknesses.
+  <Step title="AI planning generates adversarial scenarios">
+    Arga's planning agents create both functional and adversarial test scenarios. Adversarial scenarios are designed to push boundaries and expose weaknesses.
   </Step>
-  <Step title="Execute in sandbox">
-    Scenarios run against your code in an isolated environment with digital twins, so nothing touches production.
+  <Step title="Review and approve the plan">
+    You see the full plan — including red-team scenarios — before execution begins. Remove or adjust any scenarios that don't apply.
   </Step>
-  <Step title="Report findings">
+  <Step title="Execute with twins">
+    Scenarios run against your staging environment with digital twins intercepting external calls. Nothing touches production services.
+  </Step>
+  <Step title="Review findings">
     Arga surfaces failures, unexpected behaviours, and near-misses with detailed execution traces. Findings are categorized by severity (`critical`, `high`, `medium`, `low`, `info`) and attack category.
   </Step>
 </Steps>
 
-## Scan options
+## Getting started
 
-When starting a scan, you can configure the following options:
+To run red-teaming against your application, use the **Staging Validate** workflow:
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| **Focus** | A text description to narrow the scan scope (e.g. `"focus on authentication flows"`). | Scan the entire application |
-| **Action budget** | The maximum number of actions Arga performs across all campaigns. | `200` |
-| **Runner mode** | Choose `visual` for browser-driven execution or `dom` for DOM-focused campaign execution. | Both modes used as needed |
-| **Credentials** | One or more roles with login credentials for testing authenticated surfaces. | None |
+1. Open **Validate** and select **Staging Validate**.
+2. Enter your staging URL.
+3. Optionally describe a focus area (e.g. `focus on authentication and authorization flows`).
+4. Review the generated plan — adversarial scenarios are included automatically.
+5. Approve and run.
+
+See [Validate modes](/features/validate-modes#staging-validate) for the full setup guide.
 
 <Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
   See red-teaming in action. Schedule a 30-minute walkthrough.

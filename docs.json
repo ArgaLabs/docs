@@ -44,7 +44,8 @@
               "features/validate-modes",
               "features/pr-validation",
               "features/agent-testing",
-              "features/red-teaming"
+              "features/red-teaming",
+              "features/twins-quickstart"
             ]
           },
           {

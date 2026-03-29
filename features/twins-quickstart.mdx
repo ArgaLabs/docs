@@ -1,0 +1,291 @@
+---
+title: "Twins quickstart"
+description: "Set up digital twins for your staging environment in minutes"
+---
+
+The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for your project and rewrites your environment config so your staging app talks to twins instead of real third-party APIs.
+
+## Prerequisites
+
+- **Node.js 18+** installed
+- An **Arga API key** (get one at [app.argalabs.com/settings/api-keys](https://app.argalabs.com/settings/api-keys), or run `arga login` via the [CLI](/cli-and-mcp))
+
+## Run the wizard
+
+<Steps>
+  <Step title="Launch the wizard">
+    From your project directory:
+
+    ```bash
+    npx arga-wizard
+    ```
+
+    Or if you already have the Arga CLI installed:
+
+    ```bash
+    arga wizard
+    ```
+
+    The CLI version automatically passes your saved API key, so you skip the key prompt.
+  </Step>
+
+  <Step title="Select your twins">
+    The wizard lists all available twins grouped by type. Pick the services your app integrates with.
+
+    ```
+    ? Which API twins do you need? (Space to select, Enter to confirm)
+      -- UI Twins (with interactive dashboard) --
+      [x] Discord          discord.com, api.discord.com
+      [x] Slack            api.slack.com, slack.com
+      [ ] Google Drive     www.googleapis.com/drive/v3
+      [ ] Dropbox          api.dropboxapi.com
+      [ ] Notion           api.notion.com
+      [ ] Unstructured     api.unstructuredapp.io
+      -- Backend-only Twins --
+      [ ] Stripe           api.stripe.com
+      [ ] Box              api.box.com
+      [ ] Google Calendar  www.googleapis.com/calendar/v3
+      [ ] Unified          api.unified.to
+    ```
+
+    **UI twins** have an interactive dashboard you can open in the browser to see messages, files, and other state. **Backend-only twins** respond to API calls but don't have a visual UI.
+  </Step>
+
+  <Step title="Review .env changes">
+    The wizard scans your project for `.env` files and detects environment variables that match your selected twins.
+
+    ```
+    Detected changes for .env:
+      SLACK_BOT_TOKEN=          ->  xoxb-F9SXMECOSFOGYR3XKXWN
+      UNSTRUCTURED_API_KEY=     ->  test-unstructured-key
+      DROPBOX_APP_KEY=y4pd...   ->  dropbox-twin-app-key
+
+    ? Apply these changes? (Y/n)
+    ```
+
+    A backup is saved as `.env.arga-backup` before any changes are written.
+  </Step>
+
+  <Step title="Wait for provisioning">
+    The wizard spins up ephemeral twin instances. This typically takes under a minute thanks to pre-warmed VMs.
+
+    ```
+    Provisioning twin instances...
+
+      [1/2] Discord twin .......... ready
+      [2/2] Slack twin   .......... ready
+
+      Session expires in 60 minutes.
+    ```
+  </Step>
+
+  <Step title="Start building">
+    The wizard prints a summary with everything you need:
+
+    ```
+    ┌─────────────────────────────────────────────────┐
+    │  Arga Twins — Ready!                            │
+    │                                                 │
+    │  Dashboard: https://app.argalabs.com/runs/...   │
+    │                                                 │
+    │  Discord:  https://...--discord.sandbox....      │
+    │  Slack:    https://...--slack.sandbox....        │
+    │                                                 │
+    │  Session expires: 2026-03-28T14:00:00Z          │
+    │                                                 │
+    │  Commands:                                      │
+    │    arga-wizard status    Check health            │
+    │    arga-wizard reset     Reset twin state        │
+    │    arga-wizard extend    Extend by 60 min        │
+    │    arga-wizard teardown  Destroy session          │
+    └─────────────────────────────────────────────────┘
+    ```
+
+    Start your app normally — all API calls to the selected services are now routed through twins.
+  </Step>
+</Steps>
+
+## What the wizard does
+
+Under the hood, the wizard:
+
+1. **Validates your API key** against the Arga API (or reads it from `~/.config/arga/config.json` if you've run `arga login`)
+2. **Provisions twin containers** on Arga's infrastructure via `POST /validate/twins/provision`
+3. **Rewrites your `.env`** to replace real API tokens with twin-compatible defaults
+4. **Seeds quickstart data** so twins have realistic initial state (users, channels, files, etc.)
+5. **Writes a `.arga-session.json`** file that tracks the session for subsequent commands
+
+## Available twins
+
+<AccordionGroup>
+  <Accordion title="Discord" icon="discord">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `discord.com`, `api.discord.com`, `discordapp.com`
+
+    **Quickstart state:**
+    - Server: "Discord Twin Server"
+    - Channels: `#general`, `#random`, `#voice`
+    - Users: `twin-bot` (bot), `twin-user` (human)
+    - Roles: `@everyone`, `Admin`
+    - Bot token: `fake-bot-token`
+  </Accordion>
+
+  <Accordion title="Slack" icon="slack">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.slack.com`, `slack.com`, `files.slack.com`
+
+    **Quickstart state:**
+    - Workspace: "Slack Twin Workspace"
+    - Channels: `#returns-demo`, `#general`
+    - Users: `slack-twin-bot` (bot), `slack-twin-user` (human)
+    - Bot token: `xoxb-F9SXMECOSFOGYR3XKXWN`
+    - User token: `xoxp-slack-twin-user-token`
+  </Accordion>
+
+  <Accordion title="Google Drive" icon="google-drive">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `www.googleapis.com/drive/v3`, `content.googleapis.com`
+
+    **Quickstart state:**
+    - Principals: Drive Twin Owner, Drive Twin Editor
+    - Seed files: "Quarterly Plan.txt", "Reports" (folder)
+    - Owner token: `ya29.drive-twin-owner`
+  </Accordion>
+
+  <Accordion title="Dropbox" icon="dropbox">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.dropboxapi.com`, `content.dropboxapi.com`
+
+    **Quickstart state:**
+    - Root folder initialized with default filesystem
+  </Accordion>
+
+  <Accordion title="Notion" icon="book">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.notion.com`, `notion.so`
+
+    **Quickstart state:**
+    - Workspace: "Notion Twin Workspace"
+    - API key: `secret_notion-twin_seed`
+  </Accordion>
+
+  <Accordion title="Unstructured" icon="file-lines">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.unstructuredapp.io`, `platform.unstructuredapp.io`
+
+    **Quickstart state:**
+    - Partition endpoint ready at `/general/v0/general`
+    - Jobs endpoint ready at `/api/v1/jobs/`
+    - API key: `test-unstructured-key`
+  </Accordion>
+
+  <Accordion title="Stripe" icon="stripe">
+    **Type:** Backend-only
+
+    **Intercepts:** `api.stripe.com`, `files.stripe.com`, `connect.stripe.com`
+
+    Supports charges, customers, and subscriptions. No visual dashboard.
+  </Accordion>
+
+  <Accordion title="Box" icon="box">
+    **Type:** Backend-only
+
+    **Intercepts:** `api.box.com`, `upload.box.com`, `app.box.com`
+
+    **Quickstart state:**
+    - Enterprise: "Box Twin Enterprise" (ID: `11446498`)
+    - Client ID: `box-twin-client-id`
+    - Client Secret: `box-twin-client-secret`
+    - Developer token: `box-developer-token`
+  </Accordion>
+
+  <Accordion title="Google Calendar" icon="calendar">
+    **Type:** Backend-only
+
+    **Intercepts:** `www.googleapis.com/calendar/v3`
+
+    Calendar v3 API emulator with event CRUD operations.
+  </Accordion>
+
+  <Accordion title="Unified" icon="arrows-to-dot">
+    **Type:** Backend-only
+
+    **Intercepts:** `api.unified.to`, `unified.to`
+
+    Bridges to Slack, Dropbox, Google Calendar, Notion, and Google Drive.
+  </Accordion>
+</AccordionGroup>
+
+## Environment variables
+
+The wizard recognizes these environment variables per twin and replaces them with twin-compatible defaults:
+
+| Twin | Variables the wizard detects |
+|------|-----|
+| Discord | `DISCORD_TOKEN`, `DISCORD_BOT_TOKEN` |
+| Slack | `SLACK_BOT_TOKEN`, `SLACK_TOKEN`, `SLACK_SIGNING_SECRET` |
+| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_API_KEY` |
+| Google Drive | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ACCESS_TOKEN` |
+| Dropbox | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_ACCESS_TOKEN` |
+| Notion | `NOTION_API_KEY`, `NOTION_TOKEN` |
+| Box | `BOX_CLIENT_ID`, `BOX_CLIENT_SECRET`, `BOX_DEVELOPER_TOKEN` |
+| Google Calendar | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Unstructured | `UNSTRUCTURED_API_KEY` |
+| Unified | `UNIFIED_API_KEY` |
+
+Variables not associated with a selected twin are left untouched. The original file is always backed up to `.env.arga-backup`.
+
+## Session management
+
+Twin sessions are ephemeral and expire after 60 minutes by default. Use these commands from your project directory:
+
+```bash
+# Check if your twins are still running
+arga-wizard status
+
+# Reset all twins to their initial seed state
+arga-wizard reset
+
+# Add another 60 minutes to the session
+arga-wizard extend
+
+# Tear down immediately and clean up
+arga-wizard teardown
+```
+
+Session state is stored in `.arga-session.json` in your project root. Add it to your `.gitignore`.
+
+## Re-run just the .env step
+
+If you need to update your `.env` without re-provisioning:
+
+```bash
+arga-wizard env
+```
+
+This re-runs twin selection and .env rewriting without spinning up new instances.
+
+## Restoring your original .env
+
+To revert to your original environment variables:
+
+```bash
+cp .env.arga-backup .env
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Digital twins" icon="clone" href="/concepts/digital-twins">
+    Learn how twins intercept API calls and maintain state.
+  </Card>
+  <Card title="CLI and MCP" icon="terminal" href="/cli-and-mcp">
+    Full CLI reference including authentication and validation commands.
+  </Card>
+</CardGroup>
