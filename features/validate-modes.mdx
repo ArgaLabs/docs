@@ -13,54 +13,83 @@ Within **Validate**, Arga offers four workflows. Use this page to decide which o
 ## Quick chooser
 
 <CardGroup cols={2}>
+  <Card title="Staging Run" icon="flask" href="#staging-run">
+    Point Arga at your staging environment for a full AI-planned frontend and backend test run with service twins.
+  </Card>
   <Card title="Quick Pass" icon="bolt" href="#quick-pass">
-    Run a full-stack validation against any deployed URL with automatic twin detection.
+    Run a fast browser-only validation against any deployed URL.
+  </Card>
+  <Card title="Deployed Run" icon="crosshairs" href="#deployed-run">
+    Plan and run a focused branch-diff validation flow before execution starts.
   </Card>
   <Card title="CI Checks" icon="code-pull-request" href="#ci-checks">
     Automatically validate pull requests and branch pushes with GitHub integration.
   </Card>
-  <Card title="Manual PR Run" icon="crosshairs" href="#manual-pr-run">
-    Plan and run a focused branch-diff validation flow before execution starts.
-  </Card>
-  <Card title="Staging Validate" icon="flask" href="#staging-validate">
-    Point Arga at your staging environment for a full AI-planned test run with service twins.
-  </Card>
 </CardGroup>
+
+## Staging Run
+
+Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive frontend and backend test suite with service twins.
+
+### How to use it
+
+1. Open **Validate** and select **Staging Run**.
+2. Enter your staging URL.
+3. Optionally describe what to focus on (e.g. `test the checkout and payment flow`).
+4. Optionally select a repository for additional code context — Arga uses the repo structure to inform its test plan.
+5. Provide login credentials if the staging environment requires authentication.
+6. Choose a runner.
+7. Click **Start validation**.
+
+### What to expect
+
+Arga probes the staging URL for integration signals, provisions the appropriate [digital twins](/concepts/digital-twins), and uses AI planning agents to generate a comprehensive test suite. The generated plan covers:
+
+- Core user flows and critical paths
+- Integration points with external services (tested via twins)
+- Edge cases and error handling
+- Red-team scenarios for security and resilience
+
+You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment with twins intercepting all external API calls.
+
+This is the most comprehensive validation mode — it tests both frontend interactions and backend integrations in a single run.
 
 ## Quick Pass
 
-Use **Quick Pass** when you have a deployed URL and want a fast validation with full-stack coverage including integration tests.
+Use **Quick Pass** when you have a deployed URL and want a fast, browser-only validation.
+
+<Note>Quick Pass requires a paid plan.</Note>
 
 ### How to use it
 
 1. Open **Validate** and select **Quick Pass**.
 2. Enter the deployed URL.
-3. Arga automatically probes the page and detects which third-party integrations your app uses (Stripe, Slack, Discord, etc.). Detected integrations appear as toggle chips — enable the ones you want tested with [digital twins](/concepts/digital-twins).
-4. Describe the task in natural language, such as `test checkout` or `verify the login flow`.
-5. Optionally provide login credentials if the app requires authentication.
-6. Choose a runner.
-7. Click **Run test**.
+3. Describe the task in natural language, such as `test checkout` or `verify the login flow`.
+4. Optionally provide login credentials if the app requires authentication.
+5. Choose a runner.
+6. Click **Run test**.
 
 ### What to expect
 
-When twins are enabled, Arga provisions the selected twins alongside the browser agent. API calls to those services are intercepted and routed through stateful twin simulators, giving you full-stack coverage without touching live third-party APIs.
+Arga runs the browser agent against the target URL and returns a validation timeline with actions, findings, and errors. Quick Pass focuses on frontend behavior — it does not provision twins or test backend integrations.
 
-When no twins are selected, Arga runs a browser-only validation against the target URL and returns a timeline with actions, findings, and errors.
+## Deployed Run
 
-### Auto-detected integrations
+Use **Deployed Run** when you want to validate a specific pull request with a focused, AI-planned test flow before merging.
 
-Arga probes the target URL's HTML, script tags, and API patterns to suggest which twins to provision. Currently supported:
+<Note>Deployed Run requires a paid plan.</Note>
 
-- **Stripe** — `js.stripe.com`, Stripe SDK references
-- **Slack** — `api.slack.com`, Slack SDK patterns
-- **Discord** — `discord.com/api`, Discord SDK patterns
-- **Google Drive** — `apis.google.com/js/api`, Google Drive API references
-- **Dropbox** — `dropbox.com/sdk`, Dropbox SDK patterns
-- **Notion** — `api.notion.com`, Notion API references
-- **Box** — `cdn.box.com/sdk`, Box SDK patterns
-- **Google Calendar** — `calendar.google.com`, Google Calendar API references
+### How to use it
 
-You can toggle any detected twin on or off before starting the run.
+1. Open **Validate** and select **Deployed Run**.
+2. Choose the repository and pull request (or branch) you want to validate.
+3. Arga reads the PR diff and generates a validation plan.
+4. Review the proposed plan and approve it.
+5. Arga executes the plan with digital twins standing in for external services.
+
+### What to expect
+
+Arga generates user stories from the branch diff, runs them against the deployed branch, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed before you merge.
 
 ## CI Checks
 
@@ -86,54 +115,9 @@ Arga publishes results back to GitHub as the **Arga Validation** check. You can 
 
 For more details on setting up and using CI Checks, see [PR validation](/features/pr-validation).
 
-## Manual PR Run
-
-Use **Manual PR Run** when you want to validate a specific pull request with a focused, AI-planned test flow before merging.
-
-<Note>Manual PR Run requires a paid plan.</Note>
-
-### How to use it
-
-1. Open **Validate** and select **Manual PR Run**.
-2. Choose the repository and pull request (or branch) you want to validate.
-3. Arga reads the PR diff and generates a validation plan.
-4. Review the proposed plan and approve it.
-5. Arga executes the plan with digital twins standing in for external services.
-
-### What to expect
-
-Arga generates user stories from the branch diff, runs them against the deployed branch, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed before you merge.
-
-## Staging Validate
-
-Use **Staging Validate** when you have a staging environment ready and want Arga to plan and execute a comprehensive test suite with service twins.
-
-<Note>Staging Validate requires a paid plan.</Note>
-
-### How to use it
-
-1. Open **Validate** and select **Staging Validate**.
-2. Enter your staging URL.
-3. Optionally describe what to focus on (e.g. `test the checkout and payment flow`).
-4. Optionally select a repository for additional code context — Arga uses the repo structure to inform its test plan.
-5. Provide login credentials if the staging environment requires authentication.
-6. Choose a runner.
-7. Click **Start validation**.
-
-### What to expect
-
-Arga probes the staging URL for integration signals, provisions the appropriate [digital twins](/concepts/digital-twins), and uses AI planning agents to generate a comprehensive test suite. The generated plan covers:
-
-- Core user flows and critical paths
-- Integration points with external services (tested via twins)
-- Edge cases and error handling
-- Red-team scenarios for security and resilience
-
-You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment with twins intercepting all external API calls.
-
 ## Runner options
 
-**Quick Pass** and **Staging Validate** let you choose how Arga executes the run:
+**Quick Pass** and **Staging Run** let you choose how Arga executes the run:
 
 - **Visual** (`visual`) uses the browser-driven runner. Choose this for interactive flows and visual regressions. This is the default.
 - **DOM** (`dom`) uses the DOM-focused runner. Choose this for structured page state inspection.
@@ -142,7 +126,7 @@ In the web app, select the runner when configuring a run. From the [CLI](/cli-an
 
 ## Which mode should you choose?
 
-- Choose **Quick Pass** when you want a fast full-stack answer on a deployed URL.
+- Choose **Staging Run** when you want a comprehensive AI-planned test suite with full frontend and backend coverage via twins.
+- Choose **Quick Pass** when you want a fast browser-only answer on a deployed URL.
+- Choose **Deployed Run** when you want a focused, one-off validation of a specific PR before merging.
 - Choose **CI Checks** when you want repeatable checks on every code change.
-- Choose **Manual PR Run** when you want a focused, one-off validation of a specific PR before merging.
-- Choose **Staging Validate** when you want a comprehensive AI-planned test suite against your staging environment with full twin coverage.
