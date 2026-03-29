@@ -60,6 +60,7 @@ Start a browser validation run against a deployed URL.
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
 | `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server applies its default runner configuration. See [runner options](/features/validate-modes#runner-options). |
+| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, the runtime profile is adjusted to provision the requested twins alongside the validation. Only valid twin names from the [twin catalog](#list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
 
@@ -70,7 +71,8 @@ curl -X POST https://api.argalabs.com/validate/url \
   -d '{
     "url": "https://staging.example.com",
     "prompt": "test the login flow",
-    "runner_mode": "dom"
+    "runner_mode": "dom",
+    "twins": ["slack", "stripe"]
   }'
 ```
 
@@ -97,6 +99,54 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `A valid public http(s) URL is required.` |
 | `400` | `A prompt is required.` |
 | `400` | `Email and password must both be provided.` |
+| `401` | Invalid or expired token. |
+
+### Probe a URL for twin suggestions
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/url/probe
+```
+
+Probe a URL for integration SDK and API fingerprints and return suggested digital twins. Use this before starting a validation to discover which twins would be useful for the target application.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `string` | Yes | Target URL to probe. Must be a public HTTP or HTTPS URL. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/url/probe \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://staging.example.com"}'
+```
+
+**Response**
+
+```json
+{
+  "suggested_twins": ["slack", "stripe"],
+  "reasoning": ["Detected Slack SDK references in page resources", "Found Stripe.js integration"],
+  "detected_signals": ["slack-sdk", "stripe-js"]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `suggested_twins` | `array of string` | Twin names recommended for this URL based on detected signals. |
+| `reasoning` | `array of string` | Human-readable explanations for each suggestion. |
+| `detected_signals` | `array of string` | Raw integration fingerprints found during probing. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A valid public http(s) URL is required.` |
 | `401` | Invalid or expired token. |
 
 ### Check runner status
@@ -169,6 +219,250 @@ List the digital twin services available for sandbox deployments. Returns an arr
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
+
+### Start a staging validation
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/staging
+```
+
+Start a full AI-planned staging validation against a deployed URL. The server probes the URL for integration signals, generates a validation story with twin provisioning, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | `string` | Yes | — | Target staging URL to validate. Must be a public HTTP or HTTPS URL. |
+| `prompt` | `string` | No | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. |
+| `repo` | `string` | No | — | Repository in `owner/repo` format. Provides additional context for story generation. |
+| `credentials` | `object` | No | — | Login credentials for the target app. |
+| `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
+| `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
+| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. When omitted, the server applies its default runner configuration. |
+| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
+
+**Example request**
+
+```bash
+curl -N -X POST https://api.argalabs.com/validate/staging \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://staging.example.com",
+    "prompt": "test the checkout and payment flow",
+    "repo": "acme/web-app"
+  }'
+```
+
+**SSE events**
+
+| Event type | Description |
+|------------|-------------|
+| `investigating` | The agent is analyzing the staging application. Includes `tool` and `hop` fields. |
+| `sources_found` | Relevant source files identified. Includes `sources` array. |
+| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
+| `done` | Story generation complete. Includes `run_id`. |
+| `error` | An error occurred during story generation. Includes `message`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A valid public http(s) URL is required.` |
+| `400` | `Email and password must both be provided.` |
+| `401` | Invalid or expired token. |
+
+---
+
+## Twin provisioning
+
+Provision ephemeral digital twin instances without deploying your own code. This is useful for local development, integration testing, or exploring twin behavior independently.
+
+### Provision twins
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/twins/provision
+```
+
+Provision one or more ephemeral twin instances. Returns a `run_id` you can use to poll for status and retrieve connection details.
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#list-available-twins) to discover available names. |
+| `ttl_minutes` | `integer` | No | `60` | Time-to-live in minutes before the twins are automatically torn down. Range: `1`–`480`. |
+| `scenario` | `string` | No | — | Scenario name to pre-seed the twins with sample data. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/twins/provision \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "twins": ["slack", "notion"],
+    "ttl_minutes": 120
+  }'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the provisioning session. Use this to poll for status. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `At least one valid twin name is required.` |
+| `401` | Invalid or expired token. |
+
+### Get twin provision status
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /validate/twins/provision/{run_id}/status
+```
+
+Poll the provisioning status of a twin quickstart session. Once the status is `ready`, the response includes connection details for each twin.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the provisioning session returned from [Provision twins](#provision-twins). |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-ef1234567890/status" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response (provisioning)**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "provisioning",
+  "twins": {},
+  "dashboard_url": null,
+  "expires_at": null,
+  "proxy_token": null
+}
+```
+
+**Response (ready)**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "ready",
+  "twins": {
+    "slack": {
+      "name": "slack",
+      "label": "Slack",
+      "base_url": "https://r123--slack.sandbox.argalabs.com",
+      "admin_url": "https://r123--slack.sandbox.argalabs.com",
+      "env_vars": {"SLACK_API_URL": "https://r123--slack.sandbox.argalabs.com"},
+      "show_in_ui": true
+    }
+  },
+  "dashboard_url": "https://app.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "expires_at": null,
+  "proxy_token": null
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Provisioning session identifier. |
+| `status` | `string` | Current status: `provisioning`, `ready`, or `failed`. |
+| `twins` | `object` | Map of twin name to connection details. Empty while provisioning. |
+| `twins[name].name` | `string` | Twin identifier. |
+| `twins[name].label` | `string` | Human-readable display name. |
+| `twins[name].base_url` | `string` | Base URL for API requests to this twin. |
+| `twins[name].admin_url` | `string` | Admin URL for managing twin state. |
+| `twins[name].env_vars` | `object` | Environment variables to configure your application to use this twin. |
+| `twins[name].show_in_ui` | `boolean` | Whether this twin is shown in the web UI by default. |
+| `dashboard_url` | `string \| null` | URL to view the session in the Arga dashboard. Available when status is `ready`. |
+| `expires_at` | `string \| null` | ISO 8601 timestamp when the twins will be automatically torn down. |
+| `proxy_token` | `string \| null` | Authentication token for the proxy, if applicable. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Invalid run_id` |
+| `401` | Invalid or expired token. |
+| `404` | `Run not found` |
+
+### Extend twin provision TTL
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/twins/provision/{run_id}/extend
+```
+
+Extend the time-to-live of an active twin provisioning session. The run must be in `ready`, `provisioning`, or `queued` status.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the provisioning session. |
+
+**Request body**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `ttl_minutes` | `integer` | No | `60` | New time-to-live in minutes from now. Range: `1`–`480`. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-ef1234567890/extend \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"ttl_minutes": 120}'
+```
+
+**Response**
+
+```json
+{"status": "extended", "ttl_minutes": 120}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Always `extended`. |
+| `ttl_minutes` | `integer` | The new TTL that was applied. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Invalid run_id` |
+| `400` | `Cannot extend run in status: {status}` (includes the current run status) |
+| `401` | Invalid or expired token. |
+| `404` | `Run not found` |
+
+---
 
 ### Cancel a validation run
 
