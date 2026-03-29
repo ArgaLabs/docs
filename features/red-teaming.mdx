@@ -5,7 +5,7 @@ description: "Proactively discover edge cases and vulnerabilities in your softwa
 
 Arga proactively red-teams your software and AI agents by exploring edge cases, adversarial inputs, and failure modes in a safe environment with [digital twins](/concepts/digital-twins).
 
-Red-teaming is built into Arga's **Staging Validate** workflow. When Arga generates a test plan for your staging environment, it includes adversarial scenarios alongside functional tests — so you get security and resilience coverage as part of a single validation run.
+Red-teaming is built into Arga's **Staging Run** workflow. When Arga generates a test plan for your staging environment, it includes adversarial scenarios alongside functional tests — so you get security and resilience coverage as part of a single validation run.
 
 ## For software
 
@@ -30,10 +30,10 @@ AI agents present unique risks — they can take unexpected actions, chain tools
 
 ## How it works
 
-Red-teaming runs as part of a [Staging Validate](/features/validate-modes#staging-validate) session:
+Red-teaming runs as part of a [Staging Run](/features/validate-modes#staging-run) session:
 
 <Steps>
-  <Step title="Start a Staging Validate run">
+  <Step title="Start a Staging Run">
     Enter your staging URL and optionally describe a focus area. Arga probes the environment and provisions the appropriate twins.
   </Step>
   <Step title="AI planning generates adversarial scenarios">
@@ -52,15 +52,15 @@ Red-teaming runs as part of a [Staging Validate](/features/validate-modes#stagin
 
 ## Getting started
 
-To run red-teaming against your application, use the **Staging Validate** workflow:
+To run red-teaming against your application, use the **Staging Run** workflow:
 
-1. Open **Validate** and select **Staging Validate**.
+1. Open **Validate** and select **Staging Run**.
 2. Enter your staging URL.
 3. Optionally describe a focus area (e.g. `focus on authentication and authorization flows`).
 4. Review the generated plan — adversarial scenarios are included automatically.
 5. Approve and run.
 
-See [Validate modes](/features/validate-modes#staging-validate) for the full setup guide.
+See [Validate modes](/features/validate-modes#staging-run) for the full setup guide.
 
 <Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
   See red-teaming in action. Schedule a 30-minute walkthrough.
