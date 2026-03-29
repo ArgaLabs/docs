@@ -362,7 +362,8 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
   "twins": {},
   "dashboard_url": null,
   "expires_at": null,
-  "proxy_token": null
+  "proxy_token": null,
+  "error": null
 }
 ```
 
@@ -384,7 +385,22 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
   },
   "dashboard_url": "https://app.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "expires_at": null,
-  "proxy_token": null
+  "proxy_token": null,
+  "error": null
+}
+```
+
+**Response (failed)**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "failed",
+  "twins": {},
+  "dashboard_url": null,
+  "expires_at": null,
+  "proxy_token": null,
+  "error": "Provisioning timed out waiting for twin services to start."
 }
 ```
 
@@ -402,6 +418,7 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
 | `dashboard_url` | `string \| null` | URL to view the session in the Arga dashboard. Available when status is `ready`. |
 | `expires_at` | `string \| null` | ISO 8601 timestamp when the twins will be automatically torn down. |
 | `proxy_token` | `string \| null` | Authentication token for the proxy, if applicable. |
+| `error` | `string \| null` | Error message describing why provisioning failed. Only present when status is `failed`. |
 
 **Errors**
 
@@ -466,7 +483,7 @@ curl -X POST https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-789
 
 ### Cancel a validation run
 
-<Note>Requires JWT authentication.</Note>
+<Note>Accepts both API key and JWT authentication.</Note>
 
 ```bash
 POST /validate/{run_id}/cancel
