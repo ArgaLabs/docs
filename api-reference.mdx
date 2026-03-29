@@ -59,7 +59,7 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server applies its default runner configuration. See [runner options](/features/validate-modes#runner-options). |
+| `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. When omitted, defaults to `visual`. |
 | `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, the runtime profile is adjusted to provision the requested twins alongside the validation. Only valid twin names from the [twin catalog](#list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
@@ -71,7 +71,6 @@ curl -X POST https://api.argalabs.com/validate/url \
   -d '{
     "url": "https://staging.example.com",
     "prompt": "test the login flow",
-    "runner_mode": "dom",
     "twins": ["slack", "stripe"]
   }'
 ```
@@ -240,7 +239,7 @@ Start a full AI-planned staging run against a deployed URL. The server probes th
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. When omitted, the server applies its default runner configuration. |
+| `runner_mode` | `string` | No | `visual` | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. |
 | `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
 
 **Example request**
@@ -1241,7 +1240,7 @@ Start a red-team scan against a deployed application.
 | `url` | `string` | Yes | — | Target URL to scan. Must be a public HTTP or HTTPS URL. |
 | `focus` | `string` | No | — | Text description to narrow the scan scope. |
 | `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
+| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. The web app always uses the `visual` runner. |
 | `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
 | `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
 | `credentials[].credentials` | `object` | No | `{}` | Key-value pairs (string keys and string values) for login fields. |
@@ -1314,7 +1313,7 @@ Start a red-team scan against a branch deployed to a sandbox environment.
 | `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. Uses the same format as [Start a scan](#start-a-scan). |
 | `focus` | `string` | No | — | Text description to narrow the scan scope. |
 | `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
+| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. The web app always uses the `visual` runner. |
 
 **Example request**
 

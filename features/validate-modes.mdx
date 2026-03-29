@@ -116,12 +116,14 @@ For more details on setting up and using CI Checks, see [PR validation](/feature
 
 ## Runner options
 
-Arga supports two runner modes:
+Arga uses the **visual** (browser-driven) runner for all workflows. This is the only runner mode available in the web app.
 
-- **Visual** (`visual`) uses the browser-driven runner. Choose this for interactive flows and visual regressions. This is the default.
-- **DOM** (`dom`) uses the DOM-focused runner. Choose this for structured page state inspection.
+The [API](/api-reference) also accepts a `runner_mode` parameter with two values:
 
-From the [CLI](/cli-and-mcp), pass `--runner-mode visual` or `--runner-mode dom`. In the web app, Arga automatically selects the appropriate runner for each workflow.
+- **Visual** (`visual`) uses the browser-driven runner for interactive flows and visual regressions. This is the default.
+- **DOM** (`dom`) uses the DOM-focused runner for structured page state inspection.
+
+From the [CLI](/cli-and-mcp), you can pass `--runner-mode visual` or `--runner-mode dom` to override the default. When omitted, the visual runner is used.
 
 ## Which mode should you choose?
 
