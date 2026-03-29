@@ -1,55 +1,75 @@
 ---
 title: "Quickstart"
-description: "Get started with Arga in three steps"
+description: "Set up digital twins and run your first validation in minutes"
 ---
+
+Get Arga running against your app in three steps — no demo required.
 
 ## Get started
 
 <Steps>
-  <Step title="Book a demo">
-    [Schedule a 30-minute onboarding call](https://cal.com/akiratong/30min?overlayCalendar=true) with our team. We'll walk through your stack and connect your tools.
+  <Step title="Install the CLI and log in">
+    ```bash
+    pip install arga-cli
+    arga login
+    ```
+
+    This opens a browser window for authentication. Once logged in, your API key is saved locally.
   </Step>
-  <Step title="Connect your tools">
-    During onboarding, we'll integrate Arga with your context sources — GitHub, Slack, Jira, Sentry, Grafana, and others. See the full list of [supported integrations](/integrations).
+
+  <Step title="Provision twins for your project">
+    From your project directory, run the wizard to set up [digital twins](/concepts/digital-twins) — safe, stateful API simulators that replace your real third-party services during testing.
+
+    ```bash
+    npx arga-wizard
+    ```
+
+    The wizard will:
+    1. Ask which services your app integrates with (Stripe, Slack, Discord, etc.)
+    2. Scan your `.env` and rewrite API keys to point at twins
+    3. Provision ephemeral twin instances (typically under a minute)
+
+    When it finishes, start your app normally — all API calls to selected services now route through twins.
+
+    See the full [twins quickstart guide](/features/twins-quickstart) for details on available twins, environment variables, and session management.
   </Step>
+
   <Step title="Run your first validation">
-    Start with the workflow that matches your goal. Use **Staging Run** for a full AI-planned test with service twins, **Quick Pass** for a fast browser-only check, **Deployed Run** for focused branch-diff validation, or **CI Checks** for automatic GitHub PR and branch validation.
+    Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run** — it's free and gives you the full experience:
+
+    1. Enter your staging or local URL
+    2. Optionally describe what to focus on
+    3. Arga auto-detects your integrations, plans a test suite, and provisions the right twins
+    4. Review the plan, then approve to run
+
+    See [Validate modes](/features/validate-modes) for all four workflows.
   </Step>
 </Steps>
 
-## What happens during onboarding
+## Other ways to get started
 
-We'll need to understand your current tooling so we can configure Arga for your stack:
-
-1. **Observability and issue tracking** — Which tools do you use? (Datadog, Prometheus, Grafana, Sentry, Jira, Linear, etc.)
-2. **Logging and monitoring** — Which log aggregation tools do you use? (Loki, ELK, Splunk, Honeycomb, etc.)
-3. **Features of interest** — What do you want to use Arga for? (PR validation, agent testing, red-teaming, etc.)
-
-See the full [integrations page](/integrations) for details on what we support.
+<CardGroup cols={2}>
+  <Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true">
+    Prefer a guided walkthrough? Schedule a 30-minute call and we'll set everything up together.
+  </Card>
+  <Card title="Connect integrations" icon="plug" href="/integrations">
+    Connect GitHub, Slack, Jira, Sentry, and other context sources for richer test plans.
+  </Card>
+</CardGroup>
 
 ## Learn more
 
 <CardGroup cols={2}>
+  <Card title="Twins quickstart" icon="clone" href="/features/twins-quickstart">
+    Full guide to provisioning twins, managing sessions, and available services.
+  </Card>
   <Card title="Validate modes" icon="list-check" href="/features/validate-modes">
-    Learn when to use each Validate workflow and how to run it.
+    Learn when to use Staging Run, Quick Pass, Deployed Run, and CI Checks.
   </Card>
   <Card title="How Arga works" icon="gears" href="/concepts/how-it-works">
     Understand the architecture behind Arga's testing pipeline.
-  </Card>
-  <Card title="Digital twins" icon="clone" href="/concepts/digital-twins">
-    Safe, stateful clones of external services.
-  </Card>
-  <Card title="Session replay" icon="video" href="/concepts/session-replay">
-    Reconstruct exact application state for testing.
-  </Card>
-  <Card title="Integrations" icon="plug" href="/integrations">
-    See all supported tools and context sources.
   </Card>
   <Card title="CLI and MCP" icon="terminal" href="/cli-and-mcp">
     Use the terminal and your IDE to trigger validations and query Arga.
   </Card>
 </CardGroup>
-
-<Card title="Ready to get started?" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
-  Book a 30-minute demo and we'll have you running your first validation the same day.
-</Card>
