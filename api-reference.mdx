@@ -99,6 +99,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `A prompt is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ### Probe a URL for twin suggestions
 
@@ -264,7 +265,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message`. |
+| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `free_tier_limit_exceeded`, the free tier monthly twin bootup limit has been reached. |
 
 **Errors**
 
@@ -273,6 +274,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `400` | `A valid public http(s) URL is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ---
 
@@ -328,6 +330,7 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
 |--------|--------|
 | `400` | `At least one valid twin name is required.` |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ### Get twin provision status
 
@@ -634,6 +637,7 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 | `400` | `GitHub integration required for validation.` |
 | `400` | Invalid runtime profile for the pull request. |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ### Start a branch validation with story generation
@@ -691,6 +695,7 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 | `400` | `A branch is required.` |
 | `400` | Invalid repository or runtime profile configuration. |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ---
@@ -756,6 +761,7 @@ The `environment_ready` event payload includes:
 | `400` | `A branch is required.` |
 | `400` | `GitHub integration required for deployment.` |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ### Deploy a pull request
 
@@ -813,6 +819,7 @@ The `environment_ready` event payload includes:
 | `400` | `GitHub integration required for deployment.` |
 | `400` | Invalid runtime profile for the pull request (e.g. missing or malformed configuration). |
 | `401` | Invalid or expired token. |
+| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ---
 
@@ -1950,9 +1957,26 @@ Return the authenticated user's profile.
   "avatar_url": "https://avatars.githubusercontent.com/u/1",
   "workspace": "Arga Labs",
   "api_key": "arga_sk_...",
-  "billing_plan": "paid"
+  "billing_plan": "free",
+  "twin_bootups_used": 3,
+  "twin_bootups_limit": 10,
+  "twin_bootups_remaining": 7
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | User identifier. |
+| `github_login` | `string` | GitHub username. |
+| `email` | `string \| null` | Email address on the account. |
+| `email_verified` | `boolean` | Whether the email address has been verified. |
+| `avatar_url` | `string \| null` | URL of the user's GitHub avatar. |
+| `workspace` | `string` | Workspace name. |
+| `api_key` | `string \| null` | The user's API key. |
+| `billing_plan` | `string` | Current billing plan: `free` or `paid`. |
+| `twin_bootups_used` | `integer` | Number of twin bootups consumed in the current monthly billing period. |
+| `twin_bootups_limit` | `integer \| null` | Monthly twin bootup limit. `10` for free-tier users, `null` for paid users (unlimited). |
+| `twin_bootups_remaining` | `integer \| null` | Twin bootups remaining this month. `null` for paid users (unlimited). Resets at the start of each calendar month. |
 
 **Errors**
 
