@@ -1,6 +1,6 @@
 ---
 title: "Full-stack session replay"
-description: "Reconstruct exact application state from user interactions"
+description: "Reconstruct exact application state from user interactions (This feature is currently in private beta)"
 ---
 
 Full-stack session replay captures the state of your program at every user interaction point, recording every function call. Arga then reconstructs state by replaying these events, ensuring that testing happens in the exact same conditions as when a user encountered a bug.
@@ -11,9 +11,11 @@ Full-stack session replay captures the state of your program at every user inter
   <Accordion title="Snapshot" icon="camera">
     A snapshot is the complete state of your program at a specific point during a user interaction. It captures variable values, database state, in-memory caches, and any context needed to reproduce the exact moment.
   </Accordion>
+
   <Accordion title="Stateful replay" icon="database">
     The program remembers state before an API call and updates state after the call completes. When Arga replays a session, each step builds on the previous one, maintaining the same state transitions as the original interaction.
   </Accordion>
+
   <Accordion title="Behavioural fidelity" icon="arrows-spin">
     During replay, the program reacts the same way the real service would to an API call. Combined with [digital twins](/concepts/digital-twins), this means external service interactions are faithfully reproduced without touching real infrastructure.
   </Accordion>
