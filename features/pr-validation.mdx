@@ -24,7 +24,7 @@ Arga generates step-by-step user stories from your pull request diffs, runs them
 
 ## Set up automatic PR validation
 
-<Note>CI Checks and Manual PR Run require a paid plan. Run `arga whoami` to check your current billing plan.</Note>
+<Note>CI Checks and Deployed Run require a paid plan. Run `arga whoami` to check your current billing plan.</Note>
 
 <Steps>
   <Step title="Connect GitHub">
@@ -91,9 +91,9 @@ Arga does not run a fixed test suite. Instead, it generates stories based on wha
 
 Results include a step-by-step timeline with screenshots, action descriptions, and pass/fail status for each story.
 
-## CI Checks vs Manual PR Run
+## CI Checks vs Deployed Run
 
 Arga offers two ways to validate pull requests:
 
 - **CI Checks** runs automatically on every PR or branch push. Set it up once and forget it. See [Validate modes — CI Checks](/features/validate-modes#ci-checks).
-- **Manual PR Run** lets you trigger a one-off, focused validation for a specific PR. Use this when you want to validate a particular change before merging without enabling automatic checks for the entire repository. See [Validate modes — Manual PR Run](/features/validate-modes#manual-pr-run).
+- **Deployed Run** lets you trigger a one-off, focused validation for a specific PR. Use this when you want to validate a particular change before merging without enabling automatic checks for the entire repository. See [Validate modes — Deployed Run](/features/validate-modes#deployed-run).

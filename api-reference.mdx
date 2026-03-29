@@ -220,7 +220,7 @@ List the digital twin services available for sandbox deployments. Returns an arr
 |--------|--------|
 | `401` | Invalid or expired token. |
 
-### Start a staging validation
+### Start a staging run
 
 <Note>Requires JWT authentication.</Note>
 
@@ -228,7 +228,7 @@ List the digital twin services available for sandbox deployments. Returns an arr
 POST /validate/staging
 ```
 
-Start a full AI-planned staging validation against a deployed URL. The server probes the URL for integration signals, generates a validation story with twin provisioning, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
+Start a full AI-planned staging run against a deployed URL. The server probes the URL for integration signals, generates a validation story with twin provisioning, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
 
 **Request body**
 
