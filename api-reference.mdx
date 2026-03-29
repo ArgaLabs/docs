@@ -141,18 +141,18 @@ List the digital twin services available for sandbox deployments. Returns an arr
 ```json
 [
   {
+    "name": "box",
+    "label": "Box",
+    "show_in_ui": true
+  },
+  {
     "name": "discord",
     "label": "Discord",
     "show_in_ui": true
   },
   {
-    "name": "notion",
-    "label": "Notion",
-    "show_in_ui": true
-  },
-  {
-    "name": "box",
-    "label": "Box",
+    "name": "unified",
+    "label": "Unified",
     "show_in_ui": false
   }
 ]
@@ -403,7 +403,7 @@ Deploy a branch to an isolated sandbox environment. Returns a server-sent event 
 |-------|------|----------|---------|-------------|
 | `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
 | `branch` | `string` | Yes | — | Branch to deploy. |
-| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `app`, `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
+| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
 
 **Example request**
 
@@ -423,8 +423,20 @@ curl -N -X POST https://api.argalabs.com/validate/deploy \
 | Event type | Description |
 |------------|-------------|
 | `run_created` | Sandbox run created. Includes `run_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `provisioning` | The sandbox environment is being set up. Includes `message`. |
+| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
+| `deployment_building` | Building the application image. Includes `job_id`. |
+| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
+| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
 | `error` | An error occurred during deployment. |
+
+The `environment_ready` event payload includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
+| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
 
 **Errors**
 
@@ -468,8 +480,20 @@ curl -N -X POST https://api.argalabs.com/validate/deploy-pr \
 | Event type | Description |
 |------------|-------------|
 | `run_created` | Sandbox run created. Includes `run_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. |
+| `provisioning` | The sandbox environment is being set up. Includes `message`. |
+| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
+| `deployment_building` | Building the application image. Includes `job_id`. |
+| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
+| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
+| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
 | `error` | An error occurred during deployment. |
+
+The `environment_ready` event payload includes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
+| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
 
 **Errors**
 
@@ -818,7 +842,7 @@ The response includes the full run state. Key fields:
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `surface_urls` | `object \| null` | Map of service names to their proxied URLs in the sandbox. |
-| `raw_surface_urls` | `object \| null` | Map of service names to their direct URLs in the sandbox, bypassing the sandbox proxy. Only present for sandbox runs. |
+| `raw_surface_urls` | `object \| null` | Reserved for future use. Currently always `null`. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
 | `runtime_profile` | `object \| null` | Runtime profile configuration for the run. |
 | `context_notes` | `string \| null` | Additional context provided when the run was created. |
@@ -849,7 +873,7 @@ The response includes the full run state. Key fields:
 
 ### Get a run artifact
 
-<Note>Accepts JWT authentication, a `token` query parameter, or a session cookie.</Note>
+<Note>Accepts JWT authentication or a `token` query parameter.</Note>
 
 ```bash
 GET /validate/{run_id}/artifacts/{filename}

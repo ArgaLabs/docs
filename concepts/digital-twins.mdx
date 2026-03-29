@@ -3,7 +3,7 @@ title: "Digital twins"
 description: "Stateful, behavioural clones of external services for safe testing"
 ---
 
-A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, Google Drive, Google Calendar, Box, Notion, Unstructured, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
+A digital twin is a stateful, behavioural clone of any external tool — Stripe, Slack, Discord, Dropbox, Google Drive, Google Calendar, Box, Notion, Unstructured, or any third-party API — that replicates the endpoints, edge cases, and observable behaviours of the real service.
 
 ## Why digital twins?
 
@@ -33,8 +33,8 @@ Arga currently supports these sandbox twins:
 | Twin | What it stands in for | Notes |
 | ---- | --------------------- | ----- |
 | `box` | Box API (`api.box.com`, `upload.box.com`, `app.box.com`) | Exposed as a sandbox surface in the UI. Intercepts Box v2.0 operations including files, folders, users, search, events, and webhooks. Supports deterministic seeding and OAuth flows. |
-| `discord` | Discord APIs | Exposed as a sandbox surface in the UI. |
-| `dropbox` | Dropbox API v2 | Exposed as a sandbox surface in the UI. Supports storage file operations (list, get, create, update, delete), Dropbox SDK passthrough routes (e.g. `files/list_folder`, `files/upload`), webhook deliveries, and event replay. |
+| `discord` | Discord API v10 (`discord.com`, `api.discord.com`, `discordapp.com`) | Exposed as a sandbox surface in the UI. Intercepts Discord API v10 operations including guilds, channels, messages, reactions, threads, members, roles, bans, invites, webhooks, emojis, stickers, scheduled events, stage instances, auto-moderation rules, soundboard sounds, guild templates, and user endpoints. Supports deterministic seeding, bot-token authentication, and event delivery with webhook subscriptions. |
+| `dropbox` | Dropbox API v2 (`api.dropboxapi.com`, `content.dropboxapi.com`, `notify.dropboxapi.com`) | Exposed as a sandbox surface in the UI. Intercepts Dropbox API v2 operations including files (list, upload, download, copy, move, delete, search, revisions, tags), sharing (shared links, shared folders, file members), file requests, file properties, team management (members, groups, team folders, legal holds, namespaces, devices, linked apps, sharing allowlist, audit log), and admin controls. Supports upload sessions, batch operations, webhook deliveries, and event replay. Seeded with a starter folder tree and team members for deterministic testing. |
 | `google_calendar` | Google Calendar API (`www.googleapis.com`, `calendar.googleapis.com`) | Exposed as a sandbox surface in the UI. Intercepts Google Calendar v3 operations including calendars, calendar list, events, ACL rules, settings, free/busy queries, colors, and webhook deliveries (with watch support for events, ACL, calendar list, and settings resources). |
 | `google_drive` | Google Drive API (`www.googleapis.com`, `content.googleapis.com`) | Exposed as a sandbox surface in the UI. Intercepts Google Drive v3 operations including files (list, get, create, update, copy, delete, export, watch), permissions, revisions, comments, replies, shared drives, change feeds, and resumable uploads. Serves a discovery document compatible with the official Google API client libraries. File resources include the full set of common fields (capabilities, links, ownership, thumbnails) expected by the Google Drive SDK. |
 | `notion` | Notion API (`api.notion.com`, `notion.so`) | Exposed as a sandbox surface in the UI. Intercepts Notion API operations for pages, databases, blocks, users, and search. |
