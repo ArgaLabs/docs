@@ -19,8 +19,8 @@ Within **Validate**, Arga offers four workflows. Use this page to decide which o
   <Card title="Quick Pass" icon="bolt" href="#quick-pass">
     Run a fast browser-only validation against any deployed URL.
   </Card>
-  <Card title="Deployed Run" icon="crosshairs" href="#deployed-run">
-    Plan and run a focused branch-diff validation flow before execution starts.
+  <Card title="Sandbox Run" icon="cube" href="#sandbox-run">
+    Deploy a branch to a sandboxed environment with service twins, then run a full AI-planned test suite.
   </Card>
   <Card title="CI Checks" icon="code-pull-request" href="#ci-checks">
     Automatically validate pull requests and branch pushes with GitHub integration.
@@ -38,8 +38,7 @@ Use **Staging Run** when you have a staging environment ready and want Arga to p
 3. Optionally describe what to focus on (e.g. `test the checkout and payment flow`).
 4. Optionally select a repository for additional code context — Arga uses the repo structure to inform its test plan.
 5. Provide login credentials if the staging environment requires authentication.
-6. Choose a runner.
-7. Click **Start validation**.
+6. Click **Start validation**.
 
 ### What to expect
 
@@ -66,30 +65,30 @@ Use **Quick Pass** when you have a deployed URL and want a fast, browser-only va
 2. Enter the deployed URL.
 3. Describe the task in natural language, such as `test checkout` or `verify the login flow`.
 4. Optionally provide login credentials if the app requires authentication.
-5. Choose a runner.
-6. Click **Run test**.
+5. Click **Run test**.
 
 ### What to expect
 
 Arga runs the browser agent against the target URL and returns a validation timeline with actions, findings, and errors. Quick Pass focuses on frontend behavior — it does not provision twins or test backend integrations.
 
-## Deployed Run
+## Sandbox Run
 
-Use **Deployed Run** when you want to validate a specific pull request with a focused, AI-planned test flow before merging.
+Use **Sandbox Run** when you want to deploy a branch to an isolated sandbox environment with service twins and run a full AI-planned test suite against it.
 
-<Note>Deployed Run requires a paid plan.</Note>
+<Note>Sandbox Run requires a paid plan.</Note>
 
 ### How to use it
 
-1. Open **Validate** and select **Deployed Run**.
-2. Choose the repository and pull request (or branch) you want to validate.
-3. Arga reads the PR diff and generates a validation plan.
-4. Review the proposed plan and approve it.
-5. Arga executes the plan with digital twins standing in for external services.
+1. Open **Validate** and select **Sandbox Run**.
+2. Choose the repository and branch you want to validate.
+3. Select which service twins to provision alongside the sandbox deployment. Twins intercept third-party API traffic and provide browsable UIs.
+4. Arga deploys the branch to a sandboxed environment, compares it against the default branch, and builds a test plan.
+5. Review the proposed plan and approve it.
+6. Arga provisions the sandbox, deploys your branch, and runs the full test suite.
 
 ### What to expect
 
-Arga generates user stories from the branch diff, runs them against the deployed branch, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed before you merge.
+Arga generates user stories from the branch diff, deploys your branch to a sandbox with the selected service twins, runs the test suite, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed, with full backend integration testing via twins.
 
 ## CI Checks
 
@@ -117,16 +116,16 @@ For more details on setting up and using CI Checks, see [PR validation](/feature
 
 ## Runner options
 
-**Staging Run** and **Quick Pass** let you choose how Arga executes the run:
+Arga supports two runner modes:
 
 - **Visual** (`visual`) uses the browser-driven runner. Choose this for interactive flows and visual regressions. This is the default.
 - **DOM** (`dom`) uses the DOM-focused runner. Choose this for structured page state inspection.
 
-In the web app, select the runner when configuring a run. From the [CLI](/cli-and-mcp), pass `--runner-mode visual` or `--runner-mode dom`.
+From the [CLI](/cli-and-mcp), pass `--runner-mode visual` or `--runner-mode dom`. In the web app, Arga automatically selects the appropriate runner for each workflow.
 
 ## Which mode should you choose?
 
 - Choose **Staging Run** when you want a comprehensive AI-planned test suite with full frontend and backend coverage via twins.
 - Choose **Quick Pass** when you want a fast browser-only answer on a deployed URL.
-- Choose **Deployed Run** when you want a focused, one-off validation of a specific PR before merging.
+- Choose **Sandbox Run** when you want to deploy a branch to an isolated sandbox with service twins and run a focused test suite before merging.
 - Choose **CI Checks** when you want repeatable checks on every code change.
