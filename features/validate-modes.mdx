@@ -14,7 +14,7 @@ Within **Validate**, Arga offers four workflows. Use this page to decide which o
 
 <CardGroup cols={2}>
   <Card title="Staging Run" icon="flask" href="#staging-run">
-    Point Arga at your staging environment for a full AI-planned test run with service twins.
+    Point Arga at your staging environment for a full AI-planned frontend and backend test run with service twins.
   </Card>
   <Card title="Quick Pass" icon="bolt" href="#quick-pass">
     Run a fast browser-only validation against any deployed URL.
@@ -29,9 +29,7 @@ Within **Validate**, Arga offers four workflows. Use this page to decide which o
 
 ## Staging Run
 
-Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive test suite with service twins.
-
-<Note>Staging Run is available on the free plan.</Note>
+Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive frontend and backend test suite with service twins.
 
 ### How to use it
 
@@ -54,9 +52,11 @@ Arga probes the staging URL for integration signals, provisions the appropriate 
 
 You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment with twins intercepting all external API calls.
 
+This is the most comprehensive validation mode — it tests both frontend interactions and backend integrations in a single run.
+
 ## Quick Pass
 
-Use **Quick Pass** when you have a deployed URL and want a fast browser-only validation.
+Use **Quick Pass** when you have a deployed URL and want a fast, browser-only validation.
 
 <Note>Quick Pass requires a paid plan.</Note>
 
@@ -71,7 +71,25 @@ Use **Quick Pass** when you have a deployed URL and want a fast browser-only val
 
 ### What to expect
 
-Arga runs a browser-only validation against the target URL and returns a timeline with actions, findings, and errors.
+Arga runs the browser agent against the target URL and returns a validation timeline with actions, findings, and errors. Quick Pass focuses on frontend behavior — it does not provision twins or test backend integrations.
+
+## Deployed Run
+
+Use **Deployed Run** when you want to validate a specific pull request with a focused, AI-planned test flow before merging.
+
+<Note>Deployed Run requires a paid plan.</Note>
+
+### How to use it
+
+1. Open **Validate** and select **Deployed Run**.
+2. Choose the repository and pull request (or branch) you want to validate.
+3. Arga reads the PR diff and generates a validation plan.
+4. Review the proposed plan and approve it.
+5. Arga executes the plan with digital twins standing in for external services.
+
+### What to expect
+
+Arga generates user stories from the branch diff, runs them against the deployed branch, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed before you merge.
 
 ## CI Checks
 
@@ -97,24 +115,6 @@ Arga publishes results back to GitHub as the **Arga Validation** check. You can 
 
 For more details on setting up and using CI Checks, see [PR validation](/features/pr-validation).
 
-## Deployed Run
-
-Use **Deployed Run** when you want to validate a specific pull request with a focused, AI-planned test flow before merging.
-
-<Note>Deployed Run requires a paid plan.</Note>
-
-### How to use it
-
-1. Open **Validate** and select **Deployed Run**.
-2. Choose the repository and pull request (or branch) you want to validate.
-3. Arga reads the PR diff and generates a validation plan.
-4. Review the proposed plan and approve it.
-5. Arga executes the plan with digital twins standing in for external services.
-
-### What to expect
-
-Arga generates user stories from the branch diff, runs them against the deployed branch, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed before you merge.
-
 ## Runner options
 
 **Staging Run** and **Quick Pass** let you choose how Arga executes the run:
@@ -126,7 +126,7 @@ In the web app, select the runner when configuring a run. From the [CLI](/cli-an
 
 ## Which mode should you choose?
 
-- Choose **Staging Run** when you want a comprehensive AI-planned test suite against your staging environment with full twin coverage.
-- Choose **Quick Pass** when you want a fast browser-only check on a deployed URL.
+- Choose **Staging Run** when you want a comprehensive AI-planned test suite with full frontend and backend coverage via twins.
+- Choose **Quick Pass** when you want a fast browser-only answer on a deployed URL.
 - Choose **Deployed Run** when you want a focused, one-off validation of a specific PR before merging.
 - Choose **CI Checks** when you want repeatable checks on every code change.
