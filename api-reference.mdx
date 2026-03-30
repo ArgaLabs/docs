@@ -229,7 +229,9 @@ List the digital twin services available for sandbox deployments. Returns an arr
 POST /validate/staging
 ```
 
-Start a full AI-planned staging run against a deployed URL. The server probes the URL for integration signals, generates a validation story with twin provisioning, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
+Start a full AI-planned staging run against a deployed URL. The server probes the URL for integration signals, generates a validation story, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
+
+When no `twin` is specified, the run starts with no twins provisioned. The AI planner decides which twins (if any) are needed based on the staging URL and repository context. If no external integrations are detected, the run operates as a plain browser agent without provisioning any twins.
 
 **Request body**
 
@@ -241,7 +243,7 @@ Start a full AI-planned staging run against a deployed URL. The server probes th
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
-| `twin` | `string` | No | — | Name of a single digital twin to use for the staging run. When provided, the selected twin is provisioned instead of the default. Use the [twin catalog](#list-available-twins) to discover valid names. Useful for free plan users who can select one twin per run. |
+| `twin` | `string` | No | — | Name of a single digital twin to use for the staging run. When provided, the selected twin is provisioned and the AI planner skips automatic twin selection. Use the [twin catalog](#list-available-twins) to discover valid names. When omitted, no twins are provisioned by default — the AI planner decides which twins (if any) are needed based on the staging URL and repository context. |
 | `runner_mode` | `string` | No | `visual` | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. |
 | `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
 
