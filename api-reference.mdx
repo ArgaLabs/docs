@@ -241,6 +241,7 @@ Start a full AI-planned staging run against a deployed URL. The server probes th
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
+| `twin` | `string` | No | — | Name of a single digital twin to use for the staging run. When provided, the selected twin is provisioned instead of the default. Use the [twin catalog](#list-available-twins) to discover valid names. Useful for free plan users who can select one twin per run. |
 | `runner_mode` | `string` | No | `visual` | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. |
 | `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
 
@@ -253,7 +254,8 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
   -d '{
     "url": "https://staging.example.com",
     "prompt": "test the checkout and payment flow",
-    "repo": "acme/web-app"
+    "repo": "acme/web-app",
+    "twin": "slack"
   }'
 ```
 
