@@ -240,6 +240,7 @@ When no `twin` is specified, the run starts with no twins provisioned. The AI pl
 | `url` | `string` | Yes | — | Target staging URL to validate. Must be a public HTTP or HTTPS URL. |
 | `prompt` | `string` | No (required on free plan) | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. Free plan users must provide a prompt — omitting it returns a `403` error. |
 | `repo` | `string` | No | — | Repository in `owner/repo` format. Provides additional context for story generation. |
+| `branch` | `string` | No | — | Branch name within the repository. When provided alongside `repo`, the planner uses this branch for deeper analysis of the specific deployed code. Requires `repo` to be set. |
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
@@ -257,6 +258,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
     "url": "https://staging.example.com",
     "prompt": "test the checkout and payment flow",
     "repo": "acme/web-app",
+    "branch": "feature/checkout",
     "twin": "slack"
   }'
 ```
