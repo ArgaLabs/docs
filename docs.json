@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Arga",
   "colors": {
-    "primary": "#6366F1",
-    "light": "#818CF8",
-    "dark": "#4338CA"
+    "primary": "#cdcdcd",
+    "light": "#e8e9e9",
+    "dark": "#3a3a3a"
   },
   "favicon": "/logo.svg",
   "navigation": {
@@ -81,5 +81,19 @@
     "socials": {
       "github": "https://github.com/arga-dev"
     }
+  },
+  "seo": {
+    "indexing": "all"
+  },
+  "errors": {
+    "404": {
+      "description": "This page cannot be found! "
+    }
+  },
+  "interaction": {
+    "drilldown": false
+  },
+  "search": {
+    "prompt": "Ask a question..."
   }
 }
