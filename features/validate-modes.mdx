@@ -29,7 +29,7 @@ Within **Validate**, Arga offers four workflows. Use this page to decide which o
 
 ## Staging Run
 
-Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive frontend and backend test suite with service twins.
+Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive frontend and backend test suite. Arga automatically detects which service twins (if any) are needed based on your application.
 
 ### How to use it
 
@@ -42,14 +42,14 @@ Use **Staging Run** when you have a staging environment ready and want Arga to p
 
 ### What to expect
 
-Arga probes the staging URL for integration signals, provisions the appropriate [digital twins](/concepts/digital-twins), and uses AI planning agents to generate a comprehensive test suite. The generated plan covers:
+Arga probes the staging URL for integration signals and uses AI planning agents to generate a comprehensive test suite. If external integrations are detected, the appropriate [digital twins](/concepts/digital-twins) are provisioned automatically. If no integrations are found, the run operates as a plain browser agent. The generated plan covers:
 
 - Core user flows and critical paths
 - Integration points with external services (tested via twins)
 - Edge cases and error handling
 - Red-team scenarios for security and resilience
 
-You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment with twins intercepting all external API calls.
+You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment. When twins are provisioned, they intercept all external API calls so nothing touches production services.
 
 This is the most comprehensive validation mode — it tests both frontend interactions and backend integrations in a single run.
 
