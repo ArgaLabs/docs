@@ -267,10 +267,10 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 |------------|-------------|
 | `investigating` | The agent is analyzing the staging application. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (the discovered coverage manifest for the application, or `null`). |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `free_tier_limit_exceeded`, the free tier monthly twin bootup limit has been reached. |
+| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `free_tier_limit_exceeded`, the free tier monthly twin bootup limit has been reached. When `code` is `plan_limit_exceeded`, the plan's validation run or twin limit has been reached. |
 
 **Errors**
 
@@ -630,7 +630,7 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 |------------|-------------|
 | `investigating` | The agent is inspecting the PR. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (the discovered coverage manifest for the application, or `null`). |
 | `story_text` | Human-readable story text. Includes `content` and `run_id`. |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
@@ -687,7 +687,7 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 |------------|-------------|
 | `investigating` | The agent is inspecting the branch. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (the discovered coverage manifest for the application, or `null`). |
 | `story_text` | Human-readable story text. Includes `content` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
 | `error` | An error occurred during story generation. Includes `message`. |
@@ -1188,6 +1188,7 @@ The response includes the full run state. Key fields:
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
 | `login_identifier` | `string \| null` | Login identifier used during the run. |
 | `step_summaries` | `array \| null` | Summarized step results. Each object includes `title` (`string`), `status` (`string \| null`), `details` (`string \| null`), `step_number` (`integer \| null`), and `step_numbers` (`array of integer \| null`). |
+| `coverage_manifest` | `object \| null` | Coverage manifest describing the application surfaces, routes, and test coverage areas discovered during story generation. |
 
 **Errors**
 
