@@ -100,7 +100,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 
 ### Probe a URL for twin suggestions
 
@@ -240,6 +240,7 @@ When no `twin` is specified, the run starts with no twins provisioned. The AI pl
 | `url` | `string` | Yes | — | Target staging URL to validate. Must be a public HTTP or HTTPS URL. |
 | `prompt` | `string` | No (required on free plan) | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. Free plan users must provide a prompt — omitting it returns a `403` error. |
 | `repo` | `string` | No | — | Repository in `owner/repo` format. Provides additional context for story generation. |
+| `branch` | `string` | No | — | Branch name. Provides additional context for story generation when combined with `repo`. |
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
@@ -267,10 +268,10 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 |------------|-------------|
 | `investigating` | The agent is analyzing the staging application. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `free_tier_limit_exceeded`, the free tier monthly twin bootup limit has been reached. |
+| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `plan_limit_exceeded`, the plan's validation run limit has been reached. |
 
 **Errors**
 
@@ -280,7 +281,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 
 ---
 
@@ -336,7 +337,7 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
 |--------|--------|
 | `400` | `At least one valid twin name is required.` |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 
 ### Get twin provision status
 
@@ -630,7 +631,7 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 |------------|-------------|
 | `investigating` | The agent is inspecting the PR. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
 | `story_text` | Human-readable story text. Includes `content` and `run_id`. |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
@@ -644,7 +645,7 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 | `400` | Invalid runtime profile for the pull request. |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ### Start a branch validation with story generation
@@ -687,7 +688,7 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 |------------|-------------|
 | `investigating` | The agent is inspecting the branch. Includes `tool` and `hop` fields. |
 | `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object and `run_id`. |
+| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
 | `story_text` | Human-readable story text. Includes `content` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
 | `error` | An error occurred during story generation. Includes `message`. |
@@ -703,7 +704,7 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 | `400` | Invalid repository or runtime profile configuration. |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ---
@@ -769,7 +770,7 @@ The `environment_ready` event payload includes:
 | `400` | `A branch is required.` |
 | `400` | `GitHub integration required for deployment.` |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 
 ### Deploy a pull request
 
@@ -827,7 +828,7 @@ The `environment_ready` event payload includes:
 | `400` | `GitHub integration required for deployment.` |
 | `400` | Invalid runtime profile for the pull request (e.g. missing or malformed configuration). |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Plan limit reached (free tier monthly run limit or team tier monthly run limit exceeded). |
 
 ---
 
@@ -835,7 +836,7 @@ The `environment_ready` event payload includes:
 
 ### Start a PR validation
 
-<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+<Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/pr
@@ -885,11 +886,11 @@ curl -X POST https://api.argalabs.com/validation/pr \
 |--------|--------|
 | `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### Install GitHub App for a repository
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/github/install
@@ -925,12 +926,12 @@ Install or re-install the Arga GitHub App webhook for a repository so that Arga 
 |--------|--------|
 | `400` | Invalid repository or configuration. |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 | `409` | GitHub re-authorization required. |
 
 ### Get repository validation config
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/github/config
@@ -977,11 +978,11 @@ Retrieve the current validation configuration for a repository.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### Save repository validation config
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/github/config
@@ -1009,12 +1010,12 @@ Returns the same shape as [Get repository validation config](#get-repository-val
 |--------|--------|
 | `400` | `Choose a branch for branch-triggered validation.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 | `409` | `Install the Arga GitHub App on this repository before saving validation settings.` |
 
 ### List enabled repositories
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/github/enabled
@@ -1051,11 +1052,11 @@ List all repositories with automatic validation enabled for the current user.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### List PR validation runs
 
-<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+<Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/runs
@@ -1124,7 +1125,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 |--------|--------|
 | `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ---
 
@@ -1188,6 +1189,7 @@ The response includes the full run state. Key fields:
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
 | `login_identifier` | `string \| null` | Login identifier used during the run. |
 | `step_summaries` | `array \| null` | Summarized step results. Each object includes `title` (`string`), `status` (`string \| null`), `details` (`string \| null`), `step_number` (`integer \| null`), and `step_numbers` (`array of integer \| null`). |
+| `coverage_manifest` | `object \| null` | Coverage manifest describing the application's routes and capabilities discovered during story generation. |
 
 **Errors**
 
@@ -1991,12 +1993,12 @@ Return the authenticated user's profile.
 | `avatar_url` | `string \| null` | URL of the user's GitHub avatar. |
 | `workspace` | `string` | Workspace name. |
 | `api_key` | `string \| null` | The user's API key. |
-| `billing_plan` | `string` | Current billing plan: `free` or `paid`. |
+| `billing_plan` | `string` | Current billing plan: `free`, `team`, or `paid`. |
 | `plan_limits` | `object` | Plan-specific limits and usage for the current billing period. |
-| `plan_limits.validation_runs_limit` | `integer \| null` | Monthly validation run limit. `null` for paid users (unlimited). |
+| `plan_limits.validation_runs_limit` | `integer \| null` | Monthly validation run limit. `null` for paid users (unlimited). Free and team plans have finite limits. |
 | `plan_limits.validation_runs_used` | `integer` | Validation runs consumed in the current monthly billing period. |
 | `plan_limits.validation_runs_remaining` | `integer \| null` | Validation runs remaining this month. `null` for paid users (unlimited). |
-| `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for free plan, `null` for team and paid plans (unlimited). |
+| `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for the free plan, `null` for team and paid plans (unlimited). |
 | `plan_limits.ci_checks_limit` | `integer \| null` | Monthly CI check limit. Only applies to team plans. `null` for free and paid plans. |
 | `plan_limits.ci_checks_used` | `integer` | CI checks consumed in the current monthly billing period. |
 | `plan_limits.ci_checks_remaining` | `integer \| null` | CI checks remaining this month. `null` when no limit applies. |
@@ -2442,6 +2444,12 @@ POST /billing/stripe/checkout
 
 Create a Stripe checkout session to subscribe to a paid plan. Returns a URL to redirect the user to Stripe's hosted checkout page.
 
+**Request body** (optional)
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `plan` | `string` | No | `paid` | Plan to subscribe to: `team` or `paid`. |
+
 **Response**
 
 ```json
@@ -2485,7 +2493,7 @@ Confirm a completed Stripe checkout session and activate the subscription for th
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `billing_plan` | `string` | Updated billing plan for the user (e.g. `paid`, `free`). |
+| `billing_plan` | `string` | Updated billing plan for the user: `free`, `team`, or `paid`. |
 | `status` | `string` | Checkout session status. |
 
 **Errors**
