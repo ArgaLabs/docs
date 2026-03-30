@@ -99,6 +99,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `A prompt is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
+| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
 | `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ### Probe a URL for twin suggestions
@@ -235,7 +236,7 @@ Start a full AI-planned staging run against a deployed URL. The server probes th
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `url` | `string` | Yes | — | Target staging URL to validate. Must be a public HTTP or HTTPS URL. |
-| `prompt` | `string` | No | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. |
+| `prompt` | `string` | No (required on free plan) | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. Free plan users must provide a prompt — omitting it returns a `403` error. |
 | `repo` | `string` | No | — | Repository in `owner/repo` format. Provides additional context for story generation. |
 | `credentials` | `object` | No | — | Login credentials for the target app. |
 | `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
@@ -274,6 +275,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `400` | `A valid public http(s) URL is required.` |
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
+| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
 | `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 
 ---
@@ -601,7 +603,7 @@ Start a validation run for a pull request and stream story generation progress v
 |-------|------|----------|---------|-------------|
 | `pr_url` | `string` | Yes | — | Full GitHub pull request URL. |
 | `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
-| `context_notes` | `string` | No | — | Additional instructions or context for the validation. |
+| `context_notes` | `string` | No (required on free plan) | — | Additional instructions or context for the validation. Free plan users must provide context notes describing what to test — omitting them returns a `403` error. |
 | `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
 | `repo` | `string` | No | — | Repository in `owner/repo` format. Auto-derived from `pr_url` when omitted. |
 
@@ -637,6 +639,7 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 | `400` | `GitHub integration required for validation.` |
 | `400` | Invalid runtime profile for the pull request. |
 | `401` | Invalid or expired token. |
+| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
 | `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
@@ -657,7 +660,7 @@ Start a validation run for a branch and stream story generation progress via ser
 | `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
 | `branch` | `string` | Yes | — | Branch to deploy and validate. |
 | `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
-| `context_notes` | `string` | No | — | Additional instructions or context for the validation. |
+| `context_notes` | `string` | No (required on free plan) | — | Additional instructions or context for the validation. Free plan users must provide context notes describing what to test — omitting them returns a `403` error. |
 | `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
 
 **Example request**
@@ -695,6 +698,7 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 | `400` | `A branch is required.` |
 | `400` | Invalid repository or runtime profile configuration. |
 | `401` | Invalid or expired token. |
+| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
 | `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
@@ -1958,6 +1962,16 @@ Return the authenticated user's profile.
   "workspace": "Arga Labs",
   "api_key": "arga_sk_...",
   "billing_plan": "free",
+  "plan_limits": {
+    "validation_runs_limit": 10,
+    "validation_runs_used": 3,
+    "validation_runs_remaining": 7,
+    "max_twins_per_run": 1,
+    "ci_checks_limit": null,
+    "ci_checks_used": 0,
+    "ci_checks_remaining": null,
+    "prompt_required": true
+  },
   "twin_bootups_used": 3,
   "twin_bootups_limit": 10,
   "twin_bootups_remaining": 7
@@ -1974,6 +1988,15 @@ Return the authenticated user's profile.
 | `workspace` | `string` | Workspace name. |
 | `api_key` | `string \| null` | The user's API key. |
 | `billing_plan` | `string` | Current billing plan: `free` or `paid`. |
+| `plan_limits` | `object` | Plan-specific limits and usage for the current billing period. |
+| `plan_limits.validation_runs_limit` | `integer \| null` | Monthly validation run limit. `null` for paid users (unlimited). |
+| `plan_limits.validation_runs_used` | `integer` | Validation runs consumed in the current monthly billing period. |
+| `plan_limits.validation_runs_remaining` | `integer \| null` | Validation runs remaining this month. `null` for paid users (unlimited). |
+| `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for free plan, `null` for team and paid plans (unlimited). |
+| `plan_limits.ci_checks_limit` | `integer \| null` | Monthly CI check limit. Only applies to team plans. `null` for free and paid plans. |
+| `plan_limits.ci_checks_used` | `integer` | CI checks consumed in the current monthly billing period. |
+| `plan_limits.ci_checks_remaining` | `integer \| null` | CI checks remaining this month. `null` when no limit applies. |
+| `plan_limits.prompt_required` | `boolean` | Whether the user's plan requires a test prompt for validation endpoints. `true` for free plan users, `false` for team and paid plans. |
 | `twin_bootups_used` | `integer` | Number of twin bootups consumed in the current monthly billing period. |
 | `twin_bootups_limit` | `integer \| null` | Monthly twin bootup limit. `10` for free-tier users, `null` for paid users (unlimited). |
 | `twin_bootups_remaining` | `integer \| null` | Twin bootups remaining this month. `null` for paid users (unlimited). Resets at the start of each calendar month. |
