@@ -100,7 +100,8 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ### Probe a URL for twin suggestions
 
@@ -281,7 +282,8 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `400` | `Email and password must both be provided.` |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ---
 
@@ -337,7 +339,8 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
 |--------|--------|
 | `400` | `At least one valid twin name is required.` |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ### Get twin provision status
 
@@ -645,7 +648,8 @@ curl -N -X POST https://api.argalabs.com/validate/start \
 | `400` | Invalid runtime profile for the pull request. |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ### Start a branch validation with story generation
@@ -704,7 +708,8 @@ curl -N -X POST https://api.argalabs.com/validate/start-branch \
 | `400` | Invalid repository or runtime profile configuration. |
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 | `404` | `Session not found` (when `session_id` is provided but not found) |
 
 ---
@@ -770,7 +775,8 @@ The `environment_ready` event payload includes:
 | `400` | `A branch is required.` |
 | `400` | `GitHub integration required for deployment.` |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ### Deploy a pull request
 
@@ -828,7 +834,8 @@ The `environment_ready` event payload includes:
 | `400` | `GitHub integration required for deployment.` |
 | `400` | Invalid runtime profile for the pull request (e.g. missing or malformed configuration). |
 | `401` | Invalid or expired token. |
-| `403` | Monthly free tier twin bootup limit reached. Upgrade to a paid plan for unlimited bootups. |
+| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ---
 
@@ -836,7 +843,7 @@ The `environment_ready` event payload includes:
 
 ### Start a PR validation
 
-<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+<Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/pr
@@ -886,11 +893,11 @@ curl -X POST https://api.argalabs.com/validation/pr \
 |--------|--------|
 | `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### Install GitHub App for a repository
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/github/install
@@ -926,12 +933,12 @@ Install or re-install the Arga GitHub App webhook for a repository so that Arga 
 |--------|--------|
 | `400` | Invalid repository or configuration. |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 | `409` | GitHub re-authorization required. |
 
 ### Get repository validation config
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/github/config
@@ -978,11 +985,11 @@ Retrieve the current validation configuration for a repository.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### Save repository validation config
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 POST /validation/github/config
@@ -1010,12 +1017,12 @@ Returns the same shape as [Get repository validation config](#get-repository-val
 |--------|--------|
 | `400` | `Choose a branch for branch-triggered validation.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 | `409` | `Install the Arga GitHub App on this repository before saving validation settings.` |
 
 ### List enabled repositories
 
-<Note>Requires JWT authentication. Requires a paid plan.</Note>
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/github/enabled
@@ -1052,11 +1059,11 @@ List all repositories with automatic validation enabled for the current user.
 | Status | Detail |
 |--------|--------|
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ### List PR validation runs
 
-<Note>Accepts both API key and JWT authentication. Requires a paid plan.</Note>
+<Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
 ```bash
 GET /validation/runs
@@ -1125,7 +1132,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 |--------|--------|
 | `400` | `Repository must be provided as owner/repo.` |
 | `401` | Invalid or expired token. |
-| `403` | Automatic PR validation is available on paid plans only. |
+| `403` | Automatic PR validation requires a Team or Paid plan. |
 
 ---
 
