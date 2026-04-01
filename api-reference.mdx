@@ -2560,7 +2560,7 @@ Manage team workspaces, invite members by email, and control workspace membershi
 GET /team/github-orgs
 ```
 
-List GitHub organizations the authenticated user belongs to. Use this to populate a workspace creation form.
+List all GitHub organizations the authenticated user belongs to, including organizations with app-access restrictions. Use this to populate a workspace creation form.
 
 **Response**
 
@@ -2568,7 +2568,7 @@ List GitHub organizations the authenticated user belongs to. Use this to populat
 [
   {
     "login": "arga-labs",
-    "name": "Arga Labs"
+    "avatar_url": "https://avatars.githubusercontent.com/u/12345678?v=4"
   }
 ]
 ```
@@ -2576,7 +2576,7 @@ List GitHub organizations the authenticated user belongs to. Use this to populat
 | Field | Type | Description |
 |-------|------|-------------|
 | `login` | `string` | GitHub organization login. |
-| `name` | `string` | Display name of the organization. |
+| `avatar_url` | `string` | URL of the organization's avatar image. |
 
 **Errors**
 
