@@ -50,6 +50,72 @@ Twins and integrations are different:
 
 If you rely on a service not yet supported, [book a demo](https://cal.com/akiratong/30min?overlayCalendar=true) and we'll discuss building a twin for your stack.
 
+## Stub alerting
+
+Not every endpoint in a digital twin has a full stateful implementation. Endpoints that are not yet statefully implemented return **stub responses** — schema-valid mock data generated from the service's API specification. Stub responses are clearly marked so you can distinguish them from real stateful behavior:
+
+- **`X-Twin-Stub` header** — set to `"true"` on every stub response.
+- **`_twin_stub` field** — a boolean (`true`) injected into the JSON response body.
+- **`_twin_warning` field** — a human-readable string explaining which endpoint is stubbed.
+
+When the response would normally be a JSON array, it is wrapped in an object with `_twin_stub`, `_twin_warning`, and a `data` key containing the original array.
+
+```json
+{
+  "_twin_stub": true,
+  "_twin_warning": "This endpoint (GET /repos/{owner}/{repo}/topics) is stubbed and returns mock data. Do not rely on this response in production tests.",
+  "data": []
+}
+```
+
+You can use the `X-Twin-Stub` header to programmatically detect stub responses in your test suite and fail tests that rely on stubbed data.
+
+### Tracking stub hits
+
+The GitHub twin exposes an admin endpoint to audit which stubbed endpoints were called during a session:
+
+```bash
+GET <admin_url>/admin/stub-hits
+```
+
+**Response**
+
+```json
+{
+  "total_hits": 5,
+  "unique_endpoints": 2,
+  "summary": [
+    {"endpoint": "GET /repos/{owner}/{repo}/topics", "hits": 3},
+    {"endpoint": "GET /repos/{owner}/{repo}/languages", "hits": 2}
+  ],
+  "recent": [
+    {
+      "method": "GET",
+      "path_template": "/repos/{owner}/{repo}/topics",
+      "actual_path": "/repos/acme/web-app/topics",
+      "timestamp": "2026-03-21T12:00:00Z"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_hits` | `integer` | Total number of stub endpoint calls since the last clear. |
+| `unique_endpoints` | `integer` | Number of distinct stubbed endpoints called. |
+| `summary` | `array` | Deduplicated list of endpoints with hit counts, sorted by most-called first. |
+| `summary[].endpoint` | `string` | HTTP method and path template of the stubbed endpoint. |
+| `summary[].hits` | `integer` | Number of times this endpoint was called. |
+| `recent` | `array` | The 20 most recent stub hits with full details. |
+
+To clear the stub hit log:
+
+```bash
+POST <admin_url>/admin/stub-hits/clear
+```
+
+Returns `{"ok": true}` on success.
+
 ## How Arga uses digital twins
 
 During PR validation, Arga routes all external API calls from your sandbox through the appropriate digital twin. This means:

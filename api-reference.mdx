@@ -493,6 +493,116 @@ curl -X POST https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-789
 
 ---
 
+## Twin admin endpoints
+
+Each provisioned twin exposes admin endpoints on its `admin_url` for inspecting and managing twin state. These endpoints do not require authentication.
+
+### Get twin state
+
+```bash
+GET <admin_url>/admin/state
+```
+
+Return the full internal state of the twin as a JSON object. The shape varies by twin and includes all stored resources (users, channels, files, etc.).
+
+### Reset twin state
+
+```bash
+POST <admin_url>/admin/reset
+```
+
+Reset the twin to its initial seed state, discarding all changes made during the session.
+
+**Request body** (optional)
+
+Pass an empty JSON object `{}` or omit the body entirely.
+
+**Response**
+
+```json
+{"ok": true}
+```
+
+### Advance twin clock
+
+```bash
+POST <admin_url>/admin/clock/advance
+```
+
+Advance the twin's virtual clock. Useful for testing time-dependent behavior like token expiry or scheduled events.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `seconds` | `integer` | Yes | Number of seconds to advance the virtual clock. |
+
+**Response**
+
+```json
+{"ok": true}
+```
+
+<Note>The GitHub twin uses `POST /admin/clock` with a `{"seconds": N}` body instead of `/admin/clock/advance`.</Note>
+
+### Get stub hits (GitHub twin)
+
+```bash
+GET <admin_url>/admin/stub-hits
+```
+
+Return a summary of all calls to stubbed (mock) endpoints since the last clear. Only available on the GitHub twin. See [stub alerting](/concepts/digital-twins#stub-alerting) for details on how stub responses are marked.
+
+**Response**
+
+```json
+{
+  "total_hits": 5,
+  "unique_endpoints": 2,
+  "summary": [
+    {"endpoint": "GET /repos/{owner}/{repo}/topics", "hits": 3},
+    {"endpoint": "GET /repos/{owner}/{repo}/languages", "hits": 2}
+  ],
+  "recent": [
+    {
+      "method": "GET",
+      "path_template": "/repos/{owner}/{repo}/topics",
+      "actual_path": "/repos/acme/web-app/topics",
+      "timestamp": "2026-03-21T12:00:00Z"
+    }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_hits` | `integer` | Total number of stub endpoint calls since the last clear. |
+| `unique_endpoints` | `integer` | Number of distinct stubbed endpoints called. |
+| `summary` | `array` | Deduplicated list of endpoints sorted by hit count (descending). |
+| `summary[].endpoint` | `string` | HTTP method and path template. |
+| `summary[].hits` | `integer` | Number of calls to this endpoint. |
+| `recent` | `array` | Up to 20 most recent stub hits. |
+| `recent[].method` | `string` | HTTP method. |
+| `recent[].path_template` | `string` | Path template from the API spec. |
+| `recent[].actual_path` | `string` | Actual request path. |
+| `recent[].timestamp` | `string` | ISO 8601 timestamp from the twin's virtual clock. |
+
+### Clear stub hits (GitHub twin)
+
+```bash
+POST <admin_url>/admin/stub-hits/clear
+```
+
+Clear the stub hit log. Only available on the GitHub twin.
+
+**Response**
+
+```json
+{"ok": true}
+```
+
+---
+
 ### Cancel a validation run
 
 <Note>Accepts both API key and JWT authentication.</Note>
