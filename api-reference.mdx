@@ -1973,8 +1973,11 @@ Return the authenticated user's profile.
   "email_verified": true,
   "avatar_url": "https://avatars.githubusercontent.com/u/1",
   "workspace": "Arga Labs",
+  "workspace_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "workspace_role": "owner",
+  "workspace_github_org": "arga-labs",
   "api_key": "arga_sk_...",
-  "billing_plan": "free",
+  "billing_plan": "team",
   "plan_limits": {
     "validation_runs_limit": 10,
     "validation_runs_used": 3,
@@ -1998,7 +2001,10 @@ Return the authenticated user's profile.
 | `email` | `string \| null` | Email address on the account. |
 | `email_verified` | `boolean` | Whether the email address has been verified. |
 | `avatar_url` | `string \| null` | URL of the user's GitHub avatar. |
-| `workspace` | `string` | Workspace name. |
+| `workspace` | `string \| null` | Workspace name. `null` when the user does not belong to a workspace. |
+| `workspace_id` | `string \| null` | Workspace identifier. `null` when the user does not belong to a workspace. |
+| `workspace_role` | `string \| null` | The user's role in the workspace: `owner` or `member`. `null` when the user does not belong to a workspace. |
+| `workspace_github_org` | `string \| null` | GitHub organization login linked to the workspace. `null` when the user does not belong to a workspace. |
 | `api_key` | `string \| null` | The user's API key. |
 | `billing_plan` | `string` | Current billing plan: `free`, `team`, or `paid`. |
 | `plan_limits` | `object` | Plan-specific limits and usage for the current billing period. |
@@ -2539,3 +2545,424 @@ Create a Stripe billing portal session so the user can manage their subscription
 | `401` | Invalid or expired token. |
 | `502` | `Stripe billing portal did not return a URL` |
 | `503` | `Stripe secret key is not configured` |
+
+---
+
+## Team workspaces
+
+Manage team workspaces, invite members by email, and control workspace membership. Workspaces are linked to a GitHub organization and an email domain — all members must belong to the GitHub org and have a verified email on the same domain.
+
+### List GitHub organizations
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /team/github-orgs
+```
+
+List GitHub organizations the authenticated user belongs to. Use this to populate a workspace creation form.
+
+**Response**
+
+```json
+[
+  {
+    "login": "arga-labs",
+    "name": "Arga Labs"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `login` | `string` | GitHub organization login. |
+| `name` | `string` | Display name of the organization. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Get workspace
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /team/workspace
+```
+
+Get the current user's workspace, including the member list. Returns `null` when the user does not belong to a workspace.
+
+**Response**
+
+```json
+{
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "name": "Arga Labs",
+  "github_org_login": "arga-labs",
+  "domain": "argalabs.com",
+  "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "members": [
+    {
+      "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "github_login": "octocat",
+      "email": "octocat@argalabs.com",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1",
+      "role": "owner",
+      "joined_at": "2026-03-21T12:00:00"
+    }
+  ],
+  "created_at": "2026-03-21T12:00:00"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Workspace identifier. |
+| `name` | `string` | Workspace display name, derived from the GitHub organization. |
+| `github_org_login` | `string` | GitHub organization login linked to this workspace. |
+| `domain` | `string` | Email domain associated with the workspace. |
+| `owner_id` | `string` | User identifier of the workspace owner. |
+| `members` | `array` | List of workspace members. |
+| `members[].user_id` | `string` | Member's user identifier. |
+| `members[].github_login` | `string` | Member's GitHub username. |
+| `members[].email` | `string \| null` | Member's email address. |
+| `members[].avatar_url` | `string \| null` | Member's avatar URL. |
+| `members[].role` | `string` | Role in the workspace: `owner` or `member`. |
+| `members[].joined_at` | `string` | ISO 8601 timestamp when the member joined. |
+| `created_at` | `string` | ISO 8601 timestamp when the workspace was created. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### Create a workspace
+
+<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
+
+```bash
+POST /team/workspace
+```
+
+Create a new workspace linked to a GitHub organization. The creator becomes the workspace owner. You must have a verified work email (personal email domains like `gmail.com` are not allowed).
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `github_org_login` | `string` | Yes | GitHub organization login to link to the workspace. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/team/workspace \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"github_org_login": "arga-labs"}'
+```
+
+**Response** (`201 Created`)
+
+Returns the same shape as [Get workspace](#get-workspace).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A verified email is required to create a workspace` |
+| `400` | `Personal email domains cannot be used for workspaces. Use a work email.` |
+| `401` | Invalid or expired token. |
+| `403` | `A team or paid plan is required to create a workspace` |
+| `403` | `You must be a member of this GitHub organization` |
+| `404` | `GitHub organization not found` |
+| `409` | `You already belong to a workspace` |
+| `409` | `A workspace for this GitHub organization already exists` |
+
+### Send an invite
+
+<Note>Requires JWT authentication. Only the workspace owner can send invites.</Note>
+
+```bash
+POST /team/invites
+```
+
+Send a workspace invite by email. The invitee must have an email on the same domain as the workspace. An email with an accept link is sent to the address. If a pending invite already exists for the email, the token is refreshed and the invite is resent.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | `string` | Yes | Email address to invite. Must match the workspace's email domain. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/team/invites \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "teammate@argalabs.com"}'
+```
+
+**Response** (`201 Created`)
+
+```json
+{
+  "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "email": "teammate@argalabs.com",
+  "status": "pending",
+  "invited_by": "octocat",
+  "expires_at": "2026-04-07T12:00:00",
+  "created_at": "2026-03-31T12:00:00"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Invite identifier. |
+| `email` | `string` | Invited email address. |
+| `status` | `string` | Invite status: `pending`, `accepted`, `expired`, or `revoked`. |
+| `invited_by` | `string \| null` | GitHub username of the user who sent the invite. |
+| `expires_at` | `string` | ISO 8601 timestamp when the invite expires. |
+| `created_at` | `string` | ISO 8601 timestamp when the invite was created. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Email must be from the {domain} domain` |
+| `401` | Invalid or expired token. |
+| `403` | `Only the workspace owner can perform this action` |
+| `404` | `You don't belong to a workspace` |
+| `409` | `An invite already exists for this email` |
+
+### List invites
+
+<Note>Requires JWT authentication. Only the workspace owner can list invites.</Note>
+
+```bash
+GET /team/invites
+```
+
+List all invites for the current workspace, ordered by most recent first. Expired invites are automatically marked as expired.
+
+**Response**
+
+Returns an array of invite objects with the same shape as [Send an invite](#send-an-invite).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `403` | `Only the workspace owner can perform this action` |
+| `404` | `You don't belong to a workspace` |
+
+### Revoke an invite
+
+<Note>Requires JWT authentication. Only the workspace owner can revoke invites.</Note>
+
+```bash
+DELETE /team/invites/{invite_id}
+```
+
+Revoke a pending workspace invite.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `invite_id` | `string` | UUID of the invite to revoke. |
+
+**Response**
+
+`204 No Content`
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `403` | `Only the workspace owner can perform this action` |
+| `404` | `You don't belong to a workspace` |
+| `404` | `Invite not found` |
+
+### Get invite details
+
+```bash
+GET /team/invites/{token}/details
+```
+
+Look up invite details by token. No authentication required — this is used to render the invite acceptance page before the user logs in.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `token` | `string` | Invite token from the accept link. |
+
+**Response**
+
+```json
+{
+  "workspace_name": "Arga Labs",
+  "github_org_login": "arga-labs",
+  "inviter_name": "octocat",
+  "email": "teammate@argalabs.com",
+  "expired": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `workspace_name` | `string` | Name of the workspace. |
+| `github_org_login` | `string` | GitHub organization linked to the workspace. |
+| `inviter_name` | `string \| null` | GitHub username of the person who sent the invite. |
+| `email` | `string` | Email address the invite was sent to. |
+| `expired` | `boolean` | Whether the invite has expired or is no longer valid. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `404` | `Invite not found` |
+
+### Accept an invite
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /team/invites/accept
+```
+
+Accept a workspace invite. You must have a verified email on the same domain as the workspace and be a member of the workspace's GitHub organization. If you are on the free plan, your plan is automatically upgraded to `team` upon joining.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `token` | `string` | Yes | Invite token from the accept link. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/team/invites/accept \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"token": "abc123..."}'
+```
+
+**Response**
+
+```json
+{
+  "status": "joined",
+  "workspace_name": "Arga Labs",
+  "billing_plan": "team"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Always `joined`. |
+| `workspace_name` | `string` | Name of the workspace you joined. |
+| `billing_plan` | `string` | Your updated billing plan after joining. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `403` | `You must verify your email before joining a workspace` |
+| `403` | `Your email domain does not match this workspace ({domain})` |
+| `403` | `You must be a member of the {org} GitHub organization` |
+| `404` | `Invite not found` |
+| `409` | `You already belong to a workspace. Leave it first.` |
+| `409` | `You are already a member of this workspace` |
+| `410` | `This invite is no longer valid` |
+| `410` | `This invite has expired` |
+
+### List workspace members
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+GET /team/members
+```
+
+List all members of your workspace.
+
+**Response**
+
+Returns an array of member objects with the same shape as the `members` array in [Get workspace](#get-workspace).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `You don't belong to a workspace` |
+
+### Remove a member
+
+<Note>Requires JWT authentication. Only the workspace owner can remove members.</Note>
+
+```bash
+DELETE /team/members/{user_id}
+```
+
+Remove a member from the workspace. The removed member is downgraded to the free plan if they do not have their own Stripe subscription. You cannot remove yourself — cancel your subscription to dissolve the workspace instead.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `user_id` | `string` | UUID of the member to remove. |
+
+**Response**
+
+`204 No Content`
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Cannot remove yourself. Cancel your subscription to dissolve the workspace.` |
+| `401` | Invalid or expired token. |
+| `403` | `Only the workspace owner can perform this action` |
+| `404` | `You don't belong to a workspace` |
+| `404` | `Member not found` |
+
+### Leave a workspace
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /team/leave
+```
+
+Leave your current workspace. Your plan is downgraded to free if you do not have your own Stripe subscription. The workspace owner cannot leave — cancel the subscription to dissolve the workspace instead.
+
+**Response**
+
+```json
+{
+  "status": "left",
+  "billing_plan": "free"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Always `left`. |
+| `billing_plan` | `string` | Your updated billing plan after leaving. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `As the workspace owner, you cannot leave. Cancel your subscription to dissolve the workspace.` |
+| `401` | Invalid or expired token. |
+| `404` | `You don't belong to a workspace` |
