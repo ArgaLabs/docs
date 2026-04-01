@@ -140,6 +140,10 @@ Under the hood, the wizard:
     - Users: `slack-twin-bot` (bot), `slack-twin-user` (human)
     - Bot token: `xoxb-F9SXMECOSFOGYR3XKXWN`
     - User token: `xoxp-slack-twin-user-token`
+    - OAuth client ID: `slack-twin-client-id`
+    - OAuth client secret: `slack-twin-client-secret`
+
+    **OAuth support:** The Slack twin implements the OAuth 2.0 authorization code grant flow. Point your app's Slack OAuth URLs at the twin (via `SLACK_TWIN_BASE_URL`) to test "Add to Slack" install flows without hitting real Slack servers. The twin issues working `xoxb-` and `xoxp-` tokens that can be used for subsequent API calls.
   </Accordion>
 
   <Accordion title="Google Drive" icon="google-drive">
@@ -232,7 +236,7 @@ The wizard recognizes these environment variables per twin and replaces them wit
 | Twin | Variables the wizard detects |
 | --- | --- |
 | Discord | `DISCORD_TOKEN`, `DISCORD_BOT_TOKEN` |
-| Slack | `SLACK_BOT_TOKEN`, `SLACK_TOKEN`, `SLACK_SIGNING_SECRET` |
+| Slack | `SLACK_BOT_TOKEN`, `SLACK_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_TWIN_BASE_URL` |
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_API_KEY` |
 | Google Drive | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ACCESS_TOKEN` |
 | Dropbox | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_ACCESS_TOKEN` |
