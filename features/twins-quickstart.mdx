@@ -72,7 +72,7 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
       [1/2] Discord twin .......... ready
       [2/2] Slack twin   .......... ready
     
-      Session expires in 60 minutes.
+      Session expires in 10 minutes.
     ```
   </Step>
   <Step title="Start building">
@@ -262,7 +262,7 @@ Variables not associated with a selected twin are left untouched. The original f
 
 ## Session management
 
-Twin sessions are ephemeral and expire after 60 minutes by default. Use these commands from your project directory:
+Twin sessions are ephemeral and expire after 10 minutes by default. Use these commands from your project directory:
 
 ```bash
 # Check if your twins are still running
@@ -271,7 +271,7 @@ arga-wizard status
 # Reset all twins to their initial seed state
 arga-wizard reset
 
-# Add another 60 minutes to the session
+# Add another 10 minutes to the session
 arga-wizard extend
 
 # Tear down immediately and clean up

@@ -113,12 +113,12 @@ The twin names you provided don't match any available twins. List valid twin nam
 
 ### Twins expired during testing
 
-Twin sessions have a default TTL of 60 minutes. If your twins expire mid-test:
+Twin sessions have a default TTL of 10 minutes. If your twins expire mid-test:
 
-- Extend the TTL before it expires using the [extend endpoint](/api-reference#post-extend-twin-provision-ttl)
-- Set a longer initial TTL (up to 480 minutes) when provisioning
+- Extend the session with `arga-wizard extend` or the [extend endpoint](/api-reference#post-extend-twin-provision-ttl)
+- Set a longer initial TTL (up to 480 minutes) when provisioning via the API directly
 
-If you provisioned via `npx arga-wizard`, the default session is 10 minutes. Re-run the wizard to start a fresh session.
+Re-run the wizard to start a fresh session.
 
 ---
 
