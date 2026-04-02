@@ -1,0 +1,133 @@
+---
+title: "Web app"
+description: "Navigate the Arga dashboard to run validations, connect integrations, and manage your account"
+---
+
+The Arga web app is available at [app.argalabs.com](https://app.argalabs.com). After signing in with GitHub, you land on the Validate page.
+
+## Validate (`/validate`)
+
+This is the main page. From here you can start validation runs, monitor progress, and review results.
+
+### Choosing a workflow
+
+When no run is active, you see a workflow selector with four options:
+
+| Workflow | What it does | Plan |
+|----------|-------------|------|
+| **Staging Run** | Full AI-planned test suite against a staging URL, with optional digital twins. | Free |
+| **Quick Pass** | Fast browser validation against any deployed URL with a custom prompt. | Team |
+| **Sandbox Run** | Deploys a branch to Arga's sandbox with service twins, then runs a full test suite. | Team |
+| **CI Checks** | Automatic validation on every PR or branch push via GitHub integration. | Team |
+
+### Running a validation
+
+After selecting a workflow, you fill out a form with:
+
+- **URL** — the deployed app to test
+- **Prompt** — natural-language instructions for what to test (e.g. "test the checkout flow")
+- **Credentials** (optional) — email and password if the target app requires sign-in
+- **Repository and branch** (optional, for Staging and CI workflows)
+
+Click the submit button to start the run.
+
+### Monitoring a run
+
+Once a run is in progress, the page shows:
+
+- **Status badge** — queued, running, completed, or failed
+- **Live event timeline** — real-time messages as Arga investigates and tests your app
+- **Step results** — each test step appears with a pass, fail, or error status as it completes
+- **Environment URL** — link to the sandbox environment if applicable
+
+### Recent sessions
+
+A collapsible sidebar rail shows your past validation sessions. Click any session to restore it and review its results.
+
+---
+
+## Integrations (`/integrations`)
+
+Connect external tools so Arga has richer context when planning and running tests.
+
+### Available integrations
+
+| Provider | Auth method | What it provides |
+|----------|------------|-----------------|
+| **GitHub** | OAuth | PRs, issues, commits, code search |
+| **Jira** | OAuth | Issues, tickets, specs |
+| **Linear** | OAuth | Issues, project context, linked PRs |
+| **Slack** | OAuth | Messages and threads |
+| **Discord** | OAuth | Messages and channels |
+| **PostHog** | API key | Session recordings, error events |
+| **Sentry** | API key | Stack traces, error events, releases |
+| **Grafana** | API key | Metrics, dashboards, alerts |
+
+### Connecting a provider
+
+Each provider appears as a card showing its connection status. Click **Connect** to authorize:
+
+- **OAuth providers** (GitHub, Jira, Linear, Slack, Discord) redirect you to the provider's authorization screen.
+- **API key providers** (PostHog, Sentry, Grafana) open a form where you paste your token and any required configuration (e.g. project ID, base URL).
+
+You can disconnect or reconnect any provider at any time from this page.
+
+---
+
+## Ask (`/ask`)
+
+A chat interface for investigating bugs, searching context, or asking questions about your validation runs.
+
+Type a question in natural language and Arga searches your connected integrations (GitHub, Slack, Sentry, etc.) to find relevant context and synthesize an answer with citations.
+
+<Note>Ask may require a chat password if your workspace admin has enabled it. You'll see an unlock prompt if so.</Note>
+
+---
+
+## MCP setup (`/mcp`)
+
+Configure your IDE to connect to Arga's MCP server for in-editor context search and validation.
+
+The page shows:
+
+1. **CLI install command** — run `arga mcp install` after `arga login` to auto-configure your IDE
+2. **MCP config JSON** — the raw configuration with your API key (masked by default, with a reveal toggle)
+3. **IDE-specific instructions** for Cursor, Claude Code, and Codex
+
+The recommended path is the CLI install, which writes the config to the correct location automatically without exposing your key in the browser.
+
+---
+
+## Settings (`/settings`)
+
+### Profile
+
+- Your GitHub username and avatar (from OAuth, read-only)
+- Email address with verification status — click to verify or change your email
+
+### Subscription
+
+- Current plan badge (Free or Team)
+- **Upgrade** button to start a Stripe checkout for the Team plan
+- **Cancel** button to open the Stripe billing portal (for paid users)
+
+### Team workspace
+
+<Note>Visible on Team plan only.</Note>
+
+- Create a workspace linked to a GitHub organization
+- Invite teammates by email (must match your workspace domain)
+- View and manage members and pending invites
+- Remove members or revoke invitations
+
+### Authorized CLI devices
+
+Lists every terminal session created via `arga login`:
+
+- Device name, key preview (masked), and status (Active / Revoked)
+- Created and last-used timestamps
+- **Revoke** button to invalidate a specific device's API key without affecting others
+
+### Log out
+
+Clears your session and redirects to the login page.

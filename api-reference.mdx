@@ -22,6 +22,33 @@ Arga supports two token types:
 
 Both token types use the same `Authorization: Bearer <token>` header. Endpoints below note which token types they accept.
 
+### Auth requirements by endpoint
+
+| Endpoint group | API key | JWT | Notes |
+|---------------|---------|-----|-------|
+| Health check (`GET /health`) | — | — | No auth required |
+| URL validation (`POST /validate/url`) | Yes | Yes | Core programmatic access |
+| URL probe (`POST /validate/url/probe`) | Yes | Yes | |
+| Twin provisioning (`POST /validate/twins/provision`, status, extend) | Yes | Yes | |
+| Run details (`GET /runs/{run_id}`) | Yes | Yes | |
+| Cancel run (`POST /validate/{run_id}/cancel`) | Yes | Yes | |
+| Stream results (`GET /validate/{run_id}/results`) | Yes | Yes | SSE stream |
+| User info (`GET /auth/me`) | Yes | Yes | |
+| Device auth (`POST /auth/device/*`) | — | Partial | Start/poll are public; approve requires JWT |
+| Staging runs (`POST /validate/staging`) | — | Yes | Requires web session |
+| Story approval (`POST /validate/{run_id}/approve`) | — | Yes | |
+| PR validation (`POST /validation/pr`, config, install) | — | Yes | |
+| Branch validation (`POST /validate/start-branch`) | — | Yes | |
+| Sandbox deploy (`POST /validate/deploy`, `deploy-pr`) | — | Yes | |
+| Red-team scans (all `/redteam/*`) | — | Yes | |
+| Integrations (all `/integrations/*`) | — | Yes | |
+| Team management (all `/team/*`) | — | Yes | |
+| Billing (all `/billing/*`) | — | Yes | |
+| Run artifacts (`GET /validate/{run_id}/artifacts/*`) | — | Yes | Also accepts `?token=` query param |
+| Webhooks (`/validation/github/webhook`, `/billing/stripe/webhook`) | — | — | Signature-verified, no Bearer token |
+
+**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like story approval, PR configuration, and team management.
+
 ## Health check
 
 ```bash

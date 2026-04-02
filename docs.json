@@ -52,7 +52,9 @@
             "group": "Setup",
             "pages": [
               "cli-and-mcp",
+              "web-app",
               "integrations",
+              "plans",
               "api-reference"
             ]
           }
