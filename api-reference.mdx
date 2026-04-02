@@ -36,6 +36,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/{run_id}/cancel` | `POST` | Yes | Yes | |
 | `/validate/{run_id}/results` | `GET` | Yes | Yes | SSE stream |
 | `/runs/{run_id}` | `GET` | Yes | Yes | |
+| `/runs/{run_id}/logs` | `GET` | Yes | Yes | Twin and sandbox logs |
 | `/validate/{run_id}/artifacts/{filename}` | `GET` | Yes | Yes | Also accepts `?token=` query param |
 | `/validation/pr` | `POST` | Yes | Yes | Team plan required |
 | `/validation/runs` | `GET` | Yes | Yes | Team plan required |
@@ -544,6 +545,96 @@ The response includes the full run state. Key fields:
 
 | Status | Detail |
 |--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Validation run not found` |
+
+### `GET` Get run logs
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /runs/{run_id}/logs
+```
+
+Retrieve worker and runtime logs for a validation run. Returns logs from the twin and sandbox infrastructure associated with the run. Only logs belonging to the authenticated user's runs are returned.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logs" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+```json
+{
+  "run": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "status": "complete"
+  },
+  "worker_logs": [
+    {
+      "job_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "job_type": "deploy",
+      "target_role": "builder",
+      "status": "completed",
+      "content": "Building image...\nDeploy successful.",
+      "truncated": false,
+      "error": null
+    }
+  ],
+  "runtime_logs": [
+    {
+      "timestamp": "2026-03-21T12:05:00Z",
+      "service_name": "arga-api",
+      "severity": "INFO",
+      "event": "run.started",
+      "code": null,
+      "request_id": "req-abc123",
+      "job_id": null,
+      "surface_name": "slack",
+      "message": "Validation run started"
+    }
+  ],
+  "warnings": []
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run` | `object` | Run summary with current status and metadata. Same shape as the [Get run details](#get-get-run-details) response. |
+| `worker_logs` | `array` | Logs from cluster worker jobs (build, deploy, warm-up). |
+| `worker_logs[].job_id` | `string` | Identifier of the worker job. |
+| `worker_logs[].job_type` | `string \| null` | Type of worker job (e.g. `deploy`, `build`). |
+| `worker_logs[].target_role` | `string \| null` | Role of the target instance (e.g. `builder`, `warm`). |
+| `worker_logs[].status` | `string \| null` | Job status (e.g. `completed`, `failed`). |
+| `worker_logs[].content` | `string \| null` | Log text content. May be `null` if the log could not be retrieved. |
+| `worker_logs[].truncated` | `boolean` | Whether the log content was truncated due to size limits. |
+| `worker_logs[].error` | `string \| null` | Error message if the log could not be loaded. |
+| `runtime_logs` | `array` | Structured runtime logs from API and proxy services scoped to this run. |
+| `runtime_logs[].timestamp` | `string \| null` | ISO 8601 timestamp of the log entry. |
+| `runtime_logs[].service_name` | `string \| null` | Service that produced the log (e.g. `arga-api`, `preview-proxy`). |
+| `runtime_logs[].severity` | `string \| null` | Log severity level (e.g. `INFO`, `ERROR`). |
+| `runtime_logs[].event` | `string \| null` | Structured event name. |
+| `runtime_logs[].code` | `string \| null` | Event code, if applicable. |
+| `runtime_logs[].request_id` | `string \| null` | Request identifier for correlation. |
+| `runtime_logs[].job_id` | `string \| null` | Associated worker job identifier, if applicable. |
+| `runtime_logs[].surface_name` | `string \| null` | Twin or surface name associated with the log entry. |
+| `runtime_logs[].message` | `string \| null` | Human-readable log message. |
+| `warnings` | `array of string` | Warnings encountered while fetching logs (e.g. if a log source was unavailable). |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `run_id must be a valid UUID` |
 | `401` | Invalid or expired token. |
 | `404` | `Validation run not found` |
 
