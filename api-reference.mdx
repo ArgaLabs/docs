@@ -36,7 +36,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/{run_id}/cancel` | `POST` | Yes | Yes | |
 | `/validate/{run_id}/results` | `GET` | Yes | Yes | SSE stream |
 | `/runs/{run_id}` | `GET` | Yes | Yes | |
-| `/validate/{run_id}/artifacts/{filename}` | `GET` | — | Yes | Also accepts `?token=` query param |
+| `/validate/{run_id}/artifacts/{filename}` | `GET` | Yes | Yes | Also accepts `?token=` query param |
 | `/validation/pr` | `POST` | Yes | Yes | Team plan required |
 | `/validation/runs` | `GET` | Yes | Yes | Team plan required |
 | `/redteam/start` | `POST` | — | Yes | |
@@ -549,7 +549,7 @@ The response includes the full run state. Key fields:
 
 ### `GET` Get a run artifact
 
-<Note>Accepts JWT authentication or a `token` query parameter.</Note>
+<Note>Accepts API key, JWT authentication, or a `token` query parameter.</Note>
 
 ```bash
 GET /validate/{run_id}/artifacts/{filename}
@@ -568,7 +568,7 @@ Retrieve an artifact (such as a screenshot) from a validation or scan run. Retur
 
 ```bash
 curl -L "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/artifacts/screenshot.png" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
   -o screenshot.png
 ```
 
