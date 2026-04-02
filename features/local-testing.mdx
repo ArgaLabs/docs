@@ -88,12 +88,12 @@ The Slack twin comes pre-seeded with a workspace, channels (`#general`, `#return
 
 ## Managing your session
 
-Twin sessions last **60 minutes** by default. Use these commands from your project directory:
+Twin sessions last **10 minutes** by default. Use these commands from your project directory:
 
 | Command | What it does |
-|---------|-------------|
+| --- | --- |
 | `arga-wizard status` | Check if twins are still running and when they expire |
-| `arga-wizard extend` | Add another 60 minutes |
+| `arga-wizard extend` | Add another 10 minutes |
 | `arga-wizard reset` | Reset all twins to their initial seed state |
 | `arga-wizard teardown` | Destroy the session immediately |
 
@@ -110,7 +110,7 @@ Or just tear down the session — but remember to restore your `.env` manually s
 ## Available twins
 
 | Service | Type | What you can test |
-|---------|------|-------------------|
+| --- | --- | --- |
 | Stripe | UI | Payments, subscriptions, checkout, webhooks, billing portal |
 | Slack | UI | Bot messaging, OAuth install flow, file uploads |
 | Discord | UI | Bot interactions, channel management |
@@ -135,7 +135,7 @@ See the [twins quickstart](/features/twins-quickstart) for full details on each 
     ```bash
     # Expose your local app
     ngrok http 3000
-
+    
     # Validate with Arga
     arga test url --url https://your-ngrok-url.ngrok.io --prompt "complete a checkout with Stripe"
     ```
