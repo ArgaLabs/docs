@@ -45,6 +45,7 @@
               "features/validate-modes",
               "features/pr-validation",
               "features/agent-testing",
+              "features/local-testing",
               "features/red-teaming"
             ]
           },
