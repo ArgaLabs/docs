@@ -60,7 +60,7 @@ Start a browser validation run against a deployed URL.
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
 | `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. When omitted, defaults to `visual`. |
-| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, the runtime profile is adjusted to provision the requested twins alongside the validation. Only valid twin names from the [twin catalog](#list-available-twins) are accepted; unknown names are silently ignored. |
+| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
 
@@ -186,26 +186,29 @@ Check whether the runner infrastructure is connected and available.
 GET /validate/twins
 ```
 
-List the digital twin services available for sandbox deployments. Returns an array sorted by UI visibility, then alphabetically by label.
+List the digital twin services available for sandbox deployments. Returns an array sorted by kind (backend twins first, then frontend twins), then alphabetically by label within each group.
 
 **Response**
 
 ```json
 [
   {
-    "name": "box",
-    "label": "Box",
-    "show_in_ui": true
-  },
-  {
     "name": "discord",
     "label": "Discord",
+    "kind": "backend",
     "show_in_ui": true
   },
   {
-    "name": "unified",
-    "label": "Unified",
-    "show_in_ui": false
+    "name": "notion",
+    "label": "Notion",
+    "kind": "backend",
+    "show_in_ui": true
+  },
+  {
+    "name": "box",
+    "label": "Box",
+    "kind": "frontend",
+    "show_in_ui": true
   }
 ]
 ```
@@ -214,6 +217,7 @@ List the digital twin services available for sandbox deployments. Returns an arr
 |-------|------|-------------|
 | `name` | `string` | Twin identifier used in the `twins` array when deploying a sandbox. |
 | `label` | `string` | Human-readable display name. |
+| `kind` | `string` | Twin category: `backend` for server-side API mocks (e.g. messaging, billing, integration proxies) or `frontend` for client-side file storage and productivity tool mocks. |
 | `show_in_ui` | `boolean` | Whether this twin is shown in the web UI by default. |
 
 **Errors**
@@ -272,7 +276,7 @@ curl -N -X POST https://api.argalabs.com/validate/staging \
 | `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
 | `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
 | `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `free_tier_limit_exceeded`, the free tier monthly twin bootup limit has been reached. |
+| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `plan_limit_exceeded`, the plan's monthly limit has been reached. |
 
 **Errors**
 
