@@ -1,6 +1,6 @@
 ---
 title: "API reference"
-description: "HTTP API endpoints for programmatic access to Arga validations, scans, and authentication"
+description: "HTTP API endpoints for programmatic access to Arga validations, scans, scenarios, and authentication"
 ---
 
 The Arga API lets you start validations, retrieve run results, and manage authentication programmatically. All endpoints are available at `https://api.argalabs.com`.
@@ -50,6 +50,11 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/email/verify` | `POST` | — | Yes | |
 | `/auth/cli/devices` | `GET` | — | Yes | |
 | `/auth/cli/devices/{id}/revoke` | `POST` | Yes | Yes | |
+| `/scenarios` | `POST` | Yes | Yes | Create a scenario |
+| `/scenarios` | `GET` | Yes | Yes | List scenarios |
+| `/scenarios/{scenario_id}` | `GET` | Yes | Yes | |
+| `/scenarios/{scenario_id}` | `PUT` | Yes | Yes | |
+| `/scenarios/{scenario_id}` | `DELETE` | Yes | Yes | |
 
 **Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like red-team scans and email verification.
 
@@ -252,7 +257,7 @@ Provision one or more ephemeral twin instances. Returns a `run_id` you can use t
 |-------|------|----------|---------|-------------|
 | `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#get-list-available-twins) to discover available names. |
 | `ttl_minutes` | `integer` | No | `60` | Time-to-live in minutes before the twins are automatically torn down. Range: `1`–`480`. |
-| `scenario` | `string` | No | — | Scenario name to pre-seed the twins with sample data. |
+| `scenario_id` | `string` | No | — | UUID of a [scenario](#scenarios) to automatically seed the provisioned twins with preconfigured data. When provided, the twins are seeded in the background after provisioning completes. |
 
 **Example request**
 
@@ -262,7 +267,8 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
   -H "Content-Type: application/json" \
   -d '{
     "twins": ["slack", "notion"],
-    "ttl_minutes": 120
+    "ttl_minutes": 120,
+    "scenario_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
   }'
 ```
 
@@ -853,6 +859,262 @@ Cancel a running scan.
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `Red-team run not found` |
+
+---
+
+## Scenarios
+
+Scenarios let you define reusable twin seed configurations that pre-populate digital twins with realistic data before a validation run. You can create scenarios from a natural-language prompt (the API uses an LLM to generate the seed configuration) or by providing an explicit seed configuration.
+
+### `POST` Create a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /scenarios
+```
+
+Create a new scenario. Provide either a `prompt` (to generate a seed configuration automatically) or a `seed_config` with `twins` (to define the configuration explicitly). If both `prompt` and `seed_config` are provided, the explicit configuration takes precedence.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Display name for the scenario. |
+| `description` | `string` | No | Longer description of what this scenario sets up. |
+| `prompt` | `string` | No | Natural-language prompt describing the desired twin state. When provided without `seed_config`, the API generates the configuration automatically. |
+| `twins` | `array of string` | No | Twin names to include (e.g. `slack`, `stripe`). Required when `seed_config` is provided without `prompt`. |
+| `seed_config` | `object` | No | Explicit seed configuration keyed by twin name. Each value is a twin-specific configuration object. |
+| `tags` | `array of string` | No | Tags for organizing and filtering scenarios. Defaults to `[]`. |
+
+**Example request (prompt-based)**
+
+```bash
+curl -X POST https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "E-commerce checkout",
+    "prompt": "Set up Slack with an #orders channel and Stripe with a customer who has an active subscription",
+    "tags": ["checkout", "billing"]
+  }'
+```
+
+**Example request (explicit config)**
+
+```bash
+curl -X POST https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Support workflow",
+    "twins": ["slack", "notion"],
+    "seed_config": {
+      "slack": {
+        "channels": [{"name": "support-tickets"}],
+        "users": [{"name": "Support Bot"}]
+      },
+      "notion": {
+        "pages": [{"title": "Runbook"}]
+      }
+    },
+    "tags": ["support"]
+  }'
+```
+
+**Response**
+
+```json
+{
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "name": "E-commerce checkout",
+  "description": null,
+  "prompt": "Set up Slack with an #orders channel and Stripe with a customer who has an active subscription",
+  "twins": ["slack", "stripe"],
+  "seed_config": {
+    "slack": {"channels": [{"name": "orders"}]},
+    "stripe": {"customers": [{"name": "Test Customer", "subscriptions": [{"status": "active"}]}]}
+  },
+  "tags": ["checkout", "billing"],
+  "created_at": "2026-03-21T12:00:00Z",
+  "updated_at": "2026-03-21T12:00:00Z"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier for the scenario (UUID). |
+| `name` | `string` | Display name. |
+| `description` | `string \| null` | Description, if provided. |
+| `prompt` | `string \| null` | The natural-language prompt used to generate the seed configuration. |
+| `twins` | `array of string` | Twin names included in this scenario. |
+| `seed_config` | `object` | Seed configuration keyed by twin name. |
+| `tags` | `array of string` | Tags for filtering. |
+| `created_at` | `string` | ISO 8601 timestamp. |
+| `updated_at` | `string` | ISO 8601 timestamp. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `422` | Seed configuration generation failed. Returned when LLM-based generation from a prompt does not produce a valid configuration. |
+| `422` | Either `prompt` or `seed_config` must be provided. |
+
+### `GET` List scenarios
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /scenarios
+```
+
+List all scenarios owned by the authenticated user, ordered by creation date (newest first).
+
+**Query parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `twin` | `string` | No | Filter to scenarios that include this twin (e.g. `slack`). |
+| `tag` | `string` | No | Filter to scenarios that include this tag. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/scenarios?twin=slack" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+```json
+[
+  {
+    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "name": "E-commerce checkout",
+    "description": null,
+    "prompt": "Set up Slack with an #orders channel and Stripe with a customer who has an active subscription",
+    "twins": ["slack", "stripe"],
+    "seed_config": {"slack": {}, "stripe": {}},
+    "tags": ["checkout", "billing"],
+    "created_at": "2026-03-21T12:00:00Z",
+    "updated_at": "2026-03-21T12:00:00Z"
+  }
+]
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### `GET` Get a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /scenarios/{scenario_id}
+```
+
+Retrieve a single scenario by ID.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Response**
+
+Returns a scenario object (same shape as [Create a scenario](#post-create-a-scenario) response).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | Scenario not found. |
+
+### `PUT` Update a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+PUT /scenarios/{scenario_id}
+```
+
+Update an existing scenario. All fields are optional — only provided fields are updated. If `prompt` is updated without a new `seed_config`, the seed configuration is regenerated automatically.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | No | Updated display name. |
+| `description` | `string` | No | Updated description. |
+| `prompt` | `string` | No | Updated natural-language prompt. If changed and no `seed_config` is provided, the configuration is regenerated. |
+| `twins` | `array of string` | No | Updated twin names. |
+| `seed_config` | `object` | No | Updated seed configuration. |
+| `tags` | `array of string` | No | Updated tags. |
+
+**Example request**
+
+```bash
+curl -X PUT https://api.argalabs.com/scenarios/b2c3d4e5-f6a7-8901-bcde-f12345678901 \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "E-commerce checkout v2",
+    "tags": ["checkout", "billing", "v2"]
+  }'
+```
+
+**Response**
+
+Returns the updated scenario object (same shape as [Create a scenario](#post-create-a-scenario) response).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | Scenario not found. |
+| `422` | Seed configuration generation failed. |
+
+### `DELETE` Delete a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+DELETE /scenarios/{scenario_id}
+```
+
+Permanently delete a scenario. Validation runs that reference this scenario are not affected — the `scenario_id` on those runs becomes a dangling reference.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Response**
+
+```json
+{"status": "deleted"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | Scenario not found. |
 
 ---
 
