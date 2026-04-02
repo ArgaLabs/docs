@@ -148,6 +148,7 @@ arga runs list --status completed --limit 10
 | `--repo` | — | Filter by repository in `owner/repo` format. |
 | `--status` | — | Filter by status: `completed`, `failed`, or `running`. |
 | `--limit` | `20` | Maximum number of runs to show. |
+| `--json` | off | Output results as a JSON array instead of a table. |
 
 Check detailed status for a specific run:
 
@@ -160,6 +161,29 @@ Cancel a running validation:
 ```bash
 arga runs cancel <run_id>
 ```
+
+### JSON output for CI and automation
+
+Key commands accept `--json` to emit structured JSON instead of human-readable text. This is useful in CI pipelines, shell scripts, and agent automation where parsing text output is fragile.
+
+```bash
+# Capture the run ID from a validation
+RUN_ID=$(arga test url --url https://app.example.com --prompt "test login" --json | jq -r .run_id)
+
+# Poll run status
+arga runs status "$RUN_ID" --json | jq .status
+
+# List runs as a JSON array
+arga runs list --repo acme/web-app --json | jq '.[].run_id'
+```
+
+| Command | `--json` output |
+|---------|-----------------|
+| `arga test url` | `{"run_id": "...", "status": "..."}` |
+| `arga validate pr` | `{"run_id": "...", "status": "..."}` |
+| `arga validate url` | `{"run_id": "...", "status": "..."}` |
+| `arga runs status <id>` | Full run object from the API |
+| `arga runs list` | Array of run summary objects |
 
 ### Run a security scan
 
