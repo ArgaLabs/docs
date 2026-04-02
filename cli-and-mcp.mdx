@@ -128,6 +128,120 @@ arga validate pr \
   --context-notes "focus on the checkout flow changes"
 ```
 
+### Manage validation runs
+
+List recent validation runs, check status, or cancel a run.
+
+```bash
+arga runs list
+```
+
+Filter by repository or status:
+
+```bash
+arga runs list --repo acme/web-app --status running
+arga runs list --status completed --limit 10
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--repo` | — | Filter by repository in `owner/repo` format. |
+| `--status` | — | Filter by status: `completed`, `failed`, or `running`. |
+| `--limit` | `20` | Maximum number of runs to show. |
+
+Check detailed status for a specific run:
+
+```bash
+arga runs status <run_id>
+```
+
+Cancel a running validation:
+
+```bash
+arga runs cancel <run_id>
+```
+
+### Run a security scan
+
+Start an app security scan against a public URL:
+
+```bash
+arga scan https://staging.example.com
+```
+
+Set an action budget (number of test actions the scanner will attempt):
+
+```bash
+arga scan https://staging.example.com --budget 300
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--budget` | `200` | Total action budget for the scan. Must be a positive integer. |
+
+The CLI waits for the scan plan to be auto-approved, then prints the run ID and status.
+
+Check the status of a scan:
+
+```bash
+arga scan status <run_id>
+```
+
+Get the final scan report as JSON:
+
+```bash
+arga scan report <run_id>
+```
+
+The report includes all anomalies found during the scan, printed as formatted JSON to stdout.
+
+### Configure automatic PR validation
+
+Install the GitHub webhook for a repository so Arga validates pull requests automatically:
+
+```bash
+arga validate install acme/web-app
+```
+
+View the current validation configuration:
+
+```bash
+arga validate config acme/web-app
+```
+
+Update the configuration:
+
+```bash
+arga validate config set acme/web-app \
+  --trigger pr \
+  --comments on
+```
+
+```bash
+arga validate config set acme/web-app \
+  --trigger branch \
+  --branch main
+```
+
+| Flag | Description |
+|------|-------------|
+| `--trigger` | Validation trigger mode: `pr` (run on pull requests) or `branch` (run on pushes to a branch). |
+| `--branch` | Branch to monitor when using `branch` trigger mode. |
+| `--comments` | Whether to post PR comments with results: `on` or `off`. |
+
+### Git helpers
+
+Wrap `git commit` and `git push` with Arga-specific behavior. Use `--skip` to mark a commit so that Arga's automatic CI validation skips it.
+
+```bash
+arga commit --skip -m "quick typo fix"
+arga push --skip
+```
+
+`arga commit --skip` appends a trailer to the commit message that tells Arga to skip validation. `arga push --skip` verifies the HEAD commit has the skip trailer before pushing — if it doesn't, it exits with an error.
+
+Without `--skip`, both commands pass all arguments through to `git commit` and `git push` unchanged.
+
 ## Install Arga MCP into your IDE
 
 Once you are logged in, install MCP with:
