@@ -1,0 +1,228 @@
+---
+title: "Troubleshooting"
+description: "Common issues and how to fix them"
+---
+
+## CLI authentication
+
+### "Not authenticated. Run `arga login`."
+
+The CLI can't find a saved API key. This happens when:
+
+- You haven't logged in yet — run `arga login` to authenticate.
+- The config file at `~/.config/arga/config.json` was deleted or corrupted. Run `arga login` again to regenerate it.
+- The API key was revoked from the [Settings page](https://app.argalabs.com/settings) under **Authorized CLI devices**. Run `arga login` to create a new device key.
+
+### "Device code expired. Run `arga login` again."
+
+The browser approval window wasn't completed in time. Device codes expire after 10 minutes. Run `arga login` again and approve the device in the browser before the code expires.
+
+### "Device code already used. Run `arga login` again."
+
+Each device code can only be used once. If you cancelled a login attempt or the flow was interrupted, run `arga login` to start a fresh authorization.
+
+### "Timed out waiting for authentication approval."
+
+The CLI waited 10 minutes for browser approval and gave up. Make sure you complete the approval at the URL shown in your terminal. If the browser didn't open automatically, copy the URL and open it manually.
+
+---
+
+## Validation errors
+
+### "A valid public http(s) URL is required."
+
+Arga can only test publicly accessible URLs. This error appears when:
+
+- The URL uses `localhost` or a private IP address (e.g. `127.0.0.1`, `192.168.x.x`)
+- The URL scheme is not `http://` or `https://`
+- The URL is malformed or unreachable
+
+If you're testing a local dev server, deploy it to a publicly accessible staging environment first, or use a tunnel service to expose it.
+
+### "A prompt is required."
+
+Free plan users must provide a test prompt describing what to validate. Add `--prompt` to your CLI command:
+
+```bash
+arga test url --url https://your-app.com --prompt "test the login flow"
+```
+
+Team plan users can omit the prompt — Arga will auto-plan tests based on the application.
+
+### "Email and password must both be provided."
+
+You passed `--email` without `--password` or vice versa. Both must be provided together:
+
+```bash
+arga test url \
+  --url https://your-app.com \
+  --prompt "test the checkout flow" \
+  --email test@example.com \
+  --password your-test-password
+```
+
+### Run stuck in "queued" status
+
+If a run stays in `queued` for more than a few minutes:
+
+1. Check your run status: `arga runs status <run_id>`
+2. Cancel and retry: `arga runs cancel <run_id>`, then start a new run
+3. If the issue persists, contact [founders@argalabs.com](mailto:founders@argalabs.com)
+
+---
+
+## Plan limits
+
+### "Monthly free plan limit reached."
+
+Free plan users get 10 validation runs per month. Limits reset on a rolling monthly basis. Check your remaining usage with:
+
+```bash
+arga whoami
+```
+
+To get more runs, [upgrade to the Team plan](https://app.argalabs.com/settings).
+
+### "Free plan allows 1 twin per run."
+
+Free plan users can use one digital twin per validation run. To use multiple twins in a single run, upgrade to the Team plan.
+
+### "Automatic PR validation requires a Team or Paid plan."
+
+PR validation (`arga validate pr`) and CI checks are Team plan features. [Upgrade](https://app.argalabs.com/settings) to enable automatic PR validation.
+
+### "Team plan limit of N CI checks/month reached."
+
+Team plan includes 500 CI checks per month. If you need more, contact [founders@argalabs.com](mailto:founders@argalabs.com) about usage-based pricing.
+
+---
+
+## Twin provisioning
+
+### Twins stuck in "provisioning"
+
+Twin instances typically start in under a minute. If provisioning takes longer than 2 minutes:
+
+1. Check status: `arga runs status <run_id>` or poll the [status endpoint](/api-reference#get-get-twin-provision-status)
+2. Cancel and retry with a fresh run
+3. If using the CLI wizard (`npx arga-wizard`), exit and re-run it
+
+### "At least one valid twin name is required."
+
+The twin names you provided don't match any available twins. List valid twin names from the [twin catalog](/api-reference#get-list-available-twins) or check spelling. Common twin names: `slack`, `stripe`, `discord`, `notion`, `github`.
+
+### Twins expired during testing
+
+Twin sessions have a default TTL of 60 minutes. If your twins expire mid-test:
+
+- Extend the TTL before it expires using the [extend endpoint](/api-reference#post-extend-twin-provision-ttl)
+- Set a longer initial TTL (up to 480 minutes) when provisioning
+
+If you provisioned via `npx arga-wizard`, the default session is 10 minutes. Re-run the wizard to start a fresh session.
+
+---
+
+## MCP connection issues
+
+### MCP server not connecting in your IDE
+
+1. **Verify you're logged in:** Run `arga whoami` to confirm your API key is valid.
+2. **Reinstall MCP config:** Run `arga mcp install` to rewrite the config files.
+3. **Check the config file** for your IDE:
+   - Cursor: `~/.cursor/mcp.json`
+   - Claude Code: `~/.claude/mcp.json`
+   - Codex: `~/.config/codex/mcp.json`
+4. **Verify the API key** in the config matches your current key (run `arga whoami` to see it).
+5. **Restart your IDE** after updating the MCP config.
+
+### MCP tools returning errors
+
+If MCP tools return "Error: Not authenticated" or similar:
+
+- Your API key may have been revoked. Check [Settings > Authorized CLI devices](https://app.argalabs.com/settings) and run `arga login` + `arga mcp install` if the key was revoked.
+- The MCP config may have an outdated key. Run `arga mcp install` to refresh it.
+
+### MCP tools not appearing in your IDE
+
+Some IDEs cache MCP tool definitions. After running `arga mcp install`:
+
+1. Restart the IDE completely (not just reload)
+2. Check that the `arga-context` server entry exists in the MCP config file
+3. Look for MCP connection errors in your IDE's output/logs panel
+
+---
+
+## GitHub integration
+
+### "GitHub not connected"
+
+You need to connect GitHub before using features that depend on repository access (PR validation, CI checks). Go to [Integrations](https://app.argalabs.com/integrations) and click **Connect** on the GitHub card.
+
+### "GitHub reauthentication required"
+
+Your GitHub OAuth token has expired or been revoked. Go to [Integrations](https://app.argalabs.com/integrations), disconnect GitHub, and reconnect it.
+
+### "GitHub integration required for validation."
+
+PR and branch validations require a connected GitHub integration. Connect GitHub from the [Integrations page](https://app.argalabs.com/integrations) before running `arga validate pr` or setting up CI checks.
+
+---
+
+## Email verification
+
+### "Email is already verified"
+
+The email address you submitted is already verified on your account. No action needed. Run `arga whoami` to confirm your verified email.
+
+### "Wait before requesting another verification code"
+
+Verification codes can only be requested once per minute. Wait a moment and try again.
+
+### "Too many verification attempts. Request a new code"
+
+You've used all 5 attempts for the current code. Click to request a new verification code and try again with the fresh code.
+
+### "No active verification code found for that email"
+
+The verification code has expired (codes last 10 minutes) or was never requested for this email address. Request a new code and enter it within 10 minutes.
+
+---
+
+## Security scans
+
+### "Timed out waiting for the scan plan to be ready"
+
+The scan planning phase took too long. This can happen with complex applications. Try:
+
+- Narrowing the scan scope with `--budget` (lower action budget means faster planning)
+- Providing a `--focus` to target specific areas
+
+### "Scan report is not ready yet."
+
+The scan is still running. Check the status with:
+
+```bash
+arga scan status <run_id>
+```
+
+Wait for the scan to complete, then fetch the report:
+
+```bash
+arga scan report <run_id>
+```
+
+---
+
+## General
+
+### Network errors
+
+If you see "Network error" from the CLI, check:
+
+1. Your internet connection
+2. That `https://api.argalabs.com` is reachable: `curl https://api.argalabs.com/health`
+3. If using a custom API URL (`--api-url` or `ARGA_API_URL`), verify it's correct
+
+### Something else?
+
+If your issue isn't covered here, reach out at [founders@argalabs.com](mailto:founders@argalabs.com) or [book a call](https://cal.com/akiratong/30min?overlayCalendar=true).

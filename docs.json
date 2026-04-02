@@ -55,7 +55,8 @@
               "web-app",
               "integrations",
               "plans",
-              "api-reference"
+              "api-reference",
+              "troubleshooting"
             ]
           }
         ]
