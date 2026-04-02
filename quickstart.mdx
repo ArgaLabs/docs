@@ -92,34 +92,6 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
   </Step>
 </Steps>
 
-## Example project
-
-Clone the [example-app](https://github.com/ArgaLabs/example-app) repo to see a full working integration — a Next.js task manager with Arga wired into CI, MCP, and a validation script:
-
-```bash
-git clone https://github.com/ArgaLabs/example-app.git
-cd example-app
-npm install && npm run dev
-```
-
-Then validate it:
-
-```bash
-arga test url \
-  --url http://localhost:3000 \
-  --prompt "Add a task, mark it complete, filter by active, then delete it"
-```
-
-The repo includes:
-
-- **GitHub Actions workflow** that validates every PR automatically (`.github/workflows/arga-validate.yml`)
-- **MCP configs** for Cursor and Claude Code so agents can trigger validations from your IDE
-- **A shell script** (`scripts/validate.sh`) for one-command local or staging validation
-
-Use it as a starting point or copy individual pieces into your own project.
-
----
-
 ## Other ways to get started
 
 <CardGroup cols={2}>
