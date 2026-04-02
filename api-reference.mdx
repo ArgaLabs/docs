@@ -336,7 +336,7 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
       "label": "Slack",
       "base_url": "https://r123--slack.sandbox.argalabs.com",
       "admin_url": "https://r123--slack.sandbox.argalabs.com",
-      "env_vars": {"SLACK_API_URL": "https://r123--slack.sandbox.argalabs.com"},
+      "env_vars": {"SLACK_BOT_TOKEN": "xoxb-...", "SLACK_SIGNING_SECRET": "slack-signing-secret"},
       "show_in_ui": true
     }
   },
@@ -526,17 +526,29 @@ The response includes the full run state. Key fields:
 | `pr_url` | `string` | Pull request URL, if applicable. |
 | `frontend_url` | `string` | Base URL of the frontend under test. |
 | `run_type` | `string` | Type of run. |
-| `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). |
+| `mode` | `string \| null` | Validation mode for the run. One of `validation` (default), `auto_visual`, or `redteam`. |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
+| `surface_urls` | `object \| null` | Public-facing sandbox URLs for each twin surface. Keys are twin names (e.g. `slack`, `app`), values are URLs. Present only when the run has an `environment_url`. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
+| `runtime_profile` | `object \| null` | Full runtime configuration for the run, including `primary_surface`, `primary_twin`, `twins`, `runner_mode`, `manual_runner_mode`, and `sandbox_surfaces`. |
+| `context_notes` | `string \| null` | Additional instructions or context provided when the run was created. |
 | `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
 | `git_branch` | `string \| null` | Branch name. |
 | `commit_sha` | `string \| null` | Commit SHA. |
+| `github_pr_number` | `integer \| null` | Pull request number when the run was triggered from a PR. |
+| `github_check_run_id` | `string \| null` | GitHub Checks API check run ID, when a GitHub check was created. |
+| `github_check_run_url` | `string \| null` | URL to the GitHub check run page. |
+| `event_log_json` | `array \| null` | Chronological list of run lifecycle events. Each entry includes `type`, `message`, `timestamp` (ISO 8601), and optionally `details`. |
 | `story_json` | `object \| null` | Generated user story with steps and coverage matrix. |
+| `auto_story_bundle_json` | `object \| null` | Bundle of auto-generated user stories when the run mode is `auto_visual`. |
+| `auto_visual_reports` | `array \| null` | Per-story reports for `auto_visual` parent runs. Each item includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, `results_json`, `started_at`, and `completed_at`. |
+| `attack_plan_json` | `object \| null` | Red-team attack plan containing campaign definitions. Present only for `redteam` runs. |
+| `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
 | `step_summaries` | `array \| null` | Summarized step results. Each object includes `title`, `status`, `details`, `step_number`, and `step_numbers`. |
-| `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
+| `coverage_manifest` | `object \| null` | Coverage manifest describing which features and areas were planned for testing. |
+| `login_identifier` | `string \| null` | Email or username used for login credentials during validation. Only the identifier is exposed, not the password. |
 | `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. |
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
 
@@ -1077,6 +1089,12 @@ Verify an email address using the six-digit code. If the verified address differ
 ```json
 {"status": "verified", "email": "user@example.com"}
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Always `verified`. |
+| `email` | `string` | The verified email address. |
+| `pending_invite_token` | `string \| null` | Present when a pending workspace invite matches the verified email. Use this token to accept the invite. Omitted when no matching invite exists. |
 
 **Errors**
 
