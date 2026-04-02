@@ -24,32 +24,38 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 
 ### Auth requirements by endpoint
 
-| Endpoint group | API key | JWT | Notes |
-|---------------|---------|-----|-------|
-| Health check (`GET /health`) | — | — | No auth required |
-| URL validation (`POST /validate/url`) | Yes | Yes | Core programmatic access |
-| URL probe (`POST /validate/url/probe`) | Yes | Yes | |
-| Twin provisioning (`POST /validate/twins/provision`, status, extend) | Yes | Yes | |
-| Run details (`GET /runs/{run_id}`) | Yes | Yes | |
-| Cancel run (`POST /validate/{run_id}/cancel`) | Yes | Yes | |
-| Stream results (`GET /validate/{run_id}/results`) | Yes | Yes | SSE stream |
-| User info (`GET /auth/me`) | Yes | Yes | |
-| Device auth (`POST /auth/device/*`) | — | Partial | Start/poll are public; approve requires JWT |
-| Staging runs (`POST /validate/staging`) | — | Yes | Requires web session |
-| Story approval (`POST /validate/{run_id}/approve`) | — | Yes | |
-| PR validation (`POST /validation/pr`, config, install) | — | Yes | |
-| Branch validation (`POST /validate/start-branch`) | — | Yes | |
-| Sandbox deploy (`POST /validate/deploy`, `deploy-pr`) | — | Yes | |
-| Red-team scans (all `/redteam/*`) | — | Yes | |
-| Integrations (all `/integrations/*`) | — | Yes | |
-| Team management (all `/team/*`) | — | Yes | |
-| Billing (all `/billing/*`) | — | Yes | |
-| Run artifacts (`GET /validate/{run_id}/artifacts/*`) | — | Yes | Also accepts `?token=` query param |
-| Webhooks (`/validation/github/webhook`, `/billing/stripe/webhook`) | — | — | Signature-verified, no Bearer token |
+| Endpoint | Method | API key | JWT | Notes |
+|----------|--------|---------|-----|-------|
+| `/health` | `GET` | — | — | No auth required |
+| `/validate/url` | `POST` | Yes | Yes | Core programmatic access |
+| `/validate/url/probe` | `POST` | Yes | Yes | |
+| `/validate/twins` | `GET` | — | Yes | |
+| `/validate/twins/provision` | `POST` | Yes | Yes | |
+| `/validate/twins/provision/{run_id}/status` | `GET` | Yes | Yes | |
+| `/validate/twins/provision/{run_id}/extend` | `POST` | Yes | Yes | |
+| `/validate/{run_id}/cancel` | `POST` | Yes | Yes | |
+| `/validate/{run_id}/results` | `GET` | Yes | Yes | SSE stream |
+| `/runs/{run_id}` | `GET` | Yes | Yes | |
+| `/validate/{run_id}/artifacts/{filename}` | `GET` | — | Yes | Also accepts `?token=` query param |
+| `/validation/pr` | `POST` | Yes | Yes | Team plan required |
+| `/validation/runs` | `GET` | Yes | Yes | Team plan required |
+| `/redteam/start` | `POST` | — | Yes | |
+| `/redteam/{run_id}/report` | `GET` | — | Yes | |
+| `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
+| `/auth/device/start` | `POST` | — | — | Public |
+| `/auth/device/poll` | `POST` | — | — | Public |
+| `/auth/device/approve` | `POST` | — | Yes | |
+| `/auth/me` | `GET` | Yes | Yes | |
+| `/auth/email/request-verification` | `POST` | — | Yes | |
+| `/auth/email/verify` | `POST` | — | Yes | |
+| `/auth/cli/devices` | `GET` | — | Yes | |
+| `/auth/cli/devices/{id}/revoke` | `POST` | Yes | Yes | |
 
-**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like story approval, PR configuration, and team management.
+**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like red-team scans and email verification.
 
 ## Health check
+
+### `GET` Health
 
 ```bash
 GET /health
@@ -67,7 +73,7 @@ Returns the API server status. No authentication required.
 
 ## URL validation
 
-### Start a URL validation
+### `POST` Start a URL validation
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -87,7 +93,7 @@ Start a browser validation run against a deployed URL.
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
 | `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. When omitted, defaults to `visual`. |
-| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#list-available-twins) are accepted; unknown names are silently ignored. |
+| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
 
@@ -130,7 +136,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
 | `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
-### Probe a URL for twin suggestions
+### `POST` Probe a URL for twin suggestions
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -178,34 +184,11 @@ curl -X POST https://api.argalabs.com/validate/url/probe \
 | `400` | `A valid public http(s) URL is required.` |
 | `401` | Invalid or expired token. |
 
-### Check runner status
+---
 
-<Note>Requires JWT authentication.</Note>
+## Twins
 
-```bash
-GET /validate/runner-status
-```
-
-Check whether the runner infrastructure is connected and available.
-
-**Response**
-
-```json
-{"connected": true, "mode": "ephemeral"}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `connected` | `boolean` | Whether the runner is available. |
-| `mode` | `string` | Runner execution mode. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### List available twins
+### `GET` List available twins
 
 <Note>Requires JWT authentication.</Note>
 
@@ -253,76 +236,7 @@ List the digital twin services available for sandbox deployments. Returns an arr
 |--------|--------|
 | `401` | Invalid or expired token. |
 
-### Start a staging run
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /validate/staging
-```
-
-Start a full AI-planned staging run against a deployed URL. The server probes the URL for integration signals, generates a validation story, and streams progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
-
-When no `twin` is specified, the run starts with no twins provisioned. The AI planner decides which twins (if any) are needed based on the staging URL and repository context. If no external integrations are detected, the run operates as a plain browser agent without provisioning any twins.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `url` | `string` | Yes | — | Target staging URL to validate. Must be a public HTTP or HTTPS URL. |
-| `prompt` | `string` | No (required on free plan) | — | Natural-language description of what to test. When omitted, the agent auto-plans based on the application. Free plan users must provide a prompt — omitting it returns a `403` error. |
-| `repo` | `string` | No | — | Repository in `owner/repo` format. Provides additional context for story generation. |
-| `branch` | `string` | No | — | Branch name within the repository. Provides additional context for story generation when combined with `repo`. |
-| `credentials` | `object` | No | — | Login credentials for the target app. |
-| `credentials.email` | `string` | No | — | Email address for authentication. Must be provided together with `password`. |
-| `credentials.password` | `string` | No | — | Password for authentication. Must be provided together with `email`. |
-| `twin` | `string` | No | — | Name of a single digital twin to use for the staging run. When provided, the selected twin is provisioned and the AI planner skips automatic twin selection. Use the [twin catalog](#list-available-twins) to discover valid names. When omitted, no twins are provisioned by default — the AI planner decides which twins (if any) are needed based on the staging URL and repository context. |
-| `runner_mode` | `string` | No | `visual` | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. |
-| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
-
-**Example request**
-
-```bash
-curl -N -X POST https://api.argalabs.com/validate/staging \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://staging.example.com",
-    "prompt": "test the checkout and payment flow",
-    "repo": "acme/web-app",
-    "twin": "slack"
-  }'
-```
-
-**SSE events**
-
-| Event type | Description |
-|------------|-------------|
-| `investigating` | The agent is analyzing the staging application. Includes `tool` and `hop` fields. |
-| `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
-| `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
-| `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message` and optionally `code`. When `code` is `plan_limit_exceeded`, the plan's monthly limit has been reached. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `A valid public http(s) URL is required.` |
-| `400` | `Email and password must both be provided.` |
-| `401` | Invalid or expired token. |
-| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
-
----
-
-## Twin provisioning
-
-Provision ephemeral digital twin instances without deploying your own code. This is useful for local development, integration testing, or exploring twin behavior independently.
-
-### Provision twins
+### `POST` Provision twins
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -336,7 +250,7 @@ Provision one or more ephemeral twin instances. Returns a `run_id` you can use t
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#list-available-twins) to discover available names. |
+| `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#get-list-available-twins) to discover available names. |
 | `ttl_minutes` | `integer` | No | `60` | Time-to-live in minutes before the twins are automatically torn down. Range: `1`–`480`. |
 | `scenario` | `string` | No | — | Scenario name to pre-seed the twins with sample data. |
 
@@ -373,7 +287,7 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
 | `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
 | `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
-### Get twin provision status
+### `GET` Get twin provision status
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -387,7 +301,7 @@ Poll the provisioning status of a twin quickstart session. Once the status is `r
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `run_id` | `string` | UUID of the provisioning session returned from [Provision twins](#provision-twins). |
+| `run_id` | `string` | UUID of the provisioning session returned from [Provision twins](#post-provision-twins). |
 
 **Example request**
 
@@ -471,7 +385,7 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
 | `401` | Invalid or expired token. |
 | `404` | `Run not found` |
 
-### Extend twin provision TTL
+### `POST` Extend twin provision TTL
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -524,117 +438,9 @@ curl -X POST https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-789
 
 ---
 
-## Twin admin endpoints
+## Run management
 
-Each provisioned twin exposes admin endpoints on its `admin_url` for inspecting and managing twin state. These endpoints do not require authentication.
-
-### Get twin state
-
-```bash
-GET <admin_url>/admin/state
-```
-
-Return the full internal state of the twin as a JSON object. The shape varies by twin and includes all stored resources (users, channels, files, etc.).
-
-### Reset twin state
-
-```bash
-POST <admin_url>/admin/reset
-```
-
-Reset the twin to its initial seed state, discarding all changes made during the session.
-
-**Request body** (optional)
-
-Pass an empty JSON object `{}` or omit the body entirely.
-
-**Response**
-
-```json
-{"ok": true}
-```
-
-### Advance twin clock
-
-```bash
-POST <admin_url>/admin/clock/advance
-```
-
-Advance the twin's virtual clock. Useful for testing time-dependent behavior like token expiry or scheduled events.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `seconds` | `integer` | Yes | Number of seconds to advance the virtual clock. |
-
-**Response**
-
-```json
-{"ok": true}
-```
-
-<Note>The GitHub twin uses `POST /admin/clock` with a `{"seconds": N}` body instead of `/admin/clock/advance`.</Note>
-
-### Get stub hits (GitHub twin)
-
-```bash
-GET <admin_url>/admin/stub-hits
-```
-
-Return a summary of all calls to stubbed (mock) endpoints since the last clear. Only available on the GitHub twin. See [stub alerting](/concepts/digital-twins#stub-alerting) for details on how stub responses are marked.
-
-**Response**
-
-```json
-{
-  "total_hits": 5,
-  "unique_endpoints": 2,
-  "summary": [
-    {"endpoint": "GET /repos/{owner}/{repo}/topics", "hits": 3},
-    {"endpoint": "GET /repos/{owner}/{repo}/languages", "hits": 2}
-  ],
-  "recent": [
-    {
-      "method": "GET",
-      "path_template": "/repos/{owner}/{repo}/topics",
-      "actual_path": "/repos/acme/web-app/topics",
-      "timestamp": "2026-03-21T12:00:00Z"
-    }
-  ]
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `total_hits` | `integer` | Total number of stub endpoint calls since the last clear. |
-| `unique_endpoints` | `integer` | Number of distinct stubbed endpoints called. |
-| `summary` | `array` | Deduplicated list of endpoints sorted by hit count (descending). |
-| `summary[].endpoint` | `string` | HTTP method and path template. |
-| `summary[].hits` | `integer` | Number of calls to this endpoint. |
-| `recent` | `array` | Up to 20 most recent stub hits. |
-| `recent[].method` | `string` | HTTP method. |
-| `recent[].path_template` | `string` | Path template from the API spec. |
-| `recent[].actual_path` | `string` | Actual request path. |
-| `recent[].timestamp` | `string` | ISO 8601 timestamp from the twin's virtual clock. |
-
-### Clear stub hits (GitHub twin)
-
-```bash
-POST <admin_url>/admin/stub-hits/clear
-```
-
-Clear the stub hit log. Only available on the GitHub twin.
-
-**Response**
-
-```json
-{"ok": true}
-```
-
----
-
-### Cancel a validation run
+### `POST` Cancel a validation run
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -663,9 +469,9 @@ Cancel a running validation.
 | `401` | Invalid or expired token. |
 | `404` | `Validation run not found` |
 
-### Stream validation results
+### `GET` Stream validation results
 
-<Note>Requires JWT authentication.</Note>
+<Note>Accepts both API key and JWT authentication.</Note>
 
 ```bash
 GET /validate/{run_id}/results
@@ -685,15 +491,15 @@ Server-sent event (SSE) stream of live validation step results. Each event is a 
 |--------|--------|
 | `401` | Invalid or expired token. |
 
-### Approve a validation story
+### `GET` Get run details
 
-<Note>Requires JWT authentication.</Note>
+<Note>Accepts both API key and JWT authentication.</Note>
 
 ```bash
-POST /validate/{run_id}/approve
+GET /runs/{run_id}
 ```
 
-Approve the generated validation story and dispatch the run for execution. The run must be in `awaiting_approval` or `generating_story` status. You can optionally include a modified story or attack plan.
+Get full details of a validation or scan run.
 
 **Path parameters**
 
@@ -701,288 +507,89 @@ Approve the generated validation story and dispatch the run for execution. The r
 |-----------|------|-------------|
 | `run_id` | `string` | UUID of the validation run. |
 
-**Request body**
+**Example request**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `story_json` | `object` | Yes | The validation story to approve. |
-| `attack_plan_json` | `object` | No | Override attack plan. If omitted, the generated plan is used. |
+```bash
+curl "https://api.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
 
 **Response**
 
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "running",
-  "environment_url": "https://env-abc123.argalabs.com"
-}
-```
+The response includes the full run state. Key fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `id` | `string` | Run identifier. |
+| `session_id` | `string \| null` | Chat session associated with this run. |
+| `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
+| `pr_url` | `string` | Pull request URL, if applicable. |
+| `frontend_url` | `string` | Base URL of the frontend under test. |
+| `run_type` | `string` | Type of run. |
+| `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). |
+| `prompt` | `string \| null` | The prompt that initiated the run. |
+| `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
+| `twins` | `array \| null` | List of digital twin services used in the run. |
+| `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
+| `git_branch` | `string \| null` | Branch name. |
+| `commit_sha` | `string \| null` | Commit SHA. |
+| `story_json` | `object \| null` | Generated user story with steps and coverage matrix. |
+| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
+| `step_summaries` | `array \| null` | Summarized step results. Each object includes `title`, `status`, `details`, `step_number`, and `step_numbers`. |
+| `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
+| `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. |
+| `created_at` | `string \| null` | ISO 8601 timestamp. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Validation run not found` |
+
+### `GET` Get a run artifact
+
+<Note>Accepts JWT authentication or a `token` query parameter.</Note>
+
+```bash
+GET /validate/{run_id}/artifacts/{filename}
+```
+
+Retrieve an artifact (such as a screenshot) from a validation or scan run. Returns a redirect to a signed download URL that expires after 60 minutes.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
 | `run_id` | `string` | UUID of the validation run. |
-| `status` | `string` | Updated run status after approval. |
-| `environment_url` | `string \| null` | URL of the provisioned sandbox environment, if applicable. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `409` | `Validation run not found` |
-| `409` | `Cannot approve run in status: {status}` (includes the current run status) |
-
----
-
-## PR validation story
-
-### Start a PR validation with story generation
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /validate/start
-```
-
-Start a validation run for a pull request and stream story generation progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `pr_url` | `string` | Yes | — | Full GitHub pull request URL. |
-| `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
-| `context_notes` | `string` | No (required on free plan) | — | Additional instructions or context for the validation. Free plan users must provide context notes describing what to test — omitting them returns a `403` error. |
-| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
-| `repo` | `string` | No | — | Repository in `owner/repo` format. Auto-derived from `pr_url` when omitted. |
+| `filename` | `string` | Path of the artifact within the run (e.g. `screenshot.png`). |
 
 **Example request**
 
 ```bash
-curl -N -X POST https://api.argalabs.com/validate/start \
+curl -L "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/artifacts/screenshot.png" \
   -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pr_url": "https://github.com/acme/web-app/pull/42",
-    "frontend_url": "http://localhost:3000",
-    "context_notes": "focus on the checkout flow changes"
-  }'
+  -o screenshot.png
 ```
 
-**SSE events**
+**Response**
 
-| Event type | Description |
-|------------|-------------|
-| `investigating` | The agent is inspecting the PR. Includes `tool` and `hop` fields. |
-| `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
-| `story_text` | Human-readable story text. Includes `content` and `run_id`. |
-| `attack_plan_draft` | Generated attack plan, if applicable. Includes `attack_plan` and `run_id`. |
-| `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message`. |
+`302` redirect to a signed URL for the artifact.
 
 **Errors**
 
 | Status | Detail |
 |--------|--------|
-| `400` | `GitHub integration required for validation.` |
-| `400` | Invalid runtime profile for the pull request. |
-| `401` | Invalid or expired token. |
-| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
-| `404` | `Session not found` (when `session_id` is provided but not found) |
-
-### Start a branch validation with story generation
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /validate/start-branch
-```
-
-Start a validation run for a branch and stream story generation progress via server-sent events (SSE). The response includes `X-Session-Id` and `X-Run-Id` headers. This is the branch equivalent of [Start a PR validation with story generation](#start-a-pr-validation-with-story-generation) — it deploys and validates a branch directly instead of a pull request.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
-| `branch` | `string` | Yes | — | Branch to deploy and validate. |
-| `frontend_url` | `string` | No | `http://localhost:3000` | Base URL of the frontend under test. |
-| `context_notes` | `string` | No (required on free plan) | — | Additional instructions or context for the validation. Free plan users must provide context notes describing what to test — omitting them returns a `403` error. |
-| `session_id` | `string` | No | — | UUID of an existing chat session to attach to. A new session is created when omitted. |
-
-**Example request**
-
-```bash
-curl -N -X POST https://api.argalabs.com/validate/start-branch \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "repo": "acme/web-app",
-    "branch": "feature/checkout",
-    "frontend_url": "http://localhost:3000",
-    "context_notes": "focus on the checkout flow changes"
-  }'
-```
-
-**SSE events**
-
-| Event type | Description |
-|------------|-------------|
-| `investigating` | The agent is inspecting the branch. Includes `tool` and `hop` fields. |
-| `sources_found` | Relevant source files identified. Includes `sources` array. |
-| `story_draft` | Generated validation story. Includes `story` object, `run_id`, and `coverage_manifest` (object or null). |
-| `story_text` | Human-readable story text. Includes `content` and `run_id`. |
-| `done` | Story generation complete. Includes `run_id`. |
-| `error` | An error occurred during story generation. Includes `message`. |
-
-<Note>Unlike [Start a PR validation with story generation](#start-a-pr-validation-with-story-generation), this endpoint does not emit `attack_plan_draft` events.</Note>
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `GitHub integration required for validation.` |
-| `400` | `A branch is required.` |
-| `400` | Invalid repository or runtime profile configuration. |
-| `401` | Invalid or expired token. |
-| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
-| `404` | `Session not found` (when `session_id` is provided but not found) |
-
----
-
-## Sandbox deployment
-
-### Deploy a branch
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /validate/deploy
-```
-
-Deploy a branch to an isolated sandbox environment. Returns a server-sent event (SSE) stream. The response includes `X-Session-Id` and `X-Run-Id` headers.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
-| `branch` | `string` | Yes | — | Branch to deploy. |
-| `twins` | `array of string` | No | `[]` | Digital twin services to include in the sandbox (e.g. `box`, `discord`, `dropbox`, `google_calendar`, `google_drive`, `notion`, `slack`, `stripe`, `unified`, `unstructured`). |
-
-**Example request**
-
-```bash
-curl -N -X POST https://api.argalabs.com/validate/deploy \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "repo": "acme/web-app",
-    "branch": "feature/checkout",
-    "twins": ["slack", "stripe"]
-  }'
-```
-
-**SSE events**
-
-| Event type | Description |
-|------------|-------------|
-| `run_created` | Sandbox run created. Includes `run_id`. |
-| `provisioning` | The sandbox environment is being set up. Includes `message`. |
-| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
-| `deployment_building` | Building the application image. Includes `job_id`. |
-| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
-| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
-| `error` | An error occurred during deployment. |
-
-The `environment_ready` event payload includes:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
-| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `A repository is required.` |
-| `400` | `A branch is required.` |
-| `400` | `GitHub integration required for deployment.` |
-| `401` | Invalid or expired token. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
-
-### Deploy a pull request
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /validate/deploy-pr
-```
-
-Deploy a pull request to an isolated sandbox environment. Returns a server-sent event (SSE) stream. The response includes `X-Session-Id` and `X-Run-Id` headers.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `pr_url` | `string` | Yes | Full GitHub pull request URL. |
-| `repo` | `string` | No | Repository in `owner/repo` format. Auto-derived from `pr_url` when omitted. |
-
-**Example request**
-
-```bash
-curl -N -X POST https://api.argalabs.com/validate/deploy-pr \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pr_url": "https://github.com/acme/web-app/pull/42"
-  }'
-```
-
-**SSE events**
-
-| Event type | Description |
-|------------|-------------|
-| `run_created` | Sandbox run created. Includes `run_id`. |
-| `provisioning` | The sandbox environment is being set up. Includes `message`. |
-| `deployment_preparing` | Rendering the deployment bundle. Includes `deployment_id`. |
-| `deployment_building` | Building the application image. Includes `job_id`. |
-| `deployment_waiting_for_vm` | Leasing a warm VM from the pool. |
-| `deployment_deploying` | Deploying the built image onto the VM. Includes `job_id`. |
-| `environment_ready` | Sandbox environment is provisioned and ready. Includes `environment_url` and `surface_urls`. |
-| `error` | An error occurred during deployment. |
-
-The `environment_ready` event payload includes:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `environment_url` | `string` | Public URL of the primary sandbox application. Hosted on `sandbox.argalabs.com`. |
-| `surface_urls` | `object` | Map of service names to their public sandbox URLs (e.g. `{"app": "https://r<id>.sandbox.argalabs.com", "slack": "https://r<id>--slack.sandbox.argalabs.com"}`). |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `Unable to determine repository from PR URL.` |
-| `400` | `GitHub integration required for deployment.` |
-| `400` | Invalid runtime profile for the pull request (e.g. missing or malformed configuration). |
-| `401` | Invalid or expired token. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
+| `401` | `Authentication required` |
+| `404` | `Validation run not found` |
+| `404` | `Artifact not found` |
+| `500` | `Failed to retrieve artifact` |
 
 ---
 
 ## PR validation
 
-### Start a PR validation
+### `POST` Start a PR validation
 
 <Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
@@ -1036,173 +643,7 @@ curl -X POST https://api.argalabs.com/validation/pr \
 | `401` | Invalid or expired token. |
 | `403` | Automatic PR validation requires a Team or Paid plan. |
 
-### Install GitHub App for a repository
-
-<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
-
-```bash
-POST /validation/github/install
-```
-
-Install or re-install the Arga GitHub App webhook for a repository so that Arga can listen for PR and push events.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `repo` | `string` | Yes | Repository in `owner/repo` format. |
-
-**Response**
-
-```json
-{
-  "repo": "acme/web-app",
-  "webhook_id": "123456",
-  "enabled": true
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `repo` | `string` | Repository in `owner/repo` format. |
-| `webhook_id` | `string` | Identifier for the installed webhook. |
-| `enabled` | `boolean` | Whether the installation is active. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | Invalid repository or configuration. |
-| `401` | Invalid or expired token. |
-| `403` | Automatic PR validation requires a Team or Paid plan. |
-| `409` | GitHub re-authorization required. |
-
-### Get repository validation config
-
-<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
-
-```bash
-GET /validation/github/config
-```
-
-Retrieve the current validation configuration for a repository.
-
-**Query parameters**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `repo` | `string` | Yes | Repository in `owner/repo` format. |
-
-**Response**
-
-```json
-{
-  "repo": "acme/web-app",
-  "installed": true,
-  "installation_id": "12345",
-  "enabled": true,
-  "trigger_mode": "pr",
-  "branch": null,
-  "default_branch": "main",
-  "custom_instructions": null,
-  "comment_on_pr": true
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `repo` | `string` | Repository in `owner/repo` format. |
-| `installed` | `boolean` | Whether the GitHub App is installed for this repository. |
-| `installation_id` | `string \| null` | GitHub App installation identifier. |
-| `enabled` | `boolean` | Whether automatic validation is enabled. |
-| `trigger_mode` | `string` | Trigger mode: `pr` or `branch`. Defaults to `pr`. |
-| `branch` | `string \| null` | Branch name when using `branch` trigger mode. |
-| `default_branch` | `string \| null` | Default branch of the repository. |
-| `custom_instructions` | `string \| null` | Custom instructions applied to every validation run. |
-| `comment_on_pr` | `boolean` | Whether Arga posts a comment summary on pull requests. Defaults to `true`. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | Automatic PR validation requires a Team or Paid plan. |
-
-### Save repository validation config
-
-<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
-
-```bash
-POST /validation/github/config
-```
-
-Create or update the validation configuration for a repository. The GitHub App must be installed before you can save settings.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
-| `trigger_mode` | `string` | Yes | — | Trigger mode: `pr` or `branch`. |
-| `branch` | `string` | No | — | Branch name. Required when `trigger_mode` is `branch`. |
-| `custom_instructions` | `string` | No | — | Custom instructions applied to every validation run. |
-| `comment_on_pr` | `boolean` | No | `true` | Whether Arga posts a comment summary on pull requests. |
-
-**Response**
-
-Returns the same shape as [Get repository validation config](#get-repository-validation-config).
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `Choose a branch for branch-triggered validation.` |
-| `401` | Invalid or expired token. |
-| `403` | Automatic PR validation requires a Team or Paid plan. |
-| `409` | `Install the Arga GitHub App on this repository before saving validation settings.` |
-
-### List enabled repositories
-
-<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
-
-```bash
-GET /validation/github/enabled
-```
-
-List all repositories with automatic validation enabled for the current user.
-
-**Response**
-
-```json
-[
-  {
-    "repo": "acme/web-app",
-    "installation_id": "12345",
-    "trigger_mode": "pr",
-    "branch": null,
-    "default_branch": "main",
-    "comment_on_pr": true
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `repo` | `string` | Repository in `owner/repo` format. |
-| `installation_id` | `string \| null` | GitHub App installation identifier. |
-| `trigger_mode` | `string` | Trigger mode: `pr` or `branch`. |
-| `branch` | `string \| null` | Branch name when using `branch` trigger mode. |
-| `default_branch` | `string \| null` | Default branch of the repository. |
-| `comment_on_pr` | `boolean` | Whether Arga posts a comment summary on pull requests. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | Automatic PR validation requires a Team or Paid plan. |
-
-### List PR validation runs
+### `GET` List PR validation runs
 
 <Note>Accepts both API key and JWT authentication. Requires a Team or Paid plan.</Note>
 
@@ -1277,118 +718,9 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 
 ---
 
-## Get run details
-
-<Note>Accepts both API key and JWT authentication.</Note>
-
-```bash
-GET /runs/{run_id}
-```
-
-Get full details of a validation or scan run. This endpoint is also available at `GET /validate/{run_id}` (JWT only).
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `run_id` | `string` | UUID of the validation run. |
-
-**Example request**
-
-```bash
-curl "https://api.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890" \
-  -H "Authorization: Bearer $ARGA_API_KEY"
-```
-
-**Response**
-
-The response includes the full run state. Key fields:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Run identifier. |
-| `session_id` | `string \| null` | Chat session associated with this run. |
-| `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
-| `pr_url` | `string` | Pull request URL, if applicable. |
-| `frontend_url` | `string` | Base URL of the frontend under test. |
-| `run_type` | `string` | Type of run. |
-| `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). This is distinct from the runner mode (`visual` or `dom`), which is found inside `runtime_profile`. |
-| `prompt` | `string \| null` | The prompt that initiated the run. |
-| `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
-| `surface_urls` | `object \| null` | Map of service names to their proxied URLs in the sandbox. |
-| `raw_surface_urls` | `object \| null` | Reserved for future use. Currently always `null`. |
-| `twins` | `array \| null` | List of digital twin services used in the run. |
-| `runtime_profile` | `object \| null` | Runtime profile configuration for the run. |
-| `context_notes` | `string \| null` | Additional context provided when the run was created. |
-| `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
-| `git_branch` | `string \| null` | Branch name. |
-| `commit_sha` | `string \| null` | Commit SHA. |
-| `github_pr_number` | `integer \| null` | Pull request number. |
-| `github_check_run_id` | `string \| null` | GitHub check run identifier. |
-| `github_check_run_url` | `string \| null` | URL of the GitHub check run. |
-| `event_log_json` | `array \| null` | Chronological event log for the run. |
-| `story_json` | `object \| null` | Generated user story with steps, coverage matrix, and preconditions. |
-| `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for visual validation. |
-| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `story_id`, `title`, `status`, `tested_summary`, `child_run_id`, `summary`, `issues`, `story_json`, `results_json`, `started_at`, and `completed_at`. Each `issues` entry includes `step_number` (`integer \| null`), `description` (`string`), `error_detail` (`string \| null`), and `screenshot_url` (`string \| null`). |
-| `attack_plan_json` | `object \| null` | Red-team attack plan, if this is a scan run. |
-| `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
-| `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
-| `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. Each object includes `worker_key` (`string`), `worker_kind` (`string`), `status` (`string`), `shard` (`object \| null`), `summary` (`object \| null`), `error_message` (`string \| null`), `anomaly_count` (`integer`), `started_at` (`string \| null`), and `completed_at` (`string \| null`). |
-| `created_at` | `string \| null` | ISO 8601 timestamp. |
-| `login_identifier` | `string \| null` | Login identifier used during the run. |
-| `step_summaries` | `array \| null` | Summarized step results. Each object includes `title` (`string`), `status` (`string \| null`), `details` (`string \| null`), `step_number` (`integer \| null`), and `step_numbers` (`array of integer \| null`). |
-| `coverage_manifest` | `object \| null` | Coverage manifest describing the validation coverage matrix for the run. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Validation run not found` |
-
-### Get a run artifact
-
-<Note>Accepts JWT authentication or a `token` query parameter.</Note>
-
-```bash
-GET /validate/{run_id}/artifacts/{filename}
-```
-
-Retrieve an artifact (such as a screenshot) from a validation or scan run. Returns a redirect to a signed download URL that expires after 60 minutes.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `run_id` | `string` | UUID of the validation run. |
-| `filename` | `string` | Path of the artifact within the run (e.g. `screenshot.png`). |
-
-**Example request**
-
-```bash
-curl -L "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/artifacts/screenshot.png" \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -o screenshot.png
-```
-
-**Response**
-
-`302` redirect to a signed URL for the artifact.
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | `Authentication required` |
-| `404` | `Validation run not found` |
-| `404` | `Artifact not found` |
-| `500` | `Failed to retrieve artifact` |
-
----
-
 ## Red-team scans
 
-### Start a scan
+### `POST` Start a scan
 
 <Note>Requires JWT authentication.</Note>
 
@@ -1405,18 +737,16 @@ Start a red-team scan against a deployed application.
 | `url` | `string` | Yes | — | Target URL to scan. Must be a public HTTP or HTTPS URL. |
 | `focus` | `string` | No | — | Text description to narrow the scan scope. |
 | `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. The web app always uses the `visual` runner. |
+| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
 | `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
 | `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
-| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs (string keys and string values) for login fields. |
+| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
 | `credentials[].permissions_description` | `string` | No | `""` | Description of what this role can access. |
 | `manifest` | `object` | No | — | Application manifest describing routes, roles, and invariants. |
 | `manifest.url` | `string` | Yes | — | Base URL of the application. |
-| `manifest.routes` | `array` | No | `[]` | List of route entries. Each includes `path`, `description`, `auth_required` (boolean, default `false`), and `required_role`. |
-| `manifest.roles` | `array` | No | `[]` | List of role definitions. Each includes `name`, `credentials` (key-value string pairs, defaults to `{}`), and `permissions_description` (defaults to `""`). |
-| `manifest.invariants` | `array` | No | `[]` | Security invariants. Each includes `rule` (text description) and `category` (one of `auth`, `xss`, `data_leak`, `500`, `access_control`, `csrf`, `injection`, `idor`, `open_redirect`). |
-| `manifest.input_fields` | `array` | No | `[]` | Input targets. Each includes `route`, `selector` (defaults to `""`), `description` (defaults to `""`), and `field_type` (defaults to `"text"`). |
-| `manifest.known_flows` | `array` | No | `[]` | Known user flows. Each includes `name` and `steps` (list of objects with `action`, `route`, `details`). |
+| `manifest.routes` | `array` | No | `[]` | List of route entries. Each includes `path`, `description`, `auth_required` (boolean), and `required_role`. |
+| `manifest.roles` | `array` | No | `[]` | List of role definitions. Each includes `name`, `credentials`, and `permissions_description`. |
+| `manifest.invariants` | `array` | No | `[]` | Security invariants. Each includes `rule` (text) and `category` (one of `auth`, `xss`, `data_leak`, `500`, `access_control`, `csrf`, `injection`, `idor`, `open_redirect`). |
 
 **Example request**
 
@@ -1459,129 +789,7 @@ curl -X POST https://api.argalabs.com/redteam/start \
 | `400` | `A valid public http(s) URL is required.` |
 | `401` | Invalid or expired token. |
 
-### Start a branch-based scan
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /redteam/start-branch
-```
-
-Start a red-team scan against a branch deployed to a sandbox environment.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `repo` | `string` | Yes | — | Repository in `owner/repo` format. |
-| `branch` | `string` | Yes | — | Branch to deploy and scan. |
-| `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. Uses the same format as [Start a scan](#start-a-scan). |
-| `focus` | `string` | No | — | Text description to narrow the scan scope. |
-| `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. The web app always uses the `visual` runner. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/redteam/start-branch \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "repo": "acme/web-app",
-    "branch": "feature/checkout",
-    "focus": "authentication and payment flows",
-    "action_budget": 150
-  }'
-```
-
-**Response**
-
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "planning"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `run_id` | `string` | Unique identifier for the scan run. |
-| `status` | `string` | Initial status. Always `planning`. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `GitHub integration required for PR run planning.` |
-| `400` | `A branch is required.` |
-| `400` | Invalid repository or runtime profile configuration. |
-| `401` | Invalid or expired token. |
-
-### Get the attack plan
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /redteam/{run_id}/plan
-```
-
-Retrieve the generated attack plan for review before execution.
-
-**Response**
-
-The attack plan includes the target manifest, campaigns, and action budgets. Key fields:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `manifest` | `object` | Discovered application manifest with routes, roles, and invariants. |
-| `dom_campaigns` | `array` | DOM-based attack campaigns. Each object includes `name`, `attack_category`, `target_routes` (default `[]`), `target_role`, `flow_steps` (default `[]`), `interaction_goals` (default `[]`), `payloads` (default `[]`), and `action_budget` (default `50`). |
-| `visual_campaigns` | `array` | Visual (browser-driven) attack campaigns. Each object includes `name`, `attack_category`, `flow_steps` (default `[]`), `target_role`, `invariants_to_probe` (default `[]`), and `action_budget` (default `50`). |
-| `exploration_shards` | `array` | Exploration shards for reconnaissance across application surfaces. Defaults to `[]`. Each shard includes `shard_key`, `worker_kind` (`dom` or `visual`), `dom_campaign_names`, `visual_campaign_names`, `route_scope`, `target_role`, `attack_categories`, and `action_budget` (defaults to `50`). |
-| `total_action_budget` | `integer` | Total action budget across all campaigns. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Red-team run not found` |
-| `409` | `Scan plan is not ready yet` |
-
-### Approve the attack plan
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /redteam/{run_id}/approve
-```
-
-Approve the attack plan and start execution. The run must be in `awaiting_approval` or `planning` status. You can optionally provide a modified plan to override the generated one — if the run is still in `planning` status you must provide an `attack_plan_json`.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `attack_plan_json` | `object` | No | Override attack plan. If omitted, the generated plan is used. |
-
-**Response**
-
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "queued"
-}
-```
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Red-team run not found` |
-| `409` | `Cannot approve run in status {status}` (includes the current run status) |
-| `409` | `Scan plan is not ready yet` |
-
-### Get the scan report
+### `GET` Get the scan report
 
 <Note>Requires JWT authentication.</Note>
 
@@ -1623,24 +831,7 @@ Get the final report after a scan completes. If the scan is still in progress an
 | `401` | Invalid or expired token. |
 | `404` | `Red-team run not found` |
 
-### Stream scan results
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /redteam/{run_id}/results
-```
-
-Server-sent event (SSE) stream of live scan results. Each event is a JSON object sent as `data: {JSON}\n\n`.
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Red-team run not found` |
-
-### Cancel a scan
+### `POST` Cancel a scan
 
 <Note>Requires JWT authentication.</Note>
 
@@ -1663,345 +854,11 @@ Cancel a running scan.
 | `401` | Invalid or expired token. |
 | `404` | `Red-team run not found` |
 
-### Create Linear issues from scan findings
-
-<Note>Requires JWT authentication. Requires a [Linear integration](/integrations).</Note>
-
-```bash
-POST /redteam/{run_id}/create-linear-issues
-```
-
-Create Linear issues from red-team scan findings.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `run_id` | `string` | UUID of the red-team scan run. |
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `team_id` | `string` | No | Linear team ID. If omitted, the default team is used. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/redteam/a1b2c3d4-e5f6-7890-abcd-ef1234567890/create-linear-issues \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"team_id": null}'
-```
-
-**Response**
-
-Returns an array of created issue objects.
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | Invalid run or Linear configuration. |
-| `401` | Invalid or expired token. |
-
----
-
-## Create Linear issues from validation failures
-
-<Note>Requires JWT authentication. Requires a [Linear integration](/integrations).</Note>
-
-```bash
-POST /validate/{run_id}/create-linear-issues
-```
-
-Create Linear issues from failed validation steps.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `run_id` | `string` | UUID of the validation run. |
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `team_id` | `string` | No | Linear team ID. If omitted, the default team is used. |
-| `step_numbers` | `array of integer` | No | Specific step numbers to create issues for. If omitted, issues are created for all failed steps. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/create-linear-issues \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"step_numbers": [1, 3]}'
-```
-
-**Response**
-
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "issues": [
-    {
-      "issue_id": "LIN-123",
-      "step_number": 1,
-      "title": "Login button unresponsive"
-    }
-  ]
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `run_id` | `string` | UUID of the validation run. |
-| `issues` | `array` | List of created Linear issue objects. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | Invalid run or Linear configuration. |
-| `401` | Invalid or expired token. |
-
----
-
-## Chat
-
-### Check chat access
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /chat/access
-```
-
-Check whether chat requires a password and whether the current request is authorized.
-
-**Headers**
-
-| Header | Type | Required | Description |
-|--------|------|----------|-------------|
-| `X-Chat-Password` | `string` | No | Chat password, if the instance requires one. |
-
-**Response**
-
-```json
-{"password_required": false, "authorized": true}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `password_required` | `boolean` | Whether the chat feature requires a password. |
-| `authorized` | `boolean` | Whether the provided password (if any) is valid. Always `true` when no password is required. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Send a message
-
-<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
-
-```bash
-POST /chat/message
-```
-
-Send a message to the investigation agent. Returns a streaming SSE response by default.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `content` | `string` | Yes | — | The message to send. |
-| `session_id` | `string` | No | — | UUID of an existing chat session. A new session is created when omitted. |
-| `stream` | `boolean` | No | `true` | Whether to return a streaming SSE response. |
-| `repo` | `string` | No | — | Repository in `owner/repo` format to scope GitHub searches. |
-
-**Example request**
-
-```bash
-curl -N -X POST https://api.argalabs.com/chat/message \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "What errors are users seeing in Sentry this week?",
-    "stream": true
-  }'
-```
-
-**SSE events** (when `stream` is `true`)
-
-| Event type | Description |
-|------------|-------------|
-| `investigating` | The agent is calling a tool. Includes `tool` and `hop` fields. |
-| `sources_found` | Relevant sources identified. Includes `sources` array. |
-| `curating` | The agent is filtering results. Includes `total_results` field. |
-| `curated` | Filtering complete. Includes `kept` and `dropped` counts. |
-| `answer_delta` | Incremental text chunk. Includes `delta` field. |
-| `answer_done` | Answer complete. Includes `sources` array and `hops_used` count. |
-| `done` | Message fully persisted. Includes `message_id`. |
-| `error` | An error occurred. Includes `message`. |
-
-The response includes an `X-Session-Id` header with the session UUID.
-
-**Response** (when `stream` is `false`)
-
-```json
-{
-  "session_id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
-  "message_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "content": "Based on the Sentry data...",
-  "sources": [],
-  "hops_used": 3
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `session_id` | `string` | UUID of the chat session. |
-| `message_id` | `string` | UUID of the assistant's response message. |
-| `content` | `string` | The agent's response text. |
-| `sources` | `array` | Sources referenced in the response. |
-| `hops_used` | `integer` | Number of tool-use hops the agent performed. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `No tools connected. Connect at least one integration to start investigating.` |
-| `401` | Invalid or expired token. |
-| `404` | `Session not found` (when `session_id` is provided but not found) |
-
-### List chat sessions
-
-<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
-
-```bash
-GET /chat/sessions
-```
-
-List the current user's chat sessions, ordered by most recent first. Returns up to 50 sessions.
-
-**Response**
-
-```json
-[
-  {
-    "id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
-    "title": "Sentry error investigation",
-    "created_at": "2026-03-21T12:00:00",
-    "message_count": 5,
-    "mode": "chat",
-    "latest_validation_run": null
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Session UUID. |
-| `title` | `string \| null` | Auto-generated session title based on the first message. |
-| `created_at` | `string` | ISO 8601 timestamp. |
-| `message_count` | `integer` | Number of messages in the session. |
-| `mode` | `string` | Session mode (e.g. `chat`). |
-| `latest_validation_run` | `object \| null` | Summary of the most recent validation run in this session, if any. Includes `run_id`, `status`, `run_type`, `mode`, `pr_url`, `repo_full_name`, `git_branch`, `commit_sha`, `github_pr_number`, and `created_at`. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Get a chat session
-
-<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
-
-```bash
-GET /chat/sessions/{session_id}
-```
-
-Retrieve a chat session with its full message history and associated validation runs.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `session_id` | `string` | UUID of the chat session. |
-
-**Response**
-
-```json
-{
-  "id": "f0e1d2c3-b4a5-6789-0abc-def123456789",
-  "title": "Sentry error investigation",
-  "created_at": "2026-03-21T12:00:00",
-  "mode": "chat",
-  "messages": [
-    {
-      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "role": "user",
-      "content": "What errors are users seeing?",
-      "sources": [],
-      "created_at": "2026-03-21T12:00:00"
-    }
-  ],
-  "validation_runs": []
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Session UUID. |
-| `title` | `string \| null` | Session title. |
-| `created_at` | `string` | ISO 8601 timestamp. |
-| `mode` | `string` | Session mode. |
-| `messages` | `array` | Chronological list of messages. Each includes `id`, `role` (`user` or `assistant`), `content`, `sources`, and `created_at`. |
-| `validation_runs` | `array` | Validation runs associated with this session. Each object includes `id`, `session_id`, `status`, `pr_url`, `frontend_url`, `run_type`, `mode`, `prompt`, `environment_url`, `surface_urls`, `raw_surface_urls`, `twins`, `runtime_profile`, `context_notes`, `event_log_json`, `story_json`, `attack_plan_json`, `redteam_report_json`, `results_json`, `worker_progress`, `created_at`, `login_identifier`, and `step_summaries`. This is a subset of the [run details](#get-run-details) response — it does not include `repo_full_name`, `git_branch`, `commit_sha`, `github_pr_number`, `github_check_run_id`, `github_check_run_url`, `auto_story_bundle_json`, or `auto_visual_reports`. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Session not found` |
-
-### Delete a chat session
-
-<Note>Requires JWT authentication. Requires chat password when enabled.</Note>
-
-```bash
-DELETE /chat/sessions/{session_id}
-```
-
-Delete a chat session and all associated messages.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `session_id` | `string` | UUID of the chat session. |
-
-**Response**
-
-`204 No Content`
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `Session not found` |
-
 ---
 
 ## Authentication endpoints
 
-### Start device authorization
+### `POST` Start device authorization
 
 ```bash
 POST /auth/device/start
@@ -2024,7 +881,7 @@ Begin the CLI device authorization flow. Returns a device code for the user to a
 }
 ```
 
-### Poll device authorization
+### `POST` Poll device authorization
 
 ```bash
 POST /auth/device/poll
@@ -2062,7 +919,7 @@ Poll the status of a pending device authorization.
 | `409` | `` Device code already used. Run `arga login` again. `` |
 | `410` | `` Device code expired. Run `arga login` again. `` |
 
-### Approve device authorization
+### `POST` Approve device authorization
 
 <Note>Requires JWT authentication.</Note>
 
@@ -2094,7 +951,7 @@ Approve a pending device authorization request. Call this from the browser after
 | `409` | `Device code already approved` |
 | `410` | `` Device code expired. Run `arga login` again. `` |
 
-### Get current user
+### `GET` Get current user
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -2149,17 +1006,17 @@ Return the authenticated user's profile.
 | `api_key` | `string \| null` | The user's API key. |
 | `billing_plan` | `string` | Current billing plan: `free`, `team`, or `paid`. |
 | `plan_limits` | `object` | Plan-specific limits and usage for the current billing period. |
-| `plan_limits.validation_runs_limit` | `integer \| null` | Monthly validation run limit. An integer for free and team plans, `null` for paid plans (unlimited). |
+| `plan_limits.validation_runs_limit` | `integer \| null` | Monthly validation run limit. `null` for paid plans (unlimited). |
 | `plan_limits.validation_runs_used` | `integer` | Validation runs consumed in the current monthly billing period. |
 | `plan_limits.validation_runs_remaining` | `integer \| null` | Validation runs remaining this month. `null` for paid plans (unlimited). |
-| `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for free plan, `null` for team and paid plans (unlimited). |
-| `plan_limits.ci_checks_limit` | `integer \| null` | Monthly CI check limit. Only applies to team plans. `null` for free and paid plans. |
+| `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for free plan, `null` for team/paid (unlimited). |
+| `plan_limits.ci_checks_limit` | `integer \| null` | Monthly CI check limit. Only applies to team plans. |
 | `plan_limits.ci_checks_used` | `integer` | CI checks consumed in the current monthly billing period. |
 | `plan_limits.ci_checks_remaining` | `integer \| null` | CI checks remaining this month. `null` when no limit applies. |
-| `plan_limits.prompt_required` | `boolean` | Whether the user's plan requires a test prompt for validation endpoints. `true` for free plan users, `false` for team and paid plans. |
-| `twin_bootups_used` | `integer` | Number of twin bootups consumed in the current monthly billing period. |
-| `twin_bootups_limit` | `integer \| null` | Monthly twin bootup limit. `10` for free-tier users, `null` for team and paid users (unlimited). |
-| `twin_bootups_remaining` | `integer \| null` | Twin bootups remaining this month. `null` for team and paid users (unlimited). Resets at the start of each calendar month. |
+| `plan_limits.prompt_required` | `boolean` | Whether the user's plan requires a test prompt. `true` for free plan, `false` for team/paid. |
+| `twin_bootups_used` | `integer` | Twin bootups consumed in the current monthly billing period. |
+| `twin_bootups_limit` | `integer \| null` | Monthly twin bootup limit. `10` for free-tier, `null` for team/paid (unlimited). |
+| `twin_bootups_remaining` | `integer \| null` | Twin bootups remaining this month. `null` for team/paid (unlimited). |
 
 **Errors**
 
@@ -2167,7 +1024,7 @@ Return the authenticated user's profile.
 |--------|--------|
 | `401` | Invalid or expired token. |
 
-### Request email verification
+### `POST` Request email verification
 
 <Note>Requires JWT authentication.</Note>
 
@@ -2198,7 +1055,7 @@ Send a six-digit verification code to the specified email address. You can use t
 | `409` | `Email is already verified` — returned when the provided email matches the current verified email on the account. |
 | `429` | `Wait before requesting another verification code` |
 
-### Confirm email verification
+### `POST` Confirm email verification
 
 <Note>Requires JWT authentication.</Note>
 
@@ -2232,7 +1089,7 @@ Verify an email address using the six-digit code. If the verified address differ
 | `404` | `No active verification code found for that email` |
 | `429` | `Too many verification attempts. Request a new code` |
 
-### List CLI devices
+### `GET` List CLI devices
 
 <Note>Requires JWT authentication.</Note>
 
@@ -2257,7 +1114,7 @@ List all CLI API key devices for the current user.
 ]
 ```
 
-### Revoke a CLI device
+### `POST` Revoke a CLI device
 
 <Note>Accepts both API key and JWT authentication.</Note>
 
@@ -2285,825 +1142,3 @@ Revoke a CLI API key.
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `CLI device not found` |
-
----
-
-## Integrations
-
-### List integrations
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /integrations/
-```
-
-List all supported integration providers and their connection status for the current user.
-
-**Response**
-
-```json
-[
-  {
-    "provider": "github",
-    "connected": true,
-    "metadata": {"login": "octocat"},
-    "connected_at": "2026-03-21T12:00:00"
-  },
-  {
-    "provider": "sentry",
-    "connected": false,
-    "metadata": {},
-    "connected_at": null
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `provider` | `string` | Integration provider name (e.g. `github`, `slack`, `jira`, `linear`, `sentry`, `grafana`, `posthog`, `discord`). |
-| `connected` | `boolean` | Whether the integration is currently connected. |
-| `metadata` | `object` | Provider-specific metadata. Sensitive fields like tokens are excluded. |
-| `connected_at` | `string \| null` | ISO 8601 timestamp when the integration was connected. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Connect an API key integration
-
-<Note>Requires JWT authentication. Only available for providers that use API keys: `sentry`, `grafana`, `posthog`.</Note>
-
-```bash
-POST /integrations/{provider}/connect
-```
-
-Connect a provider that uses an API key or token instead of OAuth.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `provider` | `string` | Provider name. Must be one of: `sentry`, `grafana`, `posthog`. |
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `token` | `string` | Yes | — | API key or access token for the provider. |
-| `metadata` | `object` | No | `{}` | Additional provider-specific configuration (e.g. organization slug, project ID). |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/integrations/sentry/connect \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "sntrys_...",
-    "metadata": {"organization_slug": "my-org"}
-  }'
-```
-
-**Response** (`201 Created`)
-
-```json
-{"status": "connected", "provider": "sentry"}
-```
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | Provider uses OAuth — use `/auth/{provider}/connect` instead. |
-| `400` | Invalid credentials for the provider. |
-| `401` | Invalid or expired token. |
-
-### Disconnect an integration
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-DELETE /integrations/{provider}
-```
-
-Disconnect and remove a provider integration for the current user.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `provider` | `string` | Provider name to disconnect. |
-
-**Response**
-
-`204 No Content`
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Get GitHub connection status
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /integrations/github/status
-```
-
-Check the current status of the GitHub integration, including whether reauthentication is needed and which OAuth scopes are missing.
-
-**Response**
-
-```json
-{
-  "status": "connected",
-  "metadata": {"login": "octocat", "granted_scopes": "repo,read:org"},
-  "connected_at": "2026-03-21T12:00:00",
-  "missing_scopes": []
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | `string` | Connection status: `connected`, `disconnected`, or `reauth_required`. |
-| `metadata` | `object` | GitHub-specific metadata such as login and granted scopes. |
-| `connected_at` | `string \| null` | ISO 8601 timestamp when GitHub was connected. |
-| `missing_scopes` | `array of string` | OAuth scopes that are required but not yet granted. Empty when all scopes are present or when using GitHub App authentication. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `409` | GitHub reauthentication required. |
-| `502` | GitHub API error. |
-
-### List GitHub repositories
-
-<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
-
-```bash
-GET /integrations/github/repos
-```
-
-List repositories the authenticated user has push access to, ordered by most recent activity.
-
-**Response**
-
-```json
-[
-  {
-    "full_name": "acme/web-app",
-    "description": "Main web application",
-    "private": true,
-    "pushed_at": "2026-03-21T14:00:00Z"
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `full_name` | `string` | Repository in `owner/repo` format. |
-| `description` | `string` | Repository description. |
-| `private` | `boolean` | Whether the repository is private. |
-| `pushed_at` | `string \| null` | ISO 8601 timestamp of the most recent push. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | GitHub not connected. |
-| `401` | Invalid or expired token. |
-| `409` | GitHub reauthentication required. |
-| `502` | GitHub API error. |
-
-### List GitHub branches
-
-<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
-
-```bash
-GET /integrations/github/{owner}/{repo}/branches
-```
-
-List branches for a repository the authenticated user can access.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `owner` | `string` | Repository owner. |
-| `repo` | `string` | Repository name. |
-
-**Response**
-
-```json
-[
-  {
-    "name": "main",
-    "protected": true
-  },
-  {
-    "name": "feature/checkout",
-    "protected": false
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | `string` | Branch name. |
-| `protected` | `boolean` | Whether the branch is protected. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | GitHub not connected. |
-| `401` | Invalid or expired token. |
-| `409` | GitHub reauthentication required. |
-| `502` | GitHub API error. |
-
-### List GitHub pull requests
-
-<Note>Requires JWT authentication. Requires a connected GitHub integration.</Note>
-
-```bash
-GET /integrations/github/{owner}/{repo}/pulls
-```
-
-List open pull requests for a repository, ordered by most recently updated.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `owner` | `string` | Repository owner. |
-| `repo` | `string` | Repository name. |
-
-**Response**
-
-```json
-[
-  {
-    "number": 42,
-    "title": "Add checkout flow",
-    "state": "open",
-    "draft": false,
-    "html_url": "https://github.com/acme/web-app/pull/42",
-    "updated_at": "2026-03-21T14:30:00Z",
-    "author": "octocat",
-    "head_ref": "feature/checkout",
-    "base_ref": "main"
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `number` | `integer` | Pull request number. |
-| `title` | `string` | Pull request title. |
-| `state` | `string` | Pull request state (e.g. `open`). |
-| `draft` | `boolean` | Whether the pull request is a draft. |
-| `html_url` | `string` | URL of the pull request on GitHub. |
-| `updated_at` | `string \| null` | ISO 8601 timestamp of the last update. |
-| `author` | `string \| null` | GitHub login of the pull request author. |
-| `head_ref` | `string \| null` | Source branch name. |
-| `base_ref` | `string \| null` | Target branch name. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | GitHub not connected. |
-| `401` | Invalid or expired token. |
-| `409` | GitHub reauthentication required. |
-| `502` | GitHub API error. |
-
----
-
-## Billing
-
-### Create a checkout session
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /billing/stripe/checkout
-```
-
-Create a Stripe checkout session to subscribe to a paid plan. Returns a URL to redirect the user to Stripe's hosted checkout page.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `plan` | `string` | No | `paid` | Plan to subscribe to: `team` or `paid`. |
-
-**Response**
-
-```json
-{"url": "https://checkout.stripe.com/c/pay/cs_..."}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `url` | `string` | Stripe-hosted checkout URL. Redirect the user to this URL to complete payment. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `409` | `User already has a paid subscription` |
-| `502` | `Stripe checkout session did not return a URL` |
-| `503` | `Stripe secret key is not configured` or `Stripe price ID is not configured` |
-
-### Confirm a checkout session
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /billing/stripe/checkout/confirm
-```
-
-Confirm a completed Stripe checkout session and activate the subscription for the current user.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `session_id` | `string` | Yes | Stripe checkout session ID returned after successful payment. |
-
-**Response**
-
-```json
-{"billing_plan": "paid", "status": "complete"}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `billing_plan` | `string` | Updated billing plan for the user (e.g. `free`, `team`, `paid`). |
-| `status` | `string` | Checkout session status. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | Checkout session does not belong to the current user. |
-| `503` | `Stripe secret key is not configured` |
-
-### Create a billing portal session
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /billing/stripe/portal
-```
-
-Create a Stripe billing portal session so the user can manage their subscription, update payment methods, or cancel.
-
-**Response**
-
-```json
-{"url": "https://billing.stripe.com/p/session/..."}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `url` | `string` | Stripe-hosted billing portal URL. Redirect the user to this URL. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `User does not have a Stripe customer yet` |
-| `401` | Invalid or expired token. |
-| `502` | `Stripe billing portal did not return a URL` |
-| `503` | `Stripe secret key is not configured` |
-
----
-
-## Team workspaces
-
-Manage team workspaces, invite members by email, and control workspace membership. Workspaces are linked to a GitHub organization and an email domain — all members must belong to the GitHub org and have a verified email on the same domain.
-
-### List GitHub organizations
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /team/github-orgs
-```
-
-List all GitHub organizations the authenticated user belongs to, including organizations with app-access restrictions. Use this to populate a workspace creation form.
-
-**Response**
-
-```json
-[
-  {
-    "login": "arga-labs",
-    "avatar_url": "https://avatars.githubusercontent.com/u/12345678?v=4"
-  }
-]
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `login` | `string` | GitHub organization login. |
-| `avatar_url` | `string` | URL of the organization's avatar image. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Get workspace
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /team/workspace
-```
-
-Get the current user's workspace, including the member list. Returns `null` when the user does not belong to a workspace.
-
-**Response**
-
-```json
-{
-  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-  "name": "Arga Labs",
-  "github_org_login": "arga-labs",
-  "domain": "argalabs.com",
-  "owner_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "members": [
-    {
-      "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "github_login": "octocat",
-      "email": "octocat@argalabs.com",
-      "avatar_url": "https://avatars.githubusercontent.com/u/1",
-      "role": "owner",
-      "joined_at": "2026-03-21T12:00:00"
-    }
-  ],
-  "created_at": "2026-03-21T12:00:00"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Workspace identifier. |
-| `name` | `string` | Workspace display name, derived from the GitHub organization. |
-| `github_org_login` | `string` | GitHub organization login linked to this workspace. |
-| `domain` | `string` | Email domain associated with the workspace. |
-| `owner_id` | `string` | User identifier of the workspace owner. |
-| `members` | `array` | List of workspace members. |
-| `members[].user_id` | `string` | Member's user identifier. |
-| `members[].github_login` | `string` | Member's GitHub username. |
-| `members[].email` | `string \| null` | Member's email address. |
-| `members[].avatar_url` | `string \| null` | Member's avatar URL. |
-| `members[].role` | `string` | Role in the workspace: `owner` or `member`. |
-| `members[].joined_at` | `string` | ISO 8601 timestamp when the member joined. |
-| `created_at` | `string` | ISO 8601 timestamp when the workspace was created. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-
-### Create a workspace
-
-<Note>Requires JWT authentication. Requires a Team or Paid plan.</Note>
-
-```bash
-POST /team/workspace
-```
-
-Create a new workspace linked to a GitHub organization. The creator becomes the workspace owner. You must have a verified work email (personal email domains like `gmail.com` are not allowed).
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `github_org_login` | `string` | Yes | GitHub organization login to link to the workspace. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/team/workspace \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"github_org_login": "arga-labs"}'
-```
-
-**Response** (`201 Created`)
-
-Returns the same shape as [Get workspace](#get-workspace).
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `A verified email is required to create a workspace` |
-| `400` | `Personal email domains cannot be used for workspaces. Use a work email.` |
-| `401` | Invalid or expired token. |
-| `403` | `A team or paid plan is required to create a workspace` |
-| `403` | `You must be a member of this GitHub organization` |
-| `404` | `GitHub organization not found` |
-| `409` | `You already belong to a workspace` |
-| `409` | `A workspace for this GitHub organization already exists` |
-
-### Send an invite
-
-<Note>Requires JWT authentication. Only the workspace owner can send invites.</Note>
-
-```bash
-POST /team/invites
-```
-
-Send a workspace invite by email. The invitee must have an email on the same domain as the workspace. An email with an accept link is sent to the address. If a pending invite already exists for the email, the token is refreshed and the invite is resent.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `email` | `string` | Yes | Email address to invite. Must match the workspace's email domain. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/team/invites \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "teammate@argalabs.com"}'
-```
-
-**Response** (`201 Created`)
-
-```json
-{
-  "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-  "email": "teammate@argalabs.com",
-  "status": "pending",
-  "invited_by": "octocat",
-  "expires_at": "2026-04-07T12:00:00",
-  "created_at": "2026-03-31T12:00:00"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | Invite identifier. |
-| `email` | `string` | Invited email address. |
-| `status` | `string` | Invite status: `pending`, `accepted`, `expired`, or `revoked`. |
-| `invited_by` | `string \| null` | GitHub username of the user who sent the invite. |
-| `expires_at` | `string` | ISO 8601 timestamp when the invite expires. |
-| `created_at` | `string` | ISO 8601 timestamp when the invite was created. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `Email must be from the {domain} domain` |
-| `401` | Invalid or expired token. |
-| `403` | `Only the workspace owner can perform this action` |
-| `404` | `You don't belong to a workspace` |
-| `409` | `An invite already exists for this email` |
-
-### List invites
-
-<Note>Requires JWT authentication. Only the workspace owner can list invites.</Note>
-
-```bash
-GET /team/invites
-```
-
-List all invites for the current workspace, ordered by most recent first. Expired invites are automatically marked as expired.
-
-**Response**
-
-Returns an array of invite objects with the same shape as [Send an invite](#send-an-invite).
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | `Only the workspace owner can perform this action` |
-| `404` | `You don't belong to a workspace` |
-
-### Revoke an invite
-
-<Note>Requires JWT authentication. Only the workspace owner can revoke invites.</Note>
-
-```bash
-DELETE /team/invites/{invite_id}
-```
-
-Revoke a pending workspace invite.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `invite_id` | `string` | UUID of the invite to revoke. |
-
-**Response**
-
-`204 No Content`
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | `Only the workspace owner can perform this action` |
-| `404` | `You don't belong to a workspace` |
-| `404` | `Invite not found` |
-
-### Get invite details
-
-```bash
-GET /team/invites/{token}/details
-```
-
-Look up invite details by token. No authentication required — this is used to render the invite acceptance page before the user logs in.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `token` | `string` | Invite token from the accept link. |
-
-**Response**
-
-```json
-{
-  "workspace_name": "Arga Labs",
-  "github_org_login": "arga-labs",
-  "inviter_name": "octocat",
-  "email": "teammate@argalabs.com",
-  "expired": false
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `workspace_name` | `string` | Name of the workspace. |
-| `github_org_login` | `string` | GitHub organization linked to the workspace. |
-| `inviter_name` | `string \| null` | GitHub username of the person who sent the invite. |
-| `email` | `string` | Email address the invite was sent to. |
-| `expired` | `boolean` | Whether the invite has expired or is no longer valid. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `404` | `Invite not found` |
-
-### Accept an invite
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /team/invites/accept
-```
-
-Accept a workspace invite. You must have a verified email on the same domain as the workspace and be a member of the workspace's GitHub organization. If you are on the free plan, your plan is automatically upgraded to `team` upon joining.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `token` | `string` | Yes | Invite token from the accept link. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/team/invites/accept \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"token": "abc123..."}'
-```
-
-**Response**
-
-```json
-{
-  "status": "joined",
-  "workspace_name": "Arga Labs",
-  "billing_plan": "team"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | `string` | Always `joined`. |
-| `workspace_name` | `string` | Name of the workspace you joined. |
-| `billing_plan` | `string` | Your updated billing plan after joining. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `403` | `You must verify your email before joining a workspace` |
-| `403` | `Your email domain does not match this workspace ({domain})` |
-| `403` | `You must be a member of the {org} GitHub organization` |
-| `404` | `Invite not found` |
-| `409` | `You already belong to a workspace. Leave it first.` |
-| `409` | `You are already a member of this workspace` |
-| `410` | `This invite is no longer valid` |
-| `410` | `This invite has expired` |
-
-### List workspace members
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-GET /team/members
-```
-
-List all members of your workspace.
-
-**Response**
-
-Returns an array of member objects with the same shape as the `members` array in [Get workspace](#get-workspace).
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `401` | Invalid or expired token. |
-| `404` | `You don't belong to a workspace` |
-
-### Remove a member
-
-<Note>Requires JWT authentication. Only the workspace owner can remove members.</Note>
-
-```bash
-DELETE /team/members/{user_id}
-```
-
-Remove a member from the workspace. The removed member is downgraded to the free plan if they do not have their own Stripe subscription. You cannot remove yourself — cancel your subscription to dissolve the workspace instead.
-
-**Path parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `user_id` | `string` | UUID of the member to remove. |
-
-**Response**
-
-`204 No Content`
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `Cannot remove yourself. Cancel your subscription to dissolve the workspace.` |
-| `401` | Invalid or expired token. |
-| `403` | `Only the workspace owner can perform this action` |
-| `404` | `You don't belong to a workspace` |
-| `404` | `Member not found` |
-
-### Leave a workspace
-
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /team/leave
-```
-
-Leave your current workspace. Your plan is downgraded to free if you do not have your own Stripe subscription. The workspace owner cannot leave — cancel the subscription to dissolve the workspace instead.
-
-**Response**
-
-```json
-{
-  "status": "left",
-  "billing_plan": "free"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | `string` | Always `left`. |
-| `billing_plan` | `string` | Your updated billing plan after leaving. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `As the workspace owner, you cannot leave. Cancel your subscription to dissolve the workspace.` |
-| `401` | Invalid or expired token. |
-| `404` | `You don't belong to a workspace` |
