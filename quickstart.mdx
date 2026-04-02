@@ -1,11 +1,11 @@
 ---
 title: "Quickstart"
-description: "Set up digital twins and run your first validation in minutes"
+description: "Validate your app in under a minute from the terminal"
 ---
 
-Get Arga running against your app in three steps — no demo required.
+Get Arga running against your app in three steps.
 
-## Get started
+## Validate a URL
 
 <Steps>
   <Step title="Install the CLI and log in">
@@ -14,11 +14,59 @@ Get Arga running against your app in three steps — no demo required.
     arga login
     ```
 
-    This opens a browser window for authentication. Once logged in, your API key is saved locally.
+    This opens a browser window for GitHub authentication. Once approved, your API key is saved locally.
   </Step>
 
+  <Step title="Run your first validation">
+    Point Arga at any deployed URL and tell it what to test:
+
+    ```bash
+    arga test url \
+      --url https://your-app.com \
+      --prompt "test the signup flow"
+    ```
+
+    Arga spins up a browser, follows your prompt, and reports back with step-by-step results including screenshots.
+  </Step>
+
+  <Step title="Check your results">
+    The CLI prints a **run ID** when the validation starts. Track progress with:
+
+    ```bash
+    arga runs status <run_id>
+    ```
+
+    Or open [app.argalabs.com](https://app.argalabs.com) to see results in the dashboard with screenshots and step details.
+  </Step>
+</Steps>
+
+### Testing flows that require sign-in
+
+If the flow you want to test involves signing up, logging in, or any authenticated area of your app, pass the credentials Arga should use. Arga's browser will use these to sign in before executing the test:
+
+```bash
+arga test url \
+  --url https://your-app.com \
+  --prompt "sign up for a new account and complete onboarding" \
+  --email testuser@example.com \
+  --password your-test-password
+```
+
+Both `--email` and `--password` must be provided together. These are the credentials for **your app** (not your Arga account) — use a test account you've set up on your staging environment, or provide new credentials if you're testing the signup flow itself.
+
+<Tip>
+  When testing signup, create credentials that don't already exist in your app so Arga can register a fresh account. When testing login or authenticated flows, use credentials for an account that already exists.
+</Tip>
+
+---
+
+## Go further: staging with digital twins
+
+Once you've run a basic URL validation, you can test with [digital twins](/concepts/digital-twins) — safe, stateful API simulators that replace third-party services (Stripe, Slack, etc.) during testing.
+
+<Steps>
   <Step title="Provision twins for your project">
-    From your project directory, run the wizard to set up [digital twins](/concepts/digital-twins) — safe, stateful API simulators that replace your real third-party services during testing.
+    From your project directory:
 
     ```bash
     npx arga-wizard
@@ -29,15 +77,13 @@ Get Arga running against your app in three steps — no demo required.
     2. Back up your `.env` to `.env.arga-backup` and rewrite API keys to point at twins
     3. Provision ephemeral twin instances (typically under a minute)
 
-    When it finishes, start your app normally — all API calls to selected services now route through twins. Twin sessions last **10 minutes** by default. To restore your original environment, run `cp .env.arga-backup .env`.
+    Start your app normally — API calls to selected services now route through twins. Sessions last **10 minutes** by default. Restore your original environment with `cp .env.arga-backup .env`.
 
-    If provisioning fails, your `.env` has already been updated. You can re-run `npx arga-wizard` to retry, or restore from the backup.
-
-    See the full [twins quickstart guide](/features/twins-quickstart) for details on available twins, environment variables, and session management.
+    See the [twins quickstart](/features/twins-quickstart) for details on available twins and session management.
   </Step>
 
-  <Step title="Run your first validation">
-    Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run** — it's free and gives you the full experience:
+  <Step title="Run a staging validation">
+    Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run**:
 
     1. Enter your staging or local URL
     2. Optionally describe what to focus on
@@ -62,8 +108,8 @@ Get Arga running against your app in three steps — no demo required.
 ## Learn more
 
 <CardGroup cols={2}>
-  <Card title="Twins quickstart" icon="clone" href="/features/twins-quickstart">
-    Full guide to provisioning twins, managing sessions, and available services.
+  <Card title="CLI and MCP" icon="terminal" href="/cli-and-mcp">
+    Full CLI reference and MCP setup for your IDE agent.
   </Card>
   <Card title="Validate modes" icon="list-check" href="/features/validate-modes">
     Learn when to use Staging Run, Quick Pass, Sandbox Run, and CI Checks.
@@ -71,7 +117,7 @@ Get Arga running against your app in three steps — no demo required.
   <Card title="How Arga works" icon="gears" href="/concepts/how-it-works">
     Understand the architecture behind Arga's testing pipeline.
   </Card>
-  <Card title="CLI and MCP" icon="terminal" href="/cli-and-mcp">
-    Use the terminal and your IDE to trigger validations and query Arga.
+  <Card title="Twins quickstart" icon="clone" href="/features/twins-quickstart">
+    Full guide to provisioning twins, managing sessions, and available services.
   </Card>
 </CardGroup>
