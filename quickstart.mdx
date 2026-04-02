@@ -16,19 +16,17 @@ Get Arga running against your app in three steps.
 
     This opens a browser window for GitHub authentication. Once approved, your API key is saved locally.
   </Step>
-
   <Step title="Run your first validation">
     Point Arga at any deployed URL and tell it what to test:
 
     ```bash
     arga test url \
       --url https://your-app.com \
-      --prompt "test the signup flow"
+      --prompt "test ..."
     ```
 
     Arga spins up a browser, follows your prompt, and reports back with step-by-step results including screenshots.
   </Step>
-
   <Step title="Check your results">
     The CLI prints a **run ID** when the validation starts. Track progress with:
 
@@ -73,6 +71,7 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
     ```
 
     The wizard will:
+
     1. Ask which services your app integrates with (Stripe, Slack, Discord, etc.)
     2. Back up your `.env` to `.env.arga-backup` and rewrite API keys to point at twins
     3. Provision ephemeral twin instances (typically under a minute)
@@ -81,7 +80,6 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
 
     See the [twins quickstart](/features/twins-quickstart) for details on available twins and session management.
   </Step>
-
   <Step title="Run a staging validation">
     Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run**:
 
@@ -100,6 +98,7 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
   <Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true">
     Prefer a guided walkthrough? Schedule a 30-minute call and we'll set everything up together.
   </Card>
+
   <Card title="Connect integrations" icon="plug" href="/integrations">
     Connect GitHub, Slack, Jira, Sentry, and other context sources for richer test plans.
   </Card>
@@ -111,12 +110,15 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
   <Card title="CLI and MCP" icon="terminal" href="/cli-and-mcp">
     Full CLI reference and MCP setup for your IDE agent.
   </Card>
+
   <Card title="Validate modes" icon="list-check" href="/features/validate-modes">
     Learn when to use Staging Run, Quick Pass, Sandbox Run, and CI Checks.
   </Card>
+
   <Card title="How Arga works" icon="gears" href="/concepts/how-it-works">
     Understand the architecture behind Arga's testing pipeline.
   </Card>
+
   <Card title="Twins quickstart" icon="clone" href="/features/twins-quickstart">
     Full guide to provisioning twins, managing sessions, and available services.
   </Card>
