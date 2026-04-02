@@ -1,0 +1,156 @@
+---
+title: "Testing integrations locally"
+description: "Use digital twins as drop-in replacements for third-party APIs during local development"
+---
+
+When your app integrates with services like Stripe, Slack, or Notion, testing locally means either hitting real APIs (risky, rate-limited, costs money) or maintaining hand-written mocks (fragile, always out of date). Arga's digital twins give you a third option: spin up API-compatible replicas of these services and point your local app at them.
+
+## How it works
+
+Each twin is a full API emulator that runs on Arga's infrastructure and is reachable via a public URL. Your app talks to the twin URL instead of `api.stripe.com` or `api.slack.com` — no code changes needed beyond swapping environment variables.
+
+```text
+Your local app
+    │
+    ├── SLACK_BOT_TOKEN → twin token
+    ├── Slack API calls  → https://...--slack.sandbox.argalabs.com
+    │
+    ├── STRIPE_SECRET_KEY → sk_test_...
+    └── Stripe API calls  → https://...--stripe.sandbox.argalabs.com
+```
+
+Twins maintain realistic state (users, channels, files, payments), support webhooks, and behave like the real service — so you can test end-to-end flows without side effects.
+
+## Spin up twins
+
+From your project directory:
+
+<Tabs>
+  <Tab title="npx (no install needed)">
+    ```bash
+    npx arga-wizard
+    ```
+  </Tab>
+  <Tab title="Arga CLI">
+    ```bash
+    arga wizard
+    ```
+
+    The CLI version uses your saved API key from `arga login`, so you skip the key prompt.
+  </Tab>
+</Tabs>
+
+The wizard walks you through three steps:
+
+1. **Select twins** — pick the services your app uses (Slack, Stripe, Notion, etc.)
+2. **Review `.env` changes** — the wizard detects your environment variables and rewrites them to point at twins. Your original `.env` is backed up to `.env.arga-backup`.
+3. **Wait for provisioning** — twins spin up in under a minute
+
+Once ready, start your app normally. All API calls to the selected services now route through twins.
+
+## Example: testing a Stripe checkout flow
+
+```bash
+# 1. Spin up a Stripe twin
+npx arga-wizard
+# → Select "Stripe", approve .env changes, wait for provisioning
+
+# 2. Start your app as usual
+npm run dev
+
+# 3. Test checkout in your browser — payments go to the twin
+#    Use Stripe test card numbers (4242 4242 4242 4242, etc.)
+
+# 4. When you're done, tear down or let the session expire
+arga-wizard teardown
+```
+
+The Stripe twin supports customers, payment intents, subscriptions, checkout sessions, webhooks, and more. Test card numbers trigger the same outcomes (declines, 3D Secure) as Stripe's own test mode.
+
+## Example: testing a Slack bot
+
+```bash
+# 1. Spin up a Slack twin
+npx arga-wizard
+# → Select "Slack", approve .env changes
+
+# 2. Start your bot
+npm run dev
+
+# 3. Open the twin dashboard to send messages and see your bot respond
+#    Dashboard URL is printed after provisioning
+
+# 4. Reset state and test again
+arga-wizard reset
+```
+
+The Slack twin comes pre-seeded with a workspace, channels (`#general`, `#returns-demo`), and users. It also supports OAuth flows if your app has an "Add to Slack" install step.
+
+## Managing your session
+
+Twin sessions last **60 minutes** by default. Use these commands from your project directory:
+
+| Command | What it does |
+|---------|-------------|
+| `arga-wizard status` | Check if twins are still running and when they expire |
+| `arga-wizard extend` | Add another 60 minutes |
+| `arga-wizard reset` | Reset all twins to their initial seed state |
+| `arga-wizard teardown` | Destroy the session immediately |
+
+Session state is tracked in `.arga-session.json` in your project root. Add it to your `.gitignore`.
+
+## Restoring your original environment
+
+```bash
+cp .env.arga-backup .env
+```
+
+Or just tear down the session — but remember to restore your `.env` manually since teardown doesn't revert it.
+
+## Available twins
+
+| Service | Type | What you can test |
+|---------|------|-------------------|
+| Stripe | UI | Payments, subscriptions, checkout, webhooks, billing portal |
+| Slack | UI | Bot messaging, OAuth install flow, file uploads |
+| Discord | UI | Bot interactions, channel management |
+| Google Drive | UI | File CRUD, sharing, permissions |
+| Dropbox | UI | File storage, uploads, downloads |
+| Notion | UI | Pages, databases, workspace management |
+| Unstructured | UI | Document parsing and partitioning |
+| Box | Backend | File storage, enterprise management |
+| Google Calendar | Backend | Event CRUD, calendar management |
+| Unified | Backend | Aggregated API across Slack, Drive, Calendar, Notion, Dropbox |
+
+**UI twins** have an interactive dashboard where you can see and manipulate state in the browser. **Backend-only twins** respond to API calls but don't have a visual interface.
+
+See the [twins quickstart](/features/twins-quickstart) for full details on each twin's quickstart state, supported endpoints, and environment variables.
+
+## Tips
+
+<AccordionGroup>
+  <Accordion title="Combine twins with Arga validation">
+    After spinning up twins and starting your app, run an Arga validation against your local deployment (exposed via a tunnel like ngrok or Cloudflare Tunnel) to get automated browser-level testing with twins backing every integration.
+
+    ```bash
+    # Expose your local app
+    ngrok http 3000
+
+    # Validate with Arga
+    arga test url --url https://your-ngrok-url.ngrok.io --prompt "complete a checkout with Stripe"
+    ```
+  </Accordion>
+
+  <Accordion title="Use twins in CI">
+    You can provision twins in a CI pipeline by calling the API directly or running `npx arga-wizard` non-interactively. Set `ARGA_API_KEY` as a secret and the wizard will skip the key prompt.
+  </Accordion>
+
+  <Accordion title="Keep your .gitignore clean">
+    Add these to your `.gitignore`:
+
+    ```text
+    .arga-session.json
+    .env.arga-backup
+    ```
+  </Accordion>
+</AccordionGroup>
