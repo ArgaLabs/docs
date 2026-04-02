@@ -40,8 +40,8 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
       [ ] Dropbox          api.dropboxapi.com
       [ ] Notion           api.notion.com
       [ ] Unstructured     api.unstructuredapp.io
-      -- Backend-only Twins --
       [ ] Stripe           api.stripe.com
+      -- Backend-only Twins --
       [ ] Box              api.box.com
       [ ] Google Calendar  www.googleapis.com/calendar/v3
       [ ] Unified          api.unified.to
@@ -192,11 +192,23 @@ Under the hood, the wizard:
   </Accordion>
 
   <Accordion title="Stripe" icon="stripe">
-    **Type:** Backend-only
+    **Type:** UI twin (interactive checkout pages)
 
     **Intercepts:** `api.stripe.com`, `files.stripe.com`, `connect.stripe.com`
 
-    Supports charges, customers, and subscriptions. No visual dashboard.
+    **Quickstart state:**
+
+    - All Stripe API v1 resources start empty (no seeded data by default)
+    - Use the `/_twin/seed` endpoint to create a starter product, price, and webhook endpoint
+    - API key prefix: `sk_test_` (any key with a valid prefix is accepted)
+
+    **Supported resources:** Customers, payment methods, payment intents, setup intents, charges, refunds, disputes, subscriptions, invoices, invoice items, credit notes, products, prices, plans, coupons, promotion codes, tax rates, shipping rates, tokens, sources, payouts, balance, events, files, file links, checkout sessions, payment links, quotes, billing portal, subscription items, subscription schedules, usage records, tax IDs, webhook endpoints, mandates, and test clocks.
+
+    **Checkout UI:** The twin serves browser-facing checkout and billing portal pages so you can test end-to-end payment flows including success, card decline, and 3D Secure scenarios.
+
+    **Test cards:** Stripe-compatible test card numbers trigger specific outcomes (declines, 3D Secure challenges, processing errors) — matching the behavior of Stripe's own test mode.
+
+    **Webhook delivery:** Register webhook endpoints via the API and the twin delivers signed events (`Stripe-Signature` header) to your application, just like the real Stripe.
   </Accordion>
 
   <Accordion title="Box" icon="box">
@@ -237,7 +249,7 @@ The wizard recognizes these environment variables per twin and replaces them wit
 | --- | --- |
 | Discord | `DISCORD_TOKEN`, `DISCORD_BOT_TOKEN` |
 | Slack | `SLACK_BOT_TOKEN`, `SLACK_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_TWIN_BASE_URL` |
-| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_API_KEY` |
+| Stripe | `STRIPE_SECRET_KEY`, `STRIPE_API_KEY`, `STRIPE_TWIN_BASE_URL`, `STRIPE_TWIN_WEBHOOK_SECRET` |
 | Google Drive | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ACCESS_TOKEN` |
 | Dropbox | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_ACCESS_TOKEN` |
 | Notion | `NOTION_API_KEY`, `NOTION_TOKEN` |
