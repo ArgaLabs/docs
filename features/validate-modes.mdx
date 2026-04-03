@@ -67,7 +67,7 @@ Use **PR Run** when you have code changes to validate — either manually from a
 5. Review the proposed plan and approve it.
 6. Arga provisions the sandbox, deploys your branch, and runs the full test suite.
 
-Arga generates user stories from the branch diff, deploys your branch to a sandbox with the selected service twins, runs the test suite, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed, with full backend integration testing via twins.
+Arga generates user stories from the branch diff, deploys your branch to a sandbox with the selected service twins, runs the test suite, and returns results with a step-by-step timeline. The generated plan includes functional tests, integration coverage via twins, and [red-team scenarios](/features/red-teaming) — giving you targeted coverage of exactly what changed.
 
 ### Automatic CI validation
 
@@ -110,7 +110,7 @@ The agent runs adversarial and exploratory test scenarios against your app with 
 - Race conditions and state corruption
 - Unexpected behaviour under simulated failures
 
-See [Red-teaming and fuzzing](/features/red-teaming) for more on what the agent tests.
+All three workflows include [red-teaming](/features/red-teaming) automatically. Sandbox Run takes it further with a dedicated autonomous agent that explores beyond the boundaries of a planned test suite.
 
 ## Which mode should you choose?
 
