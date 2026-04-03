@@ -114,17 +114,6 @@ Arga publishes results back to GitHub as the **Arga Validation** check. You can 
 
 For more details on setting up and using CI Checks, see [PR validation](/features/pr-validation).
 
-## Runner options
-
-Arga uses the **visual** (browser-driven) runner for all workflows. This is the only runner mode available in the web app.
-
-The [API](/api-reference) also accepts a `runner_mode` parameter with two values:
-
-- **Visual** (`visual`) uses the browser-driven runner for interactive flows and visual regressions. This is the default.
-- **DOM** (`dom`) uses the DOM-focused runner for structured page state inspection.
-
-From the [CLI](/cli-and-mcp), you can pass `--runner-mode visual` or `--runner-mode dom` to override the default. When omitted, the visual runner is used.
-
 ## Which mode should you choose?
 
 - Choose **Staging Run** when you want a comprehensive AI-planned test suite with full frontend and backend coverage via twins.

@@ -86,17 +86,6 @@ You can also use the equivalent `validate` namespace:
 arga validate url --url https://demo-app.com --prompt "test checkout"
 ```
 
-To select a specific runner mode, pass `--runner-mode`:
-
-```bash
-arga test url \
-  --url https://demo-app.com \
-  --prompt "test the login flow" \
-  --runner-mode dom
-```
-
-Accepted values are `visual` (default) and `dom`. See [runner options](/features/validate-modes#runner-options) for details on each mode.
-
 If the target requires login, pass credentials together:
 
 ```bash

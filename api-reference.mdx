@@ -98,7 +98,6 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server selects the runner based on the default runtime profile. The web app always uses the `visual` runner. |
 | `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
@@ -850,7 +849,6 @@ Start a red-team scan against a deployed application.
 | `url` | `string` | Yes | — | Target URL to scan. Must be a public HTTP or HTTPS URL. |
 | `focus` | `string` | No | — | Text description to narrow the scan scope. |
 | `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Runner to use: `visual` or `dom`. If omitted, both modes are used as needed. |
 | `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
 | `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
 | `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
