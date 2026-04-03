@@ -80,6 +80,10 @@ Use `arga test url` for a one-off run against a deployed app:
 arga test url --url https://demo-app.com --prompt "test the login flow"
 ```
 
+<Info>
+  **Free plan:** `--prompt` is required for every run. Team plan users can omit it — Arga will auto-plan tests based on the target app. Free plan runs are also limited to the Staging Run workflow and 1 digital twin per run. See [Plans and limits](/plans).
+</Info>
+
 If the target requires login, pass credentials together:
 
 ```bash
