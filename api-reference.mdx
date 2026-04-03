@@ -29,7 +29,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/health` | `GET` | — | — | No auth required |
 | `/validate/url-run` | `POST` | Yes | Yes | Unified URL validation |
 | `/validate/pr-run` | `POST` | — | Yes | Unified PR/branch validation |
-| `/validate/agent-run` | `POST` | — | Yes | Unified agent exploration |
+| `/validate/agent-run` | `POST` | — | Yes | Unified sandbox run |
 | `/validate/url` | `POST` | Yes | Yes | **Deprecated** — use `/validate/url-run` |
 | `/validate/url/probe` | `POST` | Yes | Yes | |
 | `/validate/twins` | `GET` | Yes | Yes | |
@@ -43,8 +43,8 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/{run_id}/artifacts/{filename}` | `GET` | Yes | Yes | Also accepts `?token=` query param |
 | `/validation/pr` | `POST` | Yes | Yes | Team plan required |
 | `/validation/runs` | `GET` | Yes | Yes | Team plan required |
-| `/redteam/start` | `POST` | — | Yes | **Deprecated** — use `/validate/agent-run` |
-| `/redteam/start-branch` | `POST` | — | Yes | **Deprecated** — use `/validate/agent-run` |
+| `/redteam/start` | `POST` | — | Yes | **Deprecated** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
+| `/redteam/start-branch` | `POST` | — | Yes | **Deprecated** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
 | `/redteam/{run_id}/report` | `GET` | — | Yes | |
 | `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
 | `/scenarios` | `POST` | Yes | Yes | |
@@ -61,7 +61,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/cli/devices` | `GET` | — | Yes | |
 | `/auth/cli/devices/{cli_api_key_id}/revoke` | `POST` | Yes | Yes | |
 
-**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL runs, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like PR runs, agent runs, and email verification.
+**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic use — starting URL runs, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like PR runs, sandbox runs, and email verification.
 
 ## Health check
 
@@ -83,7 +83,7 @@ Returns the API server status. No authentication required.
 
 ## Unified workflows
 
-These endpoints consolidate the previous validation and red-team entry points into three workflows: URL run, PR run, and agent run.
+These endpoints consolidate the previous validation and red-team entry points into three workflows: URL run, PR run, and sandbox run.
 
 ### `POST` Start a URL run
 
@@ -201,7 +201,7 @@ The endpoint returns a `text/event-stream` response with SSE events as the serve
 | `403` | Plan limit errors. |
 | `404` | `Session not found` |
 
-### `POST` Start an agent run
+### `POST` Start a sandbox run
 
 <Note>Requires JWT authentication.</Note>
 
@@ -209,7 +209,7 @@ The endpoint returns a `text/event-stream` response with SSE events as the serve
 POST /validate/agent-run
 ```
 
-Start an autonomous agent exploration run against a deployed URL or a branch. Provide `url` for standalone exploration, or `repo` and `branch` to deploy a branch first and then explore it.
+Start a sandbox run against a deployed URL or a branch. Provide `url` for standalone exploration, or `repo` and `branch` to deploy a branch to an isolated sandbox with service twins and then run a full AI-planned test suite against it.
 
 **Request body**
 
@@ -257,7 +257,7 @@ curl -X POST https://api.argalabs.com/validate/agent-run \
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `run_id` | `string` | Unique identifier for the agent run. |
+| `run_id` | `string` | Unique identifier for the sandbox run. |
 | `status` | `string` | Initial status. Always `planning`. |
 
 **Errors**
@@ -1079,7 +1079,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 
 ### `POST` Start a scan
 
-<Warning>The `/redteam/start` endpoint is deprecated. Use [`/validate/agent-run`](#post-start-an-agent-run) instead.</Warning>
+<Warning>The `/redteam/start` endpoint is deprecated. Use [`/validate/agent-run`](#post-start-a-sandbox-run) instead.</Warning>
 
 <Note>Requires JWT authentication.</Note>
 
