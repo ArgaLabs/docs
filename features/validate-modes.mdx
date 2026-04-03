@@ -8,102 +8,73 @@ Arga has two top-level product surfaces:
 - **Ask** helps you investigate your stack with connected context sources.
 - **Validate** helps you run tests, scans, and automated checks.
 
-Within **Validate**, Arga offers four workflows. Use this page to decide which one fits your goal and how to run it.
+Within **Validate**, Arga offers three workflows. Use this page to decide which one fits your goal and how to run it.
 
 ## Quick chooser
 
-<CardGroup cols={2}>
-  <Card title="Staging Run" icon="flask" href="#staging-run">
-    Point Arga at your staging environment for a full AI-planned frontend and backend test run with service twins.
+<CardGroup cols={3}>
+  <Card title="URL Run" icon="flask" href="#url-run">
+    Point Arga at any live URL for an AI-planned test run with service twins.
   </Card>
-  <Card title="Quick Pass" icon="bolt" href="#quick-pass">
-    Run a fast browser-only validation against any deployed URL.
+  <Card title="PR Run" icon="code-pull-request" href="#pr-run">
+    Validate code changes — deploy a branch to sandbox, or auto-trigger on PRs.
   </Card>
   <Card title="Sandbox Run" icon="cube" href="#sandbox-run">
-    Deploy a branch to a sandboxed environment with service twins, then run a full AI-planned test suite.
-  </Card>
-  <Card title="CI Checks" icon="code-pull-request" href="#ci-checks">
-    Automatically validate pull requests and branch pushes with GitHub integration.
+    Deploy an autonomous agent into a sandbox environment with service twins to discover issues and security gaps.
   </Card>
 </CardGroup>
 
-## Staging Run
+## URL Run
 
-Use **Staging Run** when you have a staging environment ready and want Arga to plan and execute a comprehensive frontend and backend test suite. Arga automatically detects which service twins (if any) are needed based on your application.
+Use **URL Run** when you have a live URL and want Arga to plan and execute a comprehensive test suite. Arga automatically detects which service twins (if any) are needed based on your application.
 
 <Info>
-  **Free plan users:** Staging Run is the only workflow available on the Free plan. You must provide a test prompt describing what to validate — Arga will not auto-plan tests on the Free plan. You're also limited to 1 digital twin per run and 10 runs per month. See [Plans and limits](/plans).
+  **Free plan users:** URL Run is the only workflow available on the Free plan. You must provide a test prompt describing what to validate — Arga will not auto-plan tests on the Free plan. You're also limited to 1 digital twin per run and 10 runs per month. See [Plans and limits](/plans).
 </Info>
 
 ### How to use it
 
-1. Open **Validate** and select **Staging Run**.
-2. Enter your staging URL.
+1. Open **Validate** and select **URL Run**.
+2. Enter the URL to test.
 3. Optionally describe what to focus on (e.g. `test the checkout and payment flow`).
 4. Optionally select a repository for additional code context — Arga uses the repo structure to inform its test plan.
-5. Provide login credentials if the staging environment requires authentication.
+5. Provide login credentials if the app requires authentication.
 6. Click **Start validation**.
 
 ### What to expect
 
-Arga probes the staging URL for integration signals and uses AI planning agents to generate a comprehensive test suite. If external integrations are detected, the appropriate [digital twins](/concepts/digital-twins) are provisioned automatically. If no integrations are found, the run operates as a plain browser agent. The generated plan covers:
+Arga probes the URL for integration signals and uses AI planning agents to generate a comprehensive test suite. If external integrations are detected, the appropriate [digital twins](/concepts/digital-twins) are provisioned automatically. If no integrations are found, the run operates as a plain browser agent. The generated plan covers:
 
 - Core user flows and critical paths
 - Integration points with external services (tested via twins)
 - Edge cases and error handling
 - Red-team scenarios for security and resilience
 
-You review and approve the plan before execution begins. Arga then runs the full test suite against your staging environment. When twins are provisioned, they intercept all external API calls so nothing touches production services.
+You review and approve the plan before execution begins. Arga then runs the full test suite against your URL. When twins are provisioned, they intercept all external API calls so nothing touches production services.
 
-This is the most comprehensive validation mode — it tests both frontend interactions and backend integrations in a single run.
+## PR Run
 
-## Quick Pass
+Use **PR Run** when you have code changes to validate — either manually from a branch or automatically on every pull request.
 
-Use **Quick Pass** when you have a deployed URL and want a fast, browser-only validation.
+<Note>PR Run requires a Team or Paid plan.</Note>
 
-<Note>Quick Pass requires a Team or Paid plan.</Note>
+### Manual PR Run
 
-### How to use it
-
-1. Open **Validate** and select **Quick Pass**.
-2. Enter the deployed URL.
-3. Describe the task in natural language, such as `test checkout` or `verify the login flow`.
-4. Optionally provide login credentials if the app requires authentication.
-5. Click **Run test**.
-
-### What to expect
-
-Arga runs the browser agent against the target URL and returns a validation timeline with actions, findings, and errors. Quick Pass focuses on frontend behavior — it does not provision twins or test backend integrations.
-
-## Sandbox Run
-
-Use **Sandbox Run** when you want to deploy a branch to an isolated sandbox environment with service twins and run a full AI-planned test suite against it.
-
-<Note>Sandbox Run requires a Team or Paid plan.</Note>
-
-### How to use it
-
-1. Open **Validate** and select **Sandbox Run**.
+1. Open **Validate** and select **PR Run**.
 2. Choose the repository and branch you want to validate.
-3. Select which service twins to provision alongside the sandbox deployment. Twins intercept third-party API traffic and provide browsable UIs.
+3. Select which service twins to provision alongside the sandbox deployment.
 4. Arga deploys the branch to a sandboxed environment, compares it against the default branch, and builds a test plan.
 5. Review the proposed plan and approve it.
 6. Arga provisions the sandbox, deploys your branch, and runs the full test suite.
 
-### What to expect
-
 Arga generates user stories from the branch diff, deploys your branch to a sandbox with the selected service twins, runs the test suite, and returns results with a step-by-step timeline. This gives you targeted coverage of exactly what changed, with full backend integration testing via twins.
 
-## CI Checks
+### Automatic CI validation
 
-Use **CI Checks** when you want Arga to run automatically on every pull request or on commits to a selected branch.
-
-<Note>CI Checks requires a Team or Paid plan. You can manage your subscription from **Settings** in the web app.</Note>
-
-### How to use it
+You can also configure PR Run to trigger automatically on every pull request or on commits to a selected branch:
 
 1. Connect GitHub in [Integrations](/integrations).
-2. Open **Validate** and select **CI Checks**.
+2. Open **Validate** and select **PR Run**.
 3. Choose the repository you want Arga to monitor.
 4. Install the Arga GitHub App for that repository.
 5. Choose a trigger mode:
@@ -112,15 +83,37 @@ Use **CI Checks** when you want Arga to run automatically on every pull request 
 6. Configure options. **PR comments** are enabled by default. You can also add **custom instructions** that apply to every run for this repository.
 7. Save the validation settings.
 
-### What to expect
-
 Arga publishes results back to GitHub as the **Arga Validation** check. You can also review recent runs from the Validate UI.
 
-For more details on setting up and using CI Checks, see [PR validation](/features/pr-validation).
+For more details on setting up CI validation, see [PR validation](/features/pr-validation).
+
+## Sandbox Run
+
+Use **Sandbox Run** when you want to deploy an autonomous agent into a sandbox environment with service twins to explore your app and discover issues, security gaps, and edge cases.
+
+<Note>Sandbox Run requires a Team or Paid plan.</Note>
+
+### How to use it
+
+1. Open **Validate** and select **Sandbox Run**.
+2. Enter a URL or choose a repository and branch to deploy.
+3. Optionally describe a focus area (e.g. `focus on authentication and authorization flows`).
+4. Arga deploys the agent into a sandbox with the appropriate service twins.
+5. The agent autonomously explores your app, probing for edge cases and vulnerabilities.
+
+### What to expect
+
+The agent runs adversarial and exploratory test scenarios against your app with digital twins intercepting external calls. Findings are categorized by severity (`critical`, `high`, `medium`, `low`, `info`) and attack category. The agent covers:
+
+- Unhandled error states and edge cases
+- Prompt injection and jailbreak resistance (for AI agents)
+- Race conditions and state corruption
+- Unexpected behaviour under simulated failures
+
+See [Red-teaming and fuzzing](/features/red-teaming) for more on what the agent tests.
 
 ## Which mode should you choose?
 
-- Choose **Staging Run** when you want a comprehensive AI-planned test suite with full frontend and backend coverage via twins.
-- Choose **Quick Pass** when you want a fast browser-only answer on a deployed URL.
-- Choose **Sandbox Run** when you want to deploy a branch to an isolated sandbox with service twins and run a focused test suite before merging.
-- Choose **CI Checks** when you want repeatable checks on every code change.
+- Choose **URL Run** when you want a comprehensive AI-planned test suite against a live URL with full frontend and backend coverage via twins.
+- Choose **PR Run** when you want to validate code changes before merging — either manually from a branch or automatically on every PR.
+- Choose **Sandbox Run** when you want an autonomous agent to explore your app and discover issues, security gaps, and edge cases.
