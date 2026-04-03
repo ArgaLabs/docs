@@ -43,6 +43,11 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/redteam/start` | `POST` | — | Yes | |
 | `/redteam/{run_id}/report` | `GET` | — | Yes | |
 | `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
+| `/scenarios` | `POST` | Yes | Yes | |
+| `/scenarios` | `GET` | Yes | Yes | |
+| `/scenarios/{scenario_id}` | `GET` | Yes | Yes | |
+| `/scenarios/{scenario_id}` | `PUT` | Yes | Yes | |
+| `/scenarios/{scenario_id}` | `DELETE` | Yes | Yes | |
 | `/auth/device/start` | `POST` | — | — | Public |
 | `/auth/device/poll` | `POST` | — | — | Public |
 | `/auth/device/approve` | `POST` | — | Yes | |
@@ -50,7 +55,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/email/request-verification` | `POST` | — | Yes | |
 | `/auth/email/verify` | `POST` | — | Yes | |
 | `/auth/cli/devices` | `GET` | — | Yes | |
-| `/auth/cli/devices/{id}/revoke` | `POST` | Yes | Yes | |
+| `/auth/cli/devices/{cli_api_key_id}/revoke` | `POST` | Yes | Yes | |
 
 **Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like red-team scans and email verification.
 
@@ -93,7 +98,7 @@ Start a browser validation run against a deployed URL.
 | `credentials` | `object` | No | Login credentials for the target app. |
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner to use: `visual` (default) or `dom`. The web app always uses the `visual` runner. This parameter is only relevant when calling the API directly. When omitted, defaults to `visual`. |
+| `runner_mode` | `string` | No | Runner to use: `visual` or `dom`. When omitted, the server selects the runner based on the default runtime profile. The web app always uses the `visual` runner. |
 | `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
 
 **Example request**
@@ -253,7 +258,7 @@ Provision one or more ephemeral twin instances. Returns a `run_id` you can use t
 |-------|------|----------|---------|-------------|
 | `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#get-list-available-twins) to discover available names. |
 | `ttl_minutes` | `integer` | No | `60` | Time-to-live in minutes before the twins are automatically torn down. Range: `1`–`480`. |
-| `scenario` | `string` | No | — | Scenario name to pre-seed the twins with sample data. |
+| `scenario_id` | `string` | No | — | UUID of a [scenario](#post-create-a-scenario) to pre-seed the twins with sample data. |
 
 **Example request**
 
@@ -365,7 +370,7 @@ curl "https://api.argalabs.com/validate/twins/provision/a1b2c3d4-e5f6-7890-abcd-
 | Field | Type | Description |
 |-------|------|-------------|
 | `run_id` | `string` | Provisioning session identifier. |
-| `status` | `string` | Current status: `provisioning`, `ready`, or `failed`. |
+| `status` | `string` | Current status: `provisioning`, `ready`, `failed`, or `cancelled`. |
 | `twins` | `object` | Map of twin name to connection details. Empty while provisioning. |
 | `twins[name].name` | `string` | Twin identifier. |
 | `twins[name].label` | `string` | Human-readable display name. |
@@ -531,14 +536,31 @@ The response includes the full run state. Key fields:
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
+| `surface_urls` | `object \| null` | Map of twin name to its proxied URL. |
+| `raw_surface_urls` | `object \| null` | Map of twin name to its direct (non-proxied) URL. |
+| `runtime_profile` | `object \| null` | Runtime profile configuration used for the run. |
+| `context_notes` | `string \| null` | Additional context or instructions provided when the run was started. |
 | `repo_full_name` | `string \| null` | Repository in `owner/repo` format. |
 | `git_branch` | `string \| null` | Branch name. |
 | `commit_sha` | `string \| null` | Commit SHA. |
+| `github_pr_number` | `integer \| null` | Pull request number, if the run is associated with a PR. |
+| `github_check_run_id` | `string \| null` | GitHub check run identifier. |
+| `github_check_run_url` | `string \| null` | URL of the GitHub check run. |
+| `event_log_json` | `array \| null` | Chronological log of events during the run. |
 | `story_json` | `object \| null` | Generated user story with steps and coverage matrix. |
+| `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for multi-story runs. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `title`, `status`, `issues`, and optional `story_json` and `results_json`. |
+| `attack_plan_json` | `object \| null` | Attack plan for red-team or security scan runs. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
 | `step_summaries` | `array \| null` | Summarized step results. Each object includes `title`, `status`, `details`, `step_number`, and `step_numbers`. |
 | `redteam_report_json` | `object \| null` | Red-team report with anomalies and coverage, if this is a scan run. |
 | `worker_progress` | `array \| null` | Progress information for each worker in a multi-worker run. |
+| `login_identifier` | `string \| null` | Login identifier used during validation, if applicable. |
+| `coverage_manifest` | `object \| null` | Coverage manifest describing tested routes and features. |
+| `failure_category` | `string \| null` | Category of failure if the run did not complete successfully (e.g. `infra`, `timeout`, `user_error`). |
+| `failure_detail` | `object \| null` | Structured details about the failure. |
+| `readiness_results` | `object \| null` | Pre-run readiness check results. |
+| `retry_count` | `integer \| null` | Number of times this run has been retried. |
 | `created_at` | `string \| null` | ISO 8601 timestamp. |
 
 **Errors**
@@ -947,6 +969,210 @@ Cancel a running scan.
 
 ---
 
+## Scenarios
+
+Scenarios define pre-seeded twin configurations that you can reuse across validation runs. You can create a scenario by providing an explicit seed configuration, a natural-language prompt (which generates the configuration automatically), or both.
+
+### `POST` Create a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /scenarios
+```
+
+Create a new scenario for pre-seeding twins.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Display name for the scenario. |
+| `description` | `string` | No | Human-readable description of the scenario. |
+| `prompt` | `string` | Conditional | Natural-language description of the desired twin state (e.g. "3 GitHub repos, each with 3 files and 2 PRs on one of them"). Either `prompt` or `seed_config` is required. |
+| `twins` | `array of string` | Conditional | Twin names to include. Required when `seed_config` is provided without `prompt`. When using `prompt` alone, twins are inferred automatically. |
+| `seed_config` | `object` | Conditional | Explicit seed configuration with the JSON structure each twin runner expects. Either `prompt` or `seed_config` is required. When both are provided, `seed_config` takes precedence and the prompt is stored for reference. |
+| `tags` | `array of string` | No | Tags for organizing scenarios. Defaults to an empty array. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "E-commerce checkout",
+    "prompt": "A Stripe account with 3 products, 2 active subscriptions, and a pending invoice"
+  }'
+```
+
+**Response**
+
+```json
+{
+  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "name": "E-commerce checkout",
+  "description": null,
+  "prompt": "A Stripe account with 3 products, 2 active subscriptions, and a pending invoice",
+  "twins": ["stripe"],
+  "seed_config": {"stripe": {"products": [...], "subscriptions": [...]}},
+  "tags": [],
+  "created_at": "2026-03-21T12:00:00",
+  "updated_at": "2026-03-21T12:00:00"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier for the scenario. Use this as the `scenario_id` when [provisioning twins](#post-provision-twins). |
+| `name` | `string` | Display name. |
+| `description` | `string \| null` | Human-readable description. |
+| `prompt` | `string \| null` | The natural-language prompt used to generate the configuration, if provided. |
+| `twins` | `array of string` | Twin names included in this scenario. |
+| `seed_config` | `object` | The resolved seed configuration. |
+| `tags` | `array of string` | Tags for organizing scenarios. |
+| `created_at` | `string` | ISO 8601 timestamp. |
+| `updated_at` | `string` | ISO 8601 timestamp. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `422` | `Either 'prompt' or 'seed_config' must be provided` |
+| `422` | `'twins' is required when 'seed_config' is provided without 'prompt'` |
+
+### `GET` List scenarios
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /scenarios
+```
+
+List all scenarios for the authenticated user.
+
+**Query parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `twin` | `string` | No | Filter scenarios that include this twin name. |
+| `tag` | `string` | No | Filter scenarios that include this tag. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/scenarios?twin=stripe" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+An array of scenario objects (same shape as the [create response](#post-create-a-scenario)), sorted by creation date (newest first).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+
+### `GET` Get a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /scenarios/{scenario_id}
+```
+
+Get a single scenario by ID.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Response**
+
+A scenario object (same shape as the [create response](#post-create-a-scenario)).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Scenario not found` |
+
+### `PUT` Update a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+PUT /scenarios/{scenario_id}
+```
+
+Update an existing scenario. All fields are optional — only provided fields are updated. When a new `prompt` is provided without a new `seed_config`, the seed configuration is regenerated from the prompt.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | No | Updated display name. |
+| `description` | `string` | No | Updated description. |
+| `prompt` | `string` | No | Updated natural-language prompt. When provided without `seed_config`, the seed configuration is regenerated. |
+| `twins` | `array of string` | No | Updated twin names. |
+| `seed_config` | `object` | No | Updated seed configuration. |
+| `tags` | `array of string` | No | Updated tags. |
+
+**Response**
+
+The updated scenario object (same shape as the [create response](#post-create-a-scenario)).
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Scenario not found` |
+| `422` | Seed config generation failed. |
+
+### `DELETE` Delete a scenario
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+DELETE /scenarios/{scenario_id}
+```
+
+Delete a scenario.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `scenario_id` | `string` | UUID of the scenario. |
+
+**Response**
+
+```json
+{"status": "deleted"}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `Scenario not found` |
+
+---
+
 ## Authentication endpoints
 
 ### `POST` Start device authorization
@@ -1105,9 +1331,9 @@ Return the authenticated user's profile.
 | `plan_limits.ci_checks_used` | `integer` | CI checks consumed in the current monthly billing period. |
 | `plan_limits.ci_checks_remaining` | `integer \| null` | CI checks remaining this month. `null` when no limit applies. |
 | `plan_limits.prompt_required` | `boolean` | Whether the user's plan requires a test prompt. `true` for free plan, `false` for team/paid. |
-| `twin_bootups_used` | `integer` | Twin bootups consumed in the current monthly billing period. |
-| `twin_bootups_limit` | `integer \| null` | Monthly twin bootup limit. `10` for free-tier, `null` for team/paid (unlimited). |
-| `twin_bootups_remaining` | `integer \| null` | Twin bootups remaining this month. `null` for team/paid (unlimited). |
+| `twin_bootups_used` | `integer` | Alias for `plan_limits.validation_runs_used`. Kept for backward compatibility. |
+| `twin_bootups_limit` | `integer \| null` | Alias for `plan_limits.validation_runs_limit`. Kept for backward compatibility. |
+| `twin_bootups_remaining` | `integer \| null` | Alias for `plan_limits.validation_runs_remaining`. Kept for backward compatibility. |
 
 **Errors**
 
@@ -1168,6 +1394,12 @@ Verify an email address using the six-digit code. If the verified address differ
 ```json
 {"status": "verified", "email": "user@example.com"}
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | `string` | Always `verified`. |
+| `email` | `string` | The verified email address. |
+| `pending_invite_token` | `string \| undefined` | Present only when a pending workspace invite matches the verified email. Use this token to accept the invite. |
 
 **Errors**
 
