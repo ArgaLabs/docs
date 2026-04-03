@@ -26,10 +26,6 @@ Get Arga running against your app in three steps.
     ```
 
     Arga spins up a browser, follows your prompt, and reports back with step-by-step results including screenshots.
-
-    <Info>
-      **Free plan:** The `--prompt` flag is required on every run. On the Team plan, you can omit it and Arga will auto-plan tests based on your app. See [Plans and limits](/plans) for details.
-    </Info>
   </Step>
   <Step title="Check your results">
     The CLI prints a **run ID** when the validation starts. Track progress with:
@@ -91,14 +87,14 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
     See the [twins quickstart](/features/twins-quickstart) for details on available twins and session management.
   </Step>
   <Step title="Run a staging validation">
-    Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run**:
+    Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **URL Run**:
 
     1. Enter your staging or local URL
     2. Optionally describe what to focus on
     3. Arga auto-detects your integrations, plans a test suite, and provisions the right twins
     4. Review the plan, then approve to run
 
-    See [Validate modes](/features/validate-modes) for all four workflows.
+    See [Validate modes](/features/validate-modes) for all three workflows.
   </Step>
 </Steps>
 
@@ -122,7 +118,7 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
   </Card>
 
   <Card title="Validate modes" icon="list-check" href="/features/validate-modes">
-    Learn when to use Staging Run, Quick Pass, Sandbox Run, and CI Checks.
+    Learn when to use URL Run, PR Run, and Sandbox Run.
   </Card>
 
   <Card title="How Arga works" icon="gears" href="/concepts/how-it-works">

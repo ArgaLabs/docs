@@ -11,14 +11,13 @@ This is the main page. From here you can start validation runs, monitor progress
 
 ### Choosing a workflow
 
-When no run is active, you see a workflow selector with four options:
+When no run is active, you see a workflow selector with three options:
 
 | Workflow | What it does | Plan |
 |----------|-------------|------|
-| **Staging Run** | Full AI-planned test suite against a staging URL, with optional digital twins. | Free |
-| **Quick Pass** | Fast browser validation against any deployed URL with a custom prompt. | Team |
-| **Sandbox Run** | Deploys a branch to Arga's sandbox with service twins, then runs a full test suite. | Team |
-| **CI Checks** | Automatic validation on every PR or branch push via GitHub integration. | Team |
+| **URL Run** | Test a live URL with an AI-planned test suite and optional digital twins. | Free |
+| **PR Run** | Validate code changes from a branch or PR. Can be triggered manually or automatically via CI on every push. | Team |
+| **Sandbox Run** | Deploy an autonomous agent to explore your app, combining redteam scanning with service twins. | Team |
 
 ### Running a validation
 
@@ -27,7 +26,7 @@ After selecting a workflow, you fill out a form with:
 - **URL** — the deployed app to test
 - **Prompt** — natural-language instructions for what to test (e.g. "test the checkout flow")
 - **Credentials** (optional) — email and password if the target app requires sign-in
-- **Repository and branch** (optional, for Staging and CI workflows)
+- **Repository and branch** (optional, for PR Run workflow)
 
 Click the submit button to start the run.
 
@@ -81,7 +80,7 @@ A chat interface for investigating bugs, searching context, or asking questions 
 
 Type a question in natural language and Arga searches your connected integrations (GitHub, Slack, Sentry, etc.) to find relevant context and synthesize an answer with citations.
 
-<Note>Ask requires a Team plan. If you're on the free plan, you'll be prompted to upgrade before using this feature.</Note>
+<Note>Ask may require a chat password if your workspace admin has enabled it. You'll see an unlock prompt if so.</Note>
 
 ---
 

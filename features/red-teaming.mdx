@@ -5,7 +5,7 @@ description: "Proactively discover edge cases and vulnerabilities in your softwa
 
 Arga proactively red-teams your software and AI agents by exploring edge cases, adversarial inputs, and failure modes in a safe environment with [digital twins](/concepts/digital-twins).
 
-Red-teaming is built into Arga's **Staging Run** workflow. When Arga generates a test plan for your staging environment, it includes adversarial scenarios alongside functional tests — so you get security and resilience coverage as part of a single validation run.
+Red-teaming is built into Arga's **Sandbox Run** workflow. When Arga generates a test plan for your environment, it includes adversarial scenarios alongside functional tests — so you get security and resilience coverage as part of a single validation run.
 
 ## For software
 
@@ -30,11 +30,11 @@ AI agents present unique risks — they can take unexpected actions, chain tools
 
 ## How it works
 
-Red-teaming runs as part of a [Staging Run](/features/validate-modes#staging-run) session:
+Red-teaming runs as part of a [Sandbox Run](/features/validate-modes#sandbox-run) session:
 
 <Steps>
-  <Step title="Start a Staging Run">
-    Enter your staging URL and optionally describe a focus area. Arga probes the environment and provisions the appropriate twins.
+  <Step title="Start a Sandbox Run">
+    Enter your URL or deploy a branch to the sandbox, then optionally describe a focus area. Arga probes the environment and provisions the appropriate twins.
   </Step>
   <Step title="AI planning generates adversarial scenarios">
     Arga's planning agents create both functional and adversarial test scenarios. Adversarial scenarios are designed to push boundaries and expose weaknesses.
@@ -52,16 +52,16 @@ Red-teaming runs as part of a [Staging Run](/features/validate-modes#staging-run
 
 ## Getting started
 
-To run red-teaming against your application, use the **Staging Run** workflow:
+To run red-teaming against your application, use the **Sandbox Run** workflow:
 
-1. Open **Validate** and select **Staging Run**.
-2. Enter your staging URL.
+1. Open **Validate** and select **Sandbox Run**.
+2. Enter your URL or select a repo and branch to deploy.
 3. Optionally describe a focus area (e.g. `focus on authentication and authorization flows`).
 4. Review the generated plan — adversarial scenarios are included automatically.
 5. Approve and run.
 
-See [Validate modes](/features/validate-modes#staging-run) for the full setup guide.
+See [Validate modes](/features/validate-modes#sandbox-run) for the full setup guide.
 
 <Card title="Try it now" icon="rocket" href="/quickstart" horizontal>
-  Get started with red-teaming — run your first Staging Run in under a minute.
+  Get started with red-teaming — run your first Sandbox Run in under a minute.
 </Card>

@@ -9,15 +9,13 @@ Arga offers two plans. Both include the CLI, MCP integration, and access to the 
 
 | Feature | Free | Team |
 |---------|------|------|
-| **Staging Run** (URL validation) | Yes | Yes |
-| **Quick Pass** (fast browser check) | — | Yes |
-| **Sandbox Run** (branch deploy + twins) | — | Yes |
-| **CI Checks** (automatic PR validation) | — | Yes |
+| **URL Run** (test a live URL) | Yes | Yes |
+| **PR Run** (validate code changes from a branch/PR) | — | Yes |
+| **Sandbox Run** (autonomous agent exploration) | — | Yes |
 | **Security scans** | — | Yes |
 | **Validation runs / month** | 10 | 100 |
 | **CI checks / month** | — | 500 |
 | **Twins per run** | 1 | Unlimited |
-| **Max run TTL** | 10 minutes | Up to 480 minutes |
 | **Prompt required** | Yes | No |
 | **MCP context tools** | Yes | Yes |
 | **Team workspace** | — | Yes |
@@ -29,9 +27,8 @@ The free plan is designed to let individual developers try Arga with no commitme
 
 - **10 validation runs per month**, reset on a rolling monthly basis
 - **1 digital twin per run** (e.g. Slack _or_ Stripe, not both)
-- **10-minute maximum TTL** per run
 - A test prompt is required for every run
-- Access to Staging Run workflow only
+- Access to URL Run workflow only
 - Full CLI and MCP access for context search and investigation
 
 ## Team plan
@@ -41,10 +38,9 @@ The Team plan unlocks all workflows and higher limits:
 - **100 validation runs per month**
 - **500 CI checks per month** for automatic PR validation
 - **Unlimited twins per run** — combine Slack, Stripe, Discord, and more in a single test
-- **Custom TTL up to 480 minutes** per run (defaults to 30 minutes when not specified)
 - No prompt requirement — Arga can auto-plan tests based on your app
 - Team workspace with GitHub organization linking, member management, and email invites
-- Quick Pass, Sandbox Run, and CI Checks workflows
+- PR Run and Sandbox Run workflows
 
 ## Upgrading
 
