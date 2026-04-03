@@ -86,7 +86,10 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/arga-dev"
+      "github": "https://www.github.com/argalabs",
+      "x": "https://www.x.com/ArgaLabs",
+      "linkedin": "https://www.linkedin.com/company/arga-labs",
+      "website": "https://www.argalabs.com"
     }
   },
   "seo": {
