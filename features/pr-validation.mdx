@@ -12,7 +12,7 @@ Arga generates step-by-step user stories from your pull request diffs, runs them
     When you push to a monitored repository, Arga detects the change and starts planning a validation run. This happens automatically based on your trigger mode — either on new pull requests or on commits to a specific branch.
   </Step>
   <Step title="Arga generates user stories">
-    Arga reads the PR diff, connected context sources (Slack, Jira, Linear, Sentry, etc.), and any custom instructions you provided. It produces a set of user stories that cover the changed behaviour.
+    Arga reads the PR diff, connected context sources (Slack, Jira, Linear, Sentry, Notion, etc.), and any custom instructions you provided. It produces a set of user stories that cover the changed behaviour.
   </Step>
   <Step title="Stories execute in a sandbox">
     Each story runs in a remote sandbox with [digital twins](/concepts/digital-twins) standing in for external services. Nothing touches your production environment.
