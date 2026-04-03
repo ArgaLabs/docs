@@ -27,6 +27,7 @@
             "pages": [
               "index",
               "quickstart",
+              "agent-testing-quickstart",
               "features/twins-quickstart"
             ]
           },
