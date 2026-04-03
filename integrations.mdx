@@ -1,13 +1,15 @@
 ---
 title: "Integrations"
-description: "Connect your tools to get started with Arga"
+description: "Connect your tools to give Arga richer context"
 ---
 
-Arga requires integration with your existing tools to generate accurate user stories and provide full testing coverage. During onboarding, we'll work with you to connect the right sources.
+Arga uses your existing tools to generate accurate user stories and provide thorough testing coverage. Connect integrations from the [Integrations page](https://app.argalabs.com/integrations) in the dashboard.
 
-<Card icon="calendar" horizontal href="https://cal.com/akiratong/30min?overlayCalendar=true" title="Book a demo to get started">
-  Onboarding starts with a 30-minute call where we connect your tools and configure your first PR validation.
-</Card>
+## Connecting integrations
+
+Go to [app.argalabs.com/integrations](https://app.argalabs.com/integrations) and click **Connect** on the tools you use. Each integration uses OAuth — you'll be redirected to the provider to authorize access, then returned to Arga automatically.
+
+The more context sources you connect, the more thorough and accurate your generated user stories will be.
 
 ## Context sources
 
@@ -21,8 +23,6 @@ Arga currently supports the following context sources for generating user storie
 | **Knowledge base**   | Notion                                                |
 | **Error monitoring** | Sentry                                                |
 | **Observability**    | Grafana, PostHog                                      |
-
-The more context sources you connect, the more thorough and accurate your generated user stories will be.
 
 ## Sandbox twins
 
@@ -52,13 +52,7 @@ Arga currently supports these twins in sandbox environments. Twins are split int
 
 For more detail on how twins work, see [Digital twins](/concepts/digital-twins).
 
-## Onboarding information
-
-To get set up with Arga, we need to understand your current tooling. Here's what we'll cover during onboarding:
-
-### Observability and issue tracking
-
-Which tools do you use for observability and issue tracking?
+## Supported observability and logging tools
 
 <AccordionGroup>
   <Accordion defaultOpen icon="chart-mixed" title="Supported tools">
@@ -69,23 +63,12 @@ Which tools do you use for observability and issue tracking?
     - Jira
     - Linear
     - GitHub Issues
-    - Internal tools (please describe during onboarding)
-    - Other (please describe during onboarding)
   </Accordion>
   <Accordion icon="clock" title="Coming soon">
     - Datadog
     - Prometheus
     - AWS CloudWatch
     - AWS X-Ray
-  </Accordion>
-</AccordionGroup>
-
-### Logging and monitoring
-
-Which logging or monitoring tools do you use?
-
-<AccordionGroup>
-  <Accordion defaultOpen icon="clock" title="Coming soon">
     - Loki
     - Tempo
     - ELK (Elasticsearch, Logstash, Kibana)
@@ -97,6 +80,11 @@ Which logging or monitoring tools do you use?
 
 ## Next steps
 
-<Card icon="calendar" horizontal href="https://cal.com/akiratong/30min?overlayCalendar=true" title="Book a demo">
-  Schedule a 30-minute onboarding call. We'll connect your tools and have you running your first PR validation the same day.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Run your first validation" icon="rocket" href="/quickstart">
+    Get up and running in under a minute from the terminal.
+  </Card>
+  <Card title="Talk to our team" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true">
+    On a Team or Enterprise plan? Schedule a guided onboarding session to connect your tools together.
+  </Card>
+</CardGroup>
