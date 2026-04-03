@@ -591,7 +591,19 @@ The response includes the full run state. Key fields:
 | `event_log_json` | `array \| null` | Chronological log of events during the run. |
 | `story_json` | `object \| null` | Generated user story with steps and coverage matrix. |
 | `auto_story_bundle_json` | `object \| null` | Auto-generated story bundle for multi-story runs. |
-| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes `worker_key`, `title`, `status`, `issues`, and optional `story_json` and `results_json`. |
+| `auto_visual_reports` | `array \| null` | Reports from auto-visual story runs. Each object includes the fields below. |
+| `auto_visual_reports[].worker_key` | `string` | Identifier of the worker that executed this story. |
+| `auto_visual_reports[].story_id` | `string \| null` | Identifier of the story. |
+| `auto_visual_reports[].title` | `string` | Title of the auto-visual story. |
+| `auto_visual_reports[].status` | `string` | Execution status of the story (e.g. `pass`, `fail`, `error`). |
+| `auto_visual_reports[].tested_summary` | `string \| null` | Brief summary of what was tested. |
+| `auto_visual_reports[].child_run_id` | `string \| null` | Identifier of the child validation run, if applicable. |
+| `auto_visual_reports[].summary` | `object \| null` | Aggregated result counts for the story. |
+| `auto_visual_reports[].issues` | `array` | List of issues found during the story run. Each includes `step_number`, `description`, `error_detail`, and `screenshot_url`. |
+| `auto_visual_reports[].story_json` | `object \| null` | The generated story definition. |
+| `auto_visual_reports[].results_json` | `array \| null` | Step-by-step results for the story. |
+| `auto_visual_reports[].started_at` | `string \| null` | ISO 8601 timestamp when the story execution started. |
+| `auto_visual_reports[].completed_at` | `string \| null` | ISO 8601 timestamp when the story execution completed. |
 | `attack_plan_json` | `object \| null` | Attack plan for red-team or security scan runs. |
 | `results_json` | `array \| null` | Step-by-step results with status (`pass`, `fail`, `error`) and descriptions. |
 | `step_summaries` | `array \| null` | Summarized step results. Each object includes `title`, `status`, `details`, `step_number`, and `step_numbers`. |
