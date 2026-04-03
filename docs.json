@@ -90,7 +90,8 @@
       "x": "https://www.x.com/ArgaLabs",
       "linkedin": "https://www.linkedin.com/company/arga-labs",
       "website": "https://www.argalabs.com"
-    }
+    },
+    "poweredByMintlify": false
   },
   "seo": {
     "indexing": "all"
