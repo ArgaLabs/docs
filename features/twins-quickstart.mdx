@@ -37,6 +37,7 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
       [ ] Box              api.box.com
       [x] Discord          discord.com, api.discord.com
       [ ] Dropbox          api.dropboxapi.com
+      [ ] GitHub           api.github.com
       [ ] Google Calendar  www.googleapis.com/calendar/v3
       [ ] Google Drive     www.googleapis.com/drive/v3
       [ ] Notion           api.notion.com
@@ -212,6 +213,26 @@ Under the hood, the wizard:
     - Developer token: `box-developer-token`
   </Accordion>
 
+  <Accordion title="GitHub" icon="github">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.github.com`, `github.com`
+
+    **Quickstart state:**
+
+    - Organization: "test-org" ("Test Organization")
+    - Repository: `test-org/demo-repo` (Python, public)
+    - User: `testuser` ("Test User")
+    - Default branch: `main`
+    - Authentication: `Bearer` or `token` header (any well-formed value accepted)
+
+    **Supported resources:** Repos, branches, commits, pull requests, issues, contents, check runs, search, orgs, users, webhooks, and GitHub App endpoints.
+
+    **OAuth support:** The GitHub twin emulates the OAuth authorization code flow so you can test GitHub App install flows without hitting real GitHub servers.
+
+    **Browser UI:** A dark-themed dashboard lets you browse repos, branches, PRs, files, and user profiles backed by the twin's in-memory state.
+  </Accordion>
+
   <Accordion title="Google Calendar" icon="calendar">
     **Type:** UI twin (interactive dashboard)
 
@@ -248,6 +269,7 @@ The wizard recognizes these environment variables per twin and replaces them wit
 | Twin | Variables the wizard detects |
 | --- | --- |
 | Discord | `DISCORD_TOKEN`, `DISCORD_BOT_TOKEN` |
+| GitHub | `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_API_URL` |
 | Slack | `SLACK_BOT_TOKEN`, `SLACK_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_TWIN_BASE_URL` |
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_API_KEY`, `STRIPE_TWIN_BASE_URL`, `STRIPE_TWIN_WEBHOOK_SECRET` |
 | Google Drive | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ACCESS_TOKEN` |
