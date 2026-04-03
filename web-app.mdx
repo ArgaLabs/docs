@@ -115,10 +115,29 @@ The recommended path is the CLI install, which writes the config to the correct 
 
 <Note>Visible on Team plan only.</Note>
 
-- Create a workspace linked to a GitHub organization
-- Invite teammates by email (must match your workspace domain)
-- View and manage members and pending invites
-- Remove members or revoke invitations
+Team workspaces let you collaborate with your organization on Arga. Workspaces are linked to a GitHub organization, and members must have a verified email on the same domain.
+
+**Creating a workspace:**
+
+1. Go to **Settings** and scroll to **Team workspace**
+2. Select your GitHub organization from the dropdown (only orgs you belong to are shown)
+3. Click **Create workspace** — Arga uses your verified email domain as the workspace domain
+
+**Inviting teammates:**
+
+- Click **Invite** and enter a teammate's email address
+- The email domain must match your workspace domain (personal email providers like Gmail and Yahoo are blocked)
+- Invitees receive an email with a join link that expires after 7 days
+- You can revoke pending invitations at any time
+
+**Managing members:**
+
+- View all current members and pending invites from the workspace section
+- Remove members individually — removed members are downgraded to the Free plan
+- Members can also leave voluntarily via the **Leave workspace** option
+- Workspace owners cannot leave; transfer ownership first if needed
+
+When a teammate accepts an invite, they are automatically upgraded to the Team plan and gain access to all Team features.
 
 ### Authorized CLI devices
 

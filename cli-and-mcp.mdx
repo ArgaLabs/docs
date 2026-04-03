@@ -80,12 +80,6 @@ Use `arga test url` for a one-off run against a deployed app:
 arga test url --url https://demo-app.com --prompt "test the login flow"
 ```
 
-You can also use the equivalent `validate` namespace:
-
-```bash
-arga validate url --url https://demo-app.com --prompt "test checkout"
-```
-
 If the target requires login, pass credentials together:
 
 ```bash
@@ -170,7 +164,6 @@ arga runs list --repo acme/web-app --json | jq '.[].run_id'
 |---------|-----------------|
 | `arga test url` | `{"run_id": "...", "status": "..."}` |
 | `arga validate pr` | `{"run_id": "...", "status": "..."}` |
-| `arga validate url` | `{"run_id": "...", "status": "..."}` |
 | `arga runs status <id>` | Full run object from the API |
 | `arga runs list` | Array of run summary objects |
 

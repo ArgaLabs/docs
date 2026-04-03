@@ -64,11 +64,17 @@ Once you've run a basic URL validation, you can test with [digital twins](/conce
 
 <Steps>
   <Step title="Provision twins for your project">
-    From your project directory:
+    From your project directory, run the wizard using the CLI or npx:
+
+    ```bash
+    arga wizard
+    ```
 
     ```bash
     npx arga-wizard
     ```
+
+    `arga wizard` automatically passes your saved API key from `arga login`. If you haven't logged in or prefer not to, use `npx arga-wizard` directly.
 
     The wizard will:
 

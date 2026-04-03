@@ -1,0 +1,122 @@
+---
+title: "Custom scenarios"
+description: "Create reusable test scenarios with pre-configured digital twin data"
+---
+
+Custom scenarios let you define reusable twin seed configurations for your validation runs. Instead of starting each run with empty twins, you can pre-populate them with realistic data — Slack channels with message history, Stripe customers with active subscriptions, GitHub repos with open PRs, and more.
+
+## How it works
+
+A scenario is a saved configuration that tells Arga how to seed your digital twins before a validation run begins. You can create scenarios in two ways:
+
+- **Natural language** — describe the data you want (e.g. "3 GitHub repos, each with 3 files and 2 open PRs") and Arga generates the twin configuration automatically
+- **Explicit config** — provide the exact JSON seed configuration for each twin
+
+When you start a validation run with a scenario attached, Arga provisions the selected twins and seeds them with the scenario's data before executing any test steps.
+
+## Creating a scenario
+
+### From the API
+
+Create a scenario by providing a name and either a natural language prompt or an explicit seed configuration.
+
+**With a prompt:**
+
+```bash
+curl -X POST https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "E-commerce checkout",
+    "description": "Stripe with test customers and Slack with support channel",
+    "prompt": "A Stripe account with 3 customers on different plans and a Slack workspace with a #support channel containing 10 recent messages about billing issues"
+  }'
+```
+
+Arga's AI generates the full seed configuration from your description.
+
+**With explicit config:**
+
+```bash
+curl -X POST https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Onboarding flow",
+    "twins": ["slack", "stripe"],
+    "seed_config": {
+      "slack": {
+        "channels": [{"name": "general", "messages": ["Welcome to the team!"]}]
+      },
+      "stripe": {
+        "customers": [{"name": "Test User", "email": "test@example.com"}]
+      }
+    }
+  }'
+```
+
+### Supported twins
+
+Scenarios can seed any of the following digital twins:
+
+| Twin | What you can seed |
+|------|-------------------|
+| `slack` | Workspaces, channels, messages, threads |
+| `discord` | Guilds, channels, messages, members |
+| `stripe` | Customers, subscriptions, products, invoices |
+| `notion` | Pages, databases, blocks |
+| `google_drive` | Files, folders, permissions |
+| `google_calendar` | Calendars, events |
+| `box` | Files, folders |
+| `dropbox` | Files, folders |
+| `unified` | Unified API data |
+| `unstructured` | Documents, workflows |
+
+## Managing scenarios
+
+### List scenarios
+
+```bash
+curl https://api.argalabs.com/scenarios \
+  -H "Authorization: Bearer <api-key>"
+```
+
+Filter by twin or tag:
+
+```bash
+curl "https://api.argalabs.com/scenarios?twin=slack&tag=onboarding" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+### Update a scenario
+
+```bash
+curl -X PUT https://api.argalabs.com/scenarios/<scenario_id> \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Updated description of the data I want"}'
+```
+
+If you update the prompt without providing a new `seed_config`, Arga regenerates the configuration from the updated prompt.
+
+### Delete a scenario
+
+```bash
+curl -X DELETE https://api.argalabs.com/scenarios/<scenario_id> \
+  -H "Authorization: Bearer <api-key>"
+```
+
+## Using scenarios in validation runs
+
+Pass a `scenario_id` when starting a validation run to seed twins with your saved configuration. The scenario's twins are provisioned and populated before test execution begins.
+
+## Tags
+
+Organize scenarios with tags for easy filtering. Tags are free-form strings you define when creating or updating a scenario.
+
+```json
+{
+  "name": "Payment edge cases",
+  "tags": ["billing", "edge-cases", "stripe"]
+}
+```

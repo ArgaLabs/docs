@@ -1,0 +1,70 @@
+---
+title: "Slack and Discord bots"
+description: "Ask Arga questions directly from Slack or Discord"
+---
+
+Arga provides bots for Slack and Discord that bring context search and bug investigation into your team's existing communication channels. Mention the bot with a question, and it searches your connected integrations to synthesize an answer with citations.
+
+## How it works
+
+Both bots connect to the same investigation pipeline that powers [Ask](/web-app#ask-ask) in the web app. When you mention the bot:
+
+1. Your question is forwarded to Arga's multi-hop reasoning engine
+2. Arga searches your connected sources (GitHub, Slack, Sentry, Jira, Linear, Grafana, PostHog)
+3. Results are curated, deduplicated, and synthesized into an answer
+4. The bot replies with the answer, source citations, and a count of reasoning steps
+
+## Slack bot
+
+The Slack bot uses Socket Mode and responds to:
+
+- **@mentions in channels** — mention the bot in any channel it's been added to
+- **Direct messages** — send a DM to the bot for private investigations
+
+### Example
+
+```
+@arga why is checkout returning 500 errors since yesterday?
+```
+
+The bot posts an initial "Investigating..." message, then updates it with the full answer including linked sources.
+
+### Setup
+
+<Note>Slack bot setup is handled during onboarding. Contact the Arga team to enable it for your workspace.</Note>
+
+Once enabled, invite the bot to channels where your team discusses bugs, incidents, or deployments. The bot only responds when mentioned or messaged directly.
+
+## Discord bot
+
+The Discord bot responds to:
+
+- **@mentions in channels and threads** — mention the bot in any channel it has access to
+- **Direct messages** — DM the bot for private queries
+
+### Example
+
+```
+@arga what Sentry errors are related to the payment service this week?
+```
+
+The bot shows a typing indicator while investigating, then replies with the answer and source links.
+
+### Setup
+
+<Note>Discord bot setup is handled during onboarding. Contact the Arga team to enable it for your server.</Note>
+
+## Linking your account
+
+Both bots identify you by your platform user ID. Your Slack or Discord account must be linked to your Arga account for the bot to access your connected integrations. If your account isn't linked, the bot will reply with instructions to connect it.
+
+## Differences from Ask in the web app
+
+The bots use the same investigation engine as the web app's Ask feature. The main differences:
+
+| | Web app | Bots |
+|---|---|---|
+| **Interface** | Full chat UI with history | Inline replies in Slack/Discord |
+| **Response length** | Full-length answers | Condensed to fit platform limits |
+| **Sources shown** | Up to 8 | Up to 8 (Slack) or 5 (Discord) |
+| **Thread context** | Full session history | Per-thread context |

@@ -44,9 +44,11 @@
             "pages": [
               "features/validate-modes",
               "features/pr-validation",
+              "features/custom-scenarios",
               "features/agent-testing",
               "features/local-testing",
-              "features/red-teaming"
+              "features/red-teaming",
+              "features/bots"
             ]
           },
           {

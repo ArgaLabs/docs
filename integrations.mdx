@@ -19,7 +19,7 @@ Arga currently supports the following context sources for generating user storie
 | **Communication**    | Slack, Discord                                        |
 | **Issue tracking**   | Jira, Linear, GitHub Issues, Notion                   |
 | **Error monitoring** | Sentry                                                |
-| **Observability**    | Grafana, AWS CloudWatch, Datadog, Prometheus, PostHog |
+| **Observability**    | Grafana, PostHog                                      |
 
 The more context sources you connect, the more thorough and accurate your generated user stories will be.
 
@@ -61,10 +61,7 @@ Which tools do you use for observability and issue tracking?
 
 <AccordionGroup>
   <Accordion defaultOpen icon="chart-mixed" title="Supported tools">
-    - Datadog
-    - Prometheus
     - Grafana
-    - AWS CloudWatch or X-Ray
     - Sentry
     - PostHog
     - Notion
@@ -74,6 +71,12 @@ Which tools do you use for observability and issue tracking?
     - Internal tools (please describe during onboarding)
     - Other (please describe during onboarding)
   </Accordion>
+  <Accordion icon="clock" title="Coming soon">
+    - Datadog
+    - Prometheus
+    - AWS CloudWatch
+    - AWS X-Ray
+  </Accordion>
 </AccordionGroup>
 
 ### Logging and monitoring
@@ -81,14 +84,13 @@ Which tools do you use for observability and issue tracking?
 Which logging or monitoring tools do you use?
 
 <AccordionGroup>
-  <Accordion defaultOpen icon="file-lines" title="Supported tools">
+  <Accordion defaultOpen icon="clock" title="Coming soon">
     - Loki
     - Tempo
     - ELK (Elasticsearch, Logstash, Kibana)
     - Jaeger
     - Splunk
     - Honeycomb
-    - Other (please describe during onboarding)
   </Accordion>
 </AccordionGroup>
 
