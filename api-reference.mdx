@@ -99,7 +99,8 @@ Start a browser validation run against a deployed URL.
 | `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
 | `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
 | `runner_mode` | `string` | No | Runner execution mode. Use `"dom"` for DOM-based interaction or `"visual"` for screenshot-based visual interaction. Defaults to `"visual"` when omitted. |
-| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`, `notion`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
+| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
+| `ttl_minutes` | `integer` | No | Time-to-live in minutes for the validation run. Range: `1`–`480`. Free plan users are capped at 10 minutes. Team plan users default to 30 minutes when omitted. |
 
 **Example request**
 
@@ -110,7 +111,8 @@ curl -X POST https://api.argalabs.com/validate/url \
   -d '{
     "url": "https://staging.example.com",
     "prompt": "test the login flow",
-    "twins": ["slack", "stripe"]
+    "twins": ["slack", "stripe"],
+    "ttl_minutes": 60
   }'
 ```
 
@@ -140,6 +142,7 @@ curl -X POST https://api.argalabs.com/validate/url \
 | `401` | Invalid or expired token. |
 | `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
 | `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
+| `403` | Free plan runs are limited to {N} minutes. Upgrade to Team for custom TTL. |
 | `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
 
 ### `POST` Probe a URL for twin suggestions
@@ -298,7 +301,7 @@ Provision one or more ephemeral twin instances. Returns a `run_id` you can use t
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`, `notion`). At least one valid twin name is required. Use the [twin catalog](#get-list-available-twins) to discover available names. |
+| `twins` | `array of string` | Yes | — | Twin names to provision (e.g. `slack`, `stripe`). At least one valid twin name is required. Use the [twin catalog](#get-list-available-twins) to discover available names. |
 | `ttl_minutes` | `integer` | No | `60` | Time-to-live in minutes before the twins are automatically torn down. Range: `1`–`480`. |
 | `scenario_id` | `string` | No | — | UUID of a [scenario](#post-create-a-scenario) to pre-seed the twins with sample data. |
 
@@ -309,7 +312,7 @@ curl -X POST https://api.argalabs.com/validate/twins/provision \
   -H "Authorization: Bearer $ARGA_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "twins": ["slack", "notion"],
+    "twins": ["slack", "stripe"],
     "ttl_minutes": 120
   }'
 ```
@@ -1335,11 +1338,12 @@ Return the authenticated user's profile.
   "workspace_github_org": "arga-labs",
   "api_key": "arga_sk_...",
   "billing_plan": "team",
-  "plan_limits": {
+    "plan_limits": {
     "validation_runs_limit": 10,
     "validation_runs_used": 3,
     "validation_runs_remaining": 7,
     "max_twins_per_run": 1,
+    "max_ttl_minutes": 10,
     "ci_checks_limit": null,
     "ci_checks_used": 0,
     "ci_checks_remaining": null,
@@ -1369,6 +1373,7 @@ Return the authenticated user's profile.
 | `plan_limits.validation_runs_used` | `integer` | Validation runs consumed in the current monthly billing period. |
 | `plan_limits.validation_runs_remaining` | `integer \| null` | Validation runs remaining this month. `null` for paid plans (unlimited). |
 | `plan_limits.max_twins_per_run` | `integer \| null` | Maximum twins allowed per run. `1` for free plan, `null` for team/paid (unlimited). |
+| `plan_limits.max_ttl_minutes` | `integer \| null` | Maximum TTL in minutes for validation runs. `10` for free plan, `480` for team plan, `null` for paid (unlimited). |
 | `plan_limits.ci_checks_limit` | `integer \| null` | Monthly CI check limit. Only applies to team plans. |
 | `plan_limits.ci_checks_used` | `integer` | CI checks consumed in the current monthly billing period. |
 | `plan_limits.ci_checks_remaining` | `integer \| null` | CI checks remaining this month. `null` when no limit applies. |
