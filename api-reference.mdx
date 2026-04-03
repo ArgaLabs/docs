@@ -27,7 +27,10 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | Endpoint | Method | API key | JWT | Notes |
 |----------|--------|---------|-----|-------|
 | `/health` | `GET` | — | — | No auth required |
-| `/validate/url` | `POST` | Yes | Yes | Core programmatic access |
+| `/validate/url-run` | `POST` | Yes | Yes | Unified URL validation |
+| `/validate/pr-run` | `POST` | — | Yes | Unified PR/branch validation |
+| `/validate/agent-run` | `POST` | — | Yes | Unified agent exploration |
+| `/validate/url` | `POST` | Yes | Yes | **Deprecated** — use `/validate/url-run` |
 | `/validate/url/probe` | `POST` | Yes | Yes | |
 | `/validate/twins` | `GET` | Yes | Yes | |
 | `/validate/twins/provision` | `POST` | Yes | Yes | |
@@ -40,7 +43,8 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/{run_id}/artifacts/{filename}` | `GET` | Yes | Yes | Also accepts `?token=` query param |
 | `/validation/pr` | `POST` | Yes | Yes | Team plan required |
 | `/validation/runs` | `GET` | Yes | Yes | Team plan required |
-| `/redteam/start` | `POST` | — | Yes | |
+| `/redteam/start` | `POST` | — | Yes | **Deprecated** — use `/validate/agent-run` |
+| `/redteam/start-branch` | `POST` | — | Yes | **Deprecated** — use `/validate/agent-run` |
 | `/redteam/{run_id}/report` | `GET` | — | Yes | |
 | `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
 | `/scenarios` | `POST` | Yes | Yes | |
@@ -57,7 +61,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/cli/devices` | `GET` | — | Yes | |
 | `/auth/cli/devices/{cli_api_key_id}/revoke` | `POST` | Yes | Yes | |
 
-**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL validations, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like red-team scans and email verification.
+**Key distinction:** API keys (from `arga login`) are accepted on endpoints designed for programmatic and agent use — starting URL runs, polling run results, and managing twins. JWT tokens (from the web app OAuth flow) are required for interactive features like PR runs, agent runs, and email verification.
 
 ## Health check
 
@@ -77,7 +81,201 @@ Returns the API server status. No authentication required.
 
 ---
 
-## URL validation
+## Unified workflows
+
+These endpoints consolidate the previous validation and red-team entry points into three workflows: URL run, PR run, and agent run.
+
+### `POST` Start a URL run
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/url-run
+```
+
+Start a validation run against a deployed URL. When you include a `prompt`, the run starts immediately. When you omit `prompt`, the server plans the run automatically and streams progress via server-sent events (SSE).
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `string` | Yes | Target URL to validate. Must be a public HTTP or HTTPS URL. |
+| `prompt` | `string` | No | Natural-language description of what to test. When provided, the run starts immediately. When omitted, the server auto-plans the run and returns an SSE stream. |
+| `credentials` | `object` | No | Login credentials for the target app. |
+| `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
+| `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
+| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`). When provided, only the specified twins are provisioned. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted. |
+| `runner_mode` | `string` | No | Runner execution mode. Use `"dom"` for DOM-based interaction or `"visual"` for screenshot-based visual interaction. |
+| `session_id` | `string` | No | UUID of an existing chat session to attach this run to. When omitted, a new session is created. |
+
+**Example request (with prompt)**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/url-run \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://staging.example.com",
+    "prompt": "test the login flow",
+    "twins": ["slack", "stripe"]
+  }'
+```
+
+**Response (with prompt)**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "queued",
+  "session_id": "f0e1d2c3-b4a5-6789-0abc-def123456789"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the validation run. |
+| `status` | `string` | Initial run status. `queued` when a prompt is provided. |
+| `session_id` | `string` | Chat session associated with this run. |
+
+**Response (without prompt)**
+
+When `prompt` is omitted, the endpoint returns a `text/event-stream` response with SSE events as the server plans the run. The `X-Session-Id` and `X-Run-Id` response headers contain the session and run identifiers.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A valid public http(s) URL is required.` |
+| `400` | `Email and password must both be provided.` |
+| `401` | Invalid or expired token. |
+| `403` | Plan limit errors (free plan restrictions, monthly limit reached). |
+
+### `POST` Start a PR run
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/pr-run
+```
+
+Start a validation run against a pull request or branch. The server deploys the branch, generates a test plan, and streams progress via server-sent events (SSE).
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `repo` | `string` | Yes | Repository in `owner/repo` format. |
+| `branch` | `string` | Conditional | Branch name. Required unless `pr_url` is provided. |
+| `pr_url` | `string` | Conditional | Pull request URL. Used to resolve the branch when `branch` is not provided. |
+| `context_notes` | `string` | No | Additional instructions or context for the validation. |
+| `scenario_prompt` | `string` | No | Natural-language prompt to customize the generated test scenarios. |
+| `twins` | `array of string` | No | Digital twin services to include in the run. |
+| `frontend_url` | `string` | No | Base URL of the frontend under test. Defaults to `http://localhost:3000`. |
+| `session_id` | `string` | No | UUID of an existing chat session to attach this run to. When omitted, a new session is created. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/pr-run \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo": "acme/web-app",
+    "branch": "feature/checkout",
+    "context_notes": "focus on the checkout flow changes"
+  }'
+```
+
+**Response**
+
+The endpoint returns a `text/event-stream` response with SSE events as the server generates the test plan and deploys the branch. The `X-Session-Id` and `X-Run-Id` response headers contain the session and run identifiers.
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `A branch or PR URL is required.` |
+| `400` | `GitHub integration required for validation.` |
+| `400` | Invalid repository format. |
+| `401` | Invalid or expired token. |
+| `403` | Plan limit errors. |
+| `404` | `Session not found` |
+
+### `POST` Start an agent run
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+POST /validate/agent-run
+```
+
+Start an autonomous agent exploration run against a deployed URL or a branch. Provide `url` for standalone exploration, or `repo` and `branch` to deploy a branch first and then explore it.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | `string` | Conditional | Target URL to explore. Required unless `repo` and `branch` are provided. |
+| `repo` | `string` | Conditional | Repository in `owner/repo` format. Required together with `branch` for branch-based runs. |
+| `branch` | `string` | Conditional | Branch name. Required together with `repo` for branch-based runs. |
+| `credentials` | `array` | No | Roles with login credentials for testing authenticated surfaces. |
+| `credentials[].name` | `string` | Yes | Role name (e.g. `admin`, `user`). |
+| `credentials[].credentials` | `object` | No | Key-value pairs for login fields. |
+| `credentials[].permissions_description` | `string` | No | Description of what this role can access. |
+| `focus` | `string` | No | Text description to narrow the exploration scope. |
+| `action_budget` | `integer` | No | Maximum number of actions across all campaigns. Defaults to `200`. |
+| `runner_mode` | `string` | No | Campaign runner type. Use `"dom"` for DOM-based campaigns or `"visual"` for screenshot-based visual campaigns. When omitted, both campaign types run in combined mode. |
+
+**Example request**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/agent-run \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://staging.example.com",
+    "focus": "authentication and payment flows",
+    "action_budget": 150,
+    "credentials": [
+      {
+        "name": "admin",
+        "credentials": {"email": "admin@example.com", "password": "test123"},
+        "permissions_description": "Full admin access"
+      }
+    ]
+  }'
+```
+
+**Response**
+
+```json
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "status": "planning"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | `string` | Unique identifier for the agent run. |
+| `status` | `string` | Initial status. Always `planning`. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Either url or repo+branch is required.` |
+| `400` | `A valid public http(s) URL is required.` |
+| `400` | `GitHub integration required.` |
+| `400` | `A branch is required.` |
+| `400` | Invalid repository format. |
+| `401` | Invalid or expired token. |
+
+---
+
+## URL validation (deprecated)
+
+<Warning>The `/validate/url` endpoint is deprecated. Use [`/validate/url-run`](#post-start-a-url-run) instead.</Warning>
 
 ### `POST` Start a URL validation
 
@@ -576,8 +774,9 @@ The response includes the full run state. Key fields:
 | `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
 | `pr_url` | `string` | Pull request URL, if applicable. |
 | `frontend_url` | `string` | Base URL of the frontend under test. |
-| `run_type` | `string` | Type of run. |
+| `run_type` | `string` | Type of run. Canonical values: `url_run`, `pr_run`, `agent_run`. Legacy values such as `url`, `staging`, `pr`, `branch`, and `redteam` may appear on older runs. |
 | `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). |
+| `trigger` | `string \| null` | How the run was initiated: `manual` for runs started from the UI or API, `ci` for runs triggered by CI integrations. |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
@@ -879,6 +1078,8 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 ## Red-team scans
 
 ### `POST` Start a scan
+
+<Warning>The `/redteam/start` endpoint is deprecated. Use [`/validate/agent-run`](#post-start-an-agent-run) instead.</Warning>
 
 <Note>Requires JWT authentication.</Note>
 
