@@ -1,109 +1,14 @@
 ---
 title: "Agent testing quickstart"
-description: "Test your AI agent's behaviour in a safe sandbox in under five minutes"
+description: "Validate AI agent behaviour in safe, sandboxed environments"
 ---
 
-Run your AI agent against Arga's sandboxed environment to catch misbehaviour, prompt injection vulnerabilities, and tool-use issues — without affecting production.
+Agent testing is currently in private beta. We're working closely with early partners to refine the workflow before opening it up more broadly.
 
-<Note>Agent testing requires a Team or Paid plan. Run `arga whoami` to check your current plan, or see [Plans and limits](/plans) to upgrade.</Note>
+If your team is building AI agents and you'd like to validate their behaviour — including prompt injection resistance, tool-use boundaries, and graceful degradation — we'd love to talk.
 
-## From the CLI
+<Card title="Schedule a call" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
+  Book a 30-minute session to discuss agent testing for your use case.
+</Card>
 
-<Steps>
-  <Step title="Install the CLI and log in">
-    ```bash
-    pip install arga-cli
-    arga login
-    ```
-
-    This opens a browser window for GitHub authentication. Once approved, your API key is saved locally.
-  </Step>
-  <Step title="Scan your deployed app">
-    Point Arga at your staging URL:
-
-    ```bash
-    arga scan https://your-staging-app.com
-    ```
-
-    Arga's agent autonomously explores your application — probing user flows, API integrations, error handling, and adversarial edge cases. It auto-generates a test plan and begins execution.
-
-    To focus the scan on a specific area:
-
-    ```bash
-    arga scan https://your-staging-app.com --focus "authentication and payment flows"
-    ```
-
-    To increase the number of actions the agent can take (default 200):
-
-    ```bash
-    arga scan https://your-staging-app.com --budget 300
-    ```
-  </Step>
-  <Step title="Check progress">
-    The CLI prints a **run ID** when the scan starts. Track progress with:
-
-    ```bash
-    arga scan status <run_id>
-    ```
-
-    Or open [app.argalabs.com](https://app.argalabs.com) to watch the scan live with screenshots and action traces.
-  </Step>
-  <Step title="Get the report">
-    Once the scan completes, pull the full findings:
-
-    ```bash
-    arga scan report <run_id>
-    ```
-
-    The report includes every anomaly found, categorized by severity (`critical`, `high`, `medium`, `low`, `info`) and attack category (e.g. `auth`, `xss`, `injection`, `access_control`).
-  </Step>
-</Steps>
-
-## From the web app
-
-1. Open [app.argalabs.com/validate](https://app.argalabs.com/validate) and select **Staging Run**.
-2. Enter your staging URL.
-3. Optionally describe a focus area (e.g. `test the AI chatbot's prompt injection resistance`).
-4. Arga probes the environment, provisions [digital twins](/concepts/digital-twins), and generates a test plan — including adversarial red-team scenarios.
-5. Review and approve the plan, then let it run.
-
-Results appear in the dashboard with step-by-step execution traces, screenshots, and severity-rated findings.
-
-## Testing authenticated flows
-
-If your agent or app requires login, pass credentials so Arga can sign in before scanning:
-
-```bash
-arga scan https://your-staging-app.com \
-  --focus "test the admin agent's tool-use boundaries"
-```
-
-For multi-role testing via the API, you can provide multiple credential sets — see the [API reference](/api-reference).
-
-## What Arga tests
-
-Arga's agent testing goes beyond functional validation. It automatically includes:
-
-- **Prompt injection and jailbreak resistance** — adversarial inputs designed to bypass agent instructions
-- **Tool-use boundaries** — verifying the agent doesn't misuse connected tools or access unauthorized data
-- **Graceful degradation** — how the agent handles external service failures, timeouts, and malformed responses
-- **State corruption** — whether the agent can be tricked into corrupting session or application state
-
-See [Red-teaming and fuzzing](/features/red-teaming) for the full list of adversarial scenarios.
-
-## Next steps
-
-<CardGroup cols={2}>
-  <Card title="Digital twins" icon="clone" href="/concepts/digital-twins">
-    Learn how twins safely replicate external APIs during testing.
-  </Card>
-  <Card title="Red-teaming" icon="shield-halved" href="/features/red-teaming">
-    Deeper dive into adversarial testing scenarios.
-  </Card>
-  <Card title="CI Checks" icon="code-pull-request" href="/features/pr-validation">
-    Run agent tests automatically on every PR.
-  </Card>
-  <Card title="CLI reference" icon="terminal" href="/cli-and-mcp">
-    Full `arga scan` command reference and flags.
-  </Card>
-</CardGroup>
+In the meantime, see [AI agent testing](/features/agent-testing) for an overview of what Arga covers and why agent behaviour requires a different testing approach.
