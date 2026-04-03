@@ -410,20 +410,8 @@ List the digital twin services available for sandbox deployments. Returns an arr
 ```json
 [
   {
-    "name": "slack",
-    "label": "Slack",
-    "kind": "backend",
-    "show_in_ui": true
-  },
-  {
-    "name": "discord",
-    "label": "Discord",
-    "kind": "backend",
-    "show_in_ui": true
-  },
-  {
-    "name": "notion",
-    "label": "Notion",
+    "name": "box",
+    "label": "Box",
     "kind": "backend",
     "show_in_ui": true
   },
@@ -434,26 +422,14 @@ List the digital twin services available for sandbox deployments. Returns an arr
     "show_in_ui": true
   },
   {
-    "name": "stripe",
-    "label": "Stripe",
-    "kind": "backend",
-    "show_in_ui": true
-  },
-  {
     "name": "unstructured",
     "label": "Unstructured",
     "kind": "backend",
     "show_in_ui": true
   },
   {
-    "name": "google_drive",
-    "label": "Google Drive",
-    "kind": "frontend",
-    "show_in_ui": true
-  },
-  {
-    "name": "google_calendar",
-    "label": "Google Calendar",
+    "name": "discord",
+    "label": "Discord",
     "kind": "frontend",
     "show_in_ui": true
   },
@@ -464,8 +440,32 @@ List the digital twin services available for sandbox deployments. Returns an arr
     "show_in_ui": true
   },
   {
-    "name": "box",
-    "label": "Box",
+    "name": "google_calendar",
+    "label": "Google Calendar",
+    "kind": "frontend",
+    "show_in_ui": true
+  },
+  {
+    "name": "google_drive",
+    "label": "Google Drive",
+    "kind": "frontend",
+    "show_in_ui": true
+  },
+  {
+    "name": "notion",
+    "label": "Notion",
+    "kind": "frontend",
+    "show_in_ui": true
+  },
+  {
+    "name": "slack",
+    "label": "Slack",
+    "kind": "frontend",
+    "show_in_ui": true
+  },
+  {
+    "name": "stripe",
+    "label": "Stripe",
     "kind": "frontend",
     "show_in_ui": true
   }
@@ -476,7 +476,7 @@ List the digital twin services available for sandbox deployments. Returns an arr
 |-------|------|-------------|
 | `name` | `string` | Twin identifier used in the `twins` array when deploying a sandbox. |
 | `label` | `string` | Human-readable display name. |
-| `kind` | `string` | Twin category: `backend` for server-side API mocks (e.g. messaging, billing, integration proxies) or `frontend` for client-side file storage and productivity tool mocks. |
+| `kind` | `string` | Twin category: `backend` for server-side API mocks with no visual UI or `frontend` for browsable UI surfaces with interactive dashboards. |
 | `show_in_ui` | `boolean` | Whether this twin is shown in the web UI by default. |
 
 **Errors**

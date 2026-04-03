@@ -27,27 +27,27 @@ Arga currently supports the following context sources for generating user storie
 
 Context integrations help Arga understand your stack. Sandbox twins help Arga safely stand in for external services during validation runs.
 
-Arga currently supports these twins in sandbox environments. Twins are split into two categories: **backend** twins (server-side API mocks for messaging, billing, and integration proxies) and **frontend** twins (client-side file storage and productivity tool mocks).
-
-**Backend twins**
-
-| Twin | Purpose |
-| ---- | ------- |
-| `discord` | Stand in for Discord API v10 calls (`discord.com`, `api.discord.com`, `discordapp.com`) during sandbox validation. Supports the full Discord API v10 surface including guilds, channels, messages, threads, members, roles, webhooks, emojis, stickers, scheduled events, stage instances, and auto-moderation. |
-| `notion` | Stand in for Notion API calls (`api.notion.com`, `notion.so`) during sandbox validation. Supports pages, databases, blocks, users, and search. |
-| `slack` | Stand in for Slack Web API calls during sandbox validation. Supports the OAuth 2.0 authorization code grant flow for testing "Add to Slack" install flows. |
-| `stripe` | Stand in for Stripe API calls during sandbox validation. |
-| `unified` | Stand in for the Unified API when your app talks to `api.unified.to` instead of directly to the upstream provider. |
-| `unstructured` | Stand in for Unstructured API calls (`api.unstructuredapp.io`, `platform.unstructuredapp.io`) during sandbox validation. Supports document partitioning, workflow management, source and destination CRUD, and job execution. |
+Arga currently supports these twins in sandbox environments. Twins are split into two categories: **frontend** twins (browsable UI surfaces with interactive dashboards) and **backend** twins (server-side API mocks with no visual UI).
 
 **Frontend twins**
 
 | Twin | Purpose |
 | ---- | ------- |
-| `box` | Stand in for Box API calls (`api.box.com`, `upload.box.com`) during sandbox validation. |
+| `discord` | Stand in for Discord API v10 calls (`discord.com`, `api.discord.com`, `discordapp.com`) during sandbox validation. Supports the full Discord API v10 surface including guilds, channels, messages, threads, members, roles, webhooks, emojis, stickers, scheduled events, stage instances, and auto-moderation. |
 | `dropbox` | Stand in for Dropbox API v2 calls (`api.dropboxapi.com`, `content.dropboxapi.com`, `notify.dropboxapi.com`) during sandbox validation. Supports the full Dropbox API v2 surface including files, sharing, file requests, file properties, team management, and admin controls. |
 | `google_calendar` | Stand in for Google Calendar API calls (`www.googleapis.com`, `calendar.googleapis.com`) during sandbox validation. Supports calendars, events, ACL rules, settings, free/busy queries, and webhook deliveries. |
 | `google_drive` | Stand in for Google Drive API calls during sandbox validation. |
+| `notion` | Stand in for Notion API calls (`api.notion.com`, `notion.so`) during sandbox validation. Supports pages, databases, blocks, users, and search. |
+| `slack` | Stand in for Slack Web API calls during sandbox validation. Supports the OAuth 2.0 authorization code grant flow for testing "Add to Slack" install flows. |
+| `stripe` | Stand in for Stripe API calls during sandbox validation. |
+
+**Backend twins**
+
+| Twin | Purpose |
+| ---- | ------- |
+| `box` | Stand in for Box API calls (`api.box.com`, `upload.box.com`) during sandbox validation. |
+| `unified` | Stand in for the Unified API when your app talks to `api.unified.to` instead of directly to the upstream provider. |
+| `unstructured` | Stand in for Unstructured API calls (`api.unstructuredapp.io`, `platform.unstructuredapp.io`) during sandbox validation. Supports document partitioning, workflow management, source and destination CRUD, and job execution. |
 
 For more detail on how twins work, see [Digital twins](/concepts/digital-twins).
 

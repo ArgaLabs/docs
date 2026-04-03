@@ -34,7 +34,6 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
     ```text
     ? Which API twins do you need? (Space to select, Enter to confirm)
       -- UI Twins (with interactive dashboard) --
-      [ ] Box              api.box.com
       [x] Discord          discord.com, api.discord.com
       [ ] Dropbox          api.dropboxapi.com
       [ ] Google Calendar  www.googleapis.com/calendar/v3
@@ -43,6 +42,7 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
       [x] Slack            api.slack.com, slack.com
       [ ] Stripe           api.stripe.com
       -- Backend-only Twins --
+      [ ] Box              api.box.com
       [ ] Unified          api.unified.to
       [ ] Unstructured     api.unstructuredapp.io
     ```
@@ -200,7 +200,7 @@ Under the hood, the wizard:
   </Accordion>
 
   <Accordion title="Box" icon="box">
-    **Type:** UI twin (interactive dashboard)
+    **Type:** Backend-only
 
     **Intercepts:** `api.box.com`, `upload.box.com`, `app.box.com`
 
