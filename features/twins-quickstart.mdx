@@ -34,15 +34,16 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
     ```text
     ? Which API twins do you need? (Space to select, Enter to confirm)
       -- UI Twins (with interactive dashboard) --
-      [ ] Box              api.box.com
       [x] Discord          discord.com, api.discord.com
       [ ] Dropbox          api.dropboxapi.com
+      [ ] GitHub           api.github.com, github.com
       [ ] Google Calendar  www.googleapis.com/calendar/v3
       [ ] Google Drive     www.googleapis.com/drive/v3
       [ ] Notion           api.notion.com
       [x] Slack            api.slack.com, slack.com
       [ ] Stripe           api.stripe.com
       -- Backend-only Twins --
+      [ ] Box              api.box.com
       [ ] Unified          api.unified.to
       [ ] Unstructured     api.unstructuredapp.io
     ```
@@ -168,6 +169,21 @@ Under the hood, the wizard:
     - Root folder initialized with default filesystem
   </Accordion>
 
+  <Accordion title="GitHub" icon="github">
+    **Type:** UI twin (interactive dashboard)
+
+    **Intercepts:** `api.github.com`, `github.com`
+
+    **Quickstart state:**
+
+    - User: `testuser` (Test User)
+    - Organization: `test-org` (Test Organization)
+    - Repository: `test-org/demo-repo` (public, Python, default branch: `main`)
+    - Token: `ghp_test-github-twin-token`
+
+    **Supported resources:** Repositories, pull requests, issues, branches, commits, check runs, file contents, search, organizations, users, webhooks, and OAuth flows.
+  </Accordion>
+
   <Accordion title="Notion" icon="book">
     **Type:** UI twin (interactive dashboard)
 
@@ -200,7 +216,7 @@ Under the hood, the wizard:
   </Accordion>
 
   <Accordion title="Box" icon="box">
-    **Type:** UI twin (interactive dashboard)
+    **Type:** Backend-only
 
     **Intercepts:** `api.box.com`, `upload.box.com`, `app.box.com`
 
