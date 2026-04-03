@@ -464,7 +464,7 @@ Once installed, the `arga-context` MCP server exposes the following tools to you
     |------|------|----------|---------|-------------|
     | `run_id` | `string` | Yes | — | The run ID returned by `start_url_validation`. |
 
-    Poll this tool after starting a validation. Terminal statuses are `complete`, `failed`, and `cancelled`. Non-terminal statuses are `queued` and `running`.
+    Poll this tool after starting a validation. Terminal statuses are `completed`, `failed`, and `cancelled`. Non-terminal statuses include `queued`, `generating_story`, `awaiting_approval`, `provisioning`, and `running`.
 
     **Returns:** A markdown report with the run status, step results, visual reports (if any), and a link to view the run in the browser.
   </Accordion>
