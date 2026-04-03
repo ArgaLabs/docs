@@ -527,7 +527,7 @@ The response includes the full run state. Key fields:
 |-------|------|-------------|
 | `id` | `string` | Run identifier. |
 | `session_id` | `string \| null` | Chat session associated with this run. |
-| `status` | `string` | Current status (e.g. `queued`, `running`, `complete`, `failed`, `cancelled`). |
+| `status` | `string` | Current status: `queued`, `generating_story`, `awaiting_approval`, `planning`, `waiting_for_deploy`, `provisioning`, `ready`, `running`, `completed`, `failed`, or `cancelled`. |
 | `pr_url` | `string` | Pull request URL, if applicable. |
 | `frontend_url` | `string` | Base URL of the frontend under test. |
 | `run_type` | `string` | Type of run. |
@@ -598,7 +598,7 @@ curl "https://api.argalabs.com/runs/a1b2c3d4-e5f6-7890-abcd-ef1234567890/logs" \
 {
   "run": {
     "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "status": "complete"
+    "status": "completed"
   },
   "worker_logs": [
     {
@@ -788,7 +788,7 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
   "items": [
     {
       "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-      "status": "complete",
+      "status": "completed",
       "repo": "acme/web-app",
       "pr_number": 42,
       "branch": "feature/checkout",
