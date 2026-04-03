@@ -29,7 +29,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/health` | `GET` | — | — | No auth required |
 | `/validate/url` | `POST` | Yes | Yes | Core programmatic access |
 | `/validate/url/probe` | `POST` | Yes | Yes | |
-| `/validate/twins` | `GET` | — | Yes | |
+| `/validate/twins` | `GET` | Yes | Yes | |
 | `/validate/twins/provision` | `POST` | Yes | Yes | |
 | `/validate/twins/provision/{run_id}/status` | `GET` | Yes | Yes | |
 | `/validate/twins/provision/{run_id}/extend` | `POST` | Yes | Yes | |
@@ -196,7 +196,7 @@ curl -X POST https://api.argalabs.com/validate/url/probe \
 
 ### `GET` List available twins
 
-<Note>Requires JWT authentication.</Note>
+<Note>Accepts both API key and JWT authentication.</Note>
 
 ```bash
 GET /validate/twins
