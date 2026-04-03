@@ -1,6 +1,6 @@
 ---
 title: "AI agent testing"
-description: "Validate agent behaviour in safe, sandboxed environments"
+description: "Validate agent behaviour in safe, sandboxed environments (this feature is in private beta, we're looking for teams to iterate with)"
 ---
 
 Arga validates AI agent behaviour by placing agents in controlled environments backed by [digital twins](/concepts/digital-twins). Agents interact with realistic API surfaces without causing real-world side effects.
@@ -19,14 +19,16 @@ AI agents are non-deterministic. The same prompt can produce different tool call
   <Accordion title="Pre-deployment validation" icon="shield-check">
     Before shipping a new agent version, run it through Arga's sandbox to verify it handles common scenarios correctly and doesn't exhibit unexpected behaviour.
   </Accordion>
+
   <Accordion title="Continuous monitoring" icon="chart-line">
     Connect Arga to your CI pipeline to test agent behaviour on every code change, catching regressions before they reach production.
   </Accordion>
+
   <Accordion title="Incident reproduction" icon="bug">
     When an agent misbehaves in production, use [session replay](/concepts/session-replay) to reconstruct the exact state and debug the root cause.
   </Accordion>
 </AccordionGroup>
 
-<Card title="Book a demo" icon="calendar" href="https://cal.com/akiratong/30min?overlayCalendar=true" horizontal>
+<Card title="Book a demo" icon="calendar" horizontal href="https://cal.com/akiratong/30min?overlayCalendar=true">
   See agent testing in action. Schedule a 30-minute walkthrough.
 </Card>
