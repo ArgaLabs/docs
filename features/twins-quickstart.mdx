@@ -34,17 +34,17 @@ The `arga-wizard` CLI provisions [digital twins](/concepts/digital-twins) for yo
     ```text
     ? Which API twins do you need? (Space to select, Enter to confirm)
       -- UI Twins (with interactive dashboard) --
+      [ ] Box              api.box.com
       [x] Discord          discord.com, api.discord.com
-      [x] Slack            api.slack.com, slack.com
-      [ ] Google Drive     www.googleapis.com/drive/v3
       [ ] Dropbox          api.dropboxapi.com
+      [ ] Google Calendar  www.googleapis.com/calendar/v3
+      [ ] Google Drive     www.googleapis.com/drive/v3
       [ ] Notion           api.notion.com
-      [ ] Unstructured     api.unstructuredapp.io
+      [x] Slack            api.slack.com, slack.com
       [ ] Stripe           api.stripe.com
       -- Backend-only Twins --
-      [ ] Box              api.box.com
-      [ ] Google Calendar  www.googleapis.com/calendar/v3
       [ ] Unified          api.unified.to
+      [ ] Unstructured     api.unstructuredapp.io
     ```
 
     **UI twins** have an interactive dashboard you can open in the browser to see messages, files, and other state. **Backend-only twins** respond to API calls but don't have a visual UI.
@@ -179,18 +179,6 @@ Under the hood, the wizard:
     - API key: `secret_notion-twin_seed`
   </Accordion>
 
-  <Accordion title="Unstructured" icon="file-lines">
-    **Type:** UI twin (interactive dashboard)
-
-    **Intercepts:** `api.unstructuredapp.io`, `platform.unstructuredapp.io`
-
-    **Quickstart state:**
-
-    - Partition endpoint ready at `/general/v0/general`
-    - Jobs endpoint ready at `/api/v1/jobs/`
-    - API key: `test-unstructured-key`
-  </Accordion>
-
   <Accordion title="Stripe" icon="stripe">
     **Type:** UI twin (interactive checkout pages)
 
@@ -212,7 +200,7 @@ Under the hood, the wizard:
   </Accordion>
 
   <Accordion title="Box" icon="box">
-    **Type:** Backend-only
+    **Type:** UI twin (interactive dashboard)
 
     **Intercepts:** `api.box.com`, `upload.box.com`, `app.box.com`
 
@@ -225,7 +213,7 @@ Under the hood, the wizard:
   </Accordion>
 
   <Accordion title="Google Calendar" icon="calendar">
-    **Type:** Backend-only
+    **Type:** UI twin (interactive dashboard)
 
     **Intercepts:** `www.googleapis.com/calendar/v3`
 
@@ -238,6 +226,18 @@ Under the hood, the wizard:
     **Intercepts:** `api.unified.to`, `unified.to`
 
     Bridges to Slack, Dropbox, Google Calendar, Notion, and Google Drive.
+  </Accordion>
+
+  <Accordion title="Unstructured" icon="file-lines">
+    **Type:** Backend-only
+
+    **Intercepts:** `api.unstructuredapp.io`, `platform.unstructuredapp.io`
+
+    **Quickstart state:**
+
+    - Partition endpoint ready at `/general/v0/general`
+    - Jobs endpoint ready at `/api/v1/jobs/`
+    - API key: `test-unstructured-key`
   </Accordion>
 </AccordionGroup>
 
