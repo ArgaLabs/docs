@@ -456,6 +456,48 @@ Once installed, the `arga-context` MCP server exposes the following tools to you
 
     **Returns:** Up to 8 matching results sorted by date.
   </Accordion>
+
+  <Accordion title="start_url_validation">
+    Start a browser validation run against a deployed URL.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `url` | `string` | Yes | — | Target URL to validate. Must be a public HTTP or HTTPS URL. |
+    | `prompt` | `string` | Yes | — | Natural-language description of what to test. |
+    | `email` | `string` | No | `""` | Email for signing in to the target app. Must be provided together with `password`. |
+    | `password` | `string` | No | `""` | Password for signing in to the target app. Must be provided together with `email`. |
+    | `twins` | `string` | No | `""` | Comma-separated list of digital twin services to include (e.g. `"slack,stripe"`). |
+
+    **Returns:** A confirmation message with the run ID and a link to view results. Use `get_validation_results` to poll for progress.
+  </Accordion>
+
+  <Accordion title="get_validation_results">
+    Get the status and step-by-step results of a validation run.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `run_id` | `string` | Yes | — | The run ID returned by `start_url_validation`. |
+
+    Poll this tool after starting a validation. Terminal statuses are `complete`, `failed`, and `cancelled`. Non-terminal statuses are `queued` and `running`.
+
+    **Returns:** A markdown report with the run status, step results, visual reports (if any), and a link to view the run in the browser.
+  </Accordion>
+
+  <Accordion title="cancel_validation_run">
+    Cancel a running validation. Only works on runs that have not yet reached a terminal status.
+
+    **Parameters:**
+
+    | Name | Type | Required | Default | Description |
+    |------|------|----------|---------|-------------|
+    | `run_id` | `string` | Yes | — | The run ID of the validation to cancel. |
+
+    **Returns:** A confirmation that the run was cancelled.
+  </Accordion>
 </AccordionGroup>
 
 ## Use a custom API URL
