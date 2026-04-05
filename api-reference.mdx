@@ -30,7 +30,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/url-run` | `POST` | Yes | Yes | Unified URL validation |
 | `/validate/pr-run` | `POST` | — | Yes | Unified PR/branch validation |
 | `/validate/agent-run` | `POST` | — | Yes | Unified sandbox run |
-| `/validate/url` | `POST` | Yes | Yes | **Deprecated** — use `/validate/url-run` |
+| `/validate/url` | `POST` | Yes | Yes | **Removed** — use `/validate/url-run` |
 | `/validate/url/probe` | `POST` | Yes | Yes | |
 | `/validate/twins` | `GET` | Yes | Yes | |
 | `/validate/twins/provision` | `POST` | Yes | Yes | |
@@ -43,8 +43,8 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/validate/{run_id}/artifacts/{filename}` | `GET` | Yes | Yes | Also accepts `?token=` query param |
 | `/validation/pr` | `POST` | Yes | Yes | Team plan required |
 | `/validation/runs` | `GET` | Yes | Yes | Team plan required |
-| `/redteam/start` | `POST` | — | Yes | **Deprecated** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
-| `/redteam/start-branch` | `POST` | — | Yes | **Deprecated** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
+| `/redteam/start` | `POST` | — | Yes | **Removed** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
+| `/redteam/start-branch` | `POST` | — | Yes | **Removed** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
 | `/redteam/{run_id}/report` | `GET` | — | Yes | |
 | `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
 | `/scenarios` | `POST` | Yes | Yes | |
@@ -274,75 +274,11 @@ curl -X POST https://api.argalabs.com/validate/agent-run \
 
 ---
 
-## URL validation (deprecated)
+## URL validation (removed)
 
-<Warning>The `/validate/url` endpoint is deprecated. Use [`/validate/url-run`](#post-start-a-url-run) instead.</Warning>
+<Warning>The `/validate/url` endpoint has been removed. Use [`/validate/url-run`](#post-start-a-url-run) instead.</Warning>
 
-### `POST` Start a URL validation
-
-<Note>Accepts both API key and JWT authentication.</Note>
-
-```bash
-POST /validate/url
-```
-
-Start a browser validation run against a deployed URL.
-
-**Request body**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `url` | `string` | Yes | Target URL to validate. Must be a public HTTP or HTTPS URL. |
-| `prompt` | `string` | Yes | Natural-language description of what to test. |
-| `credentials` | `object` | No | Login credentials for the target app. |
-| `credentials.email` | `string` | No | Email address for authentication. Must be provided together with `password`. |
-| `credentials.password` | `string` | No | Password for authentication. Must be provided together with `email`. |
-| `runner_mode` | `string` | No | Runner execution mode. Use `"dom"` for DOM-based interaction or `"visual"` for screenshot-based visual interaction. Defaults to `"visual"` when omitted. |
-| `twins` | `array of string` | No | Digital twin services to include in the run (e.g. `slack`, `stripe`). When provided, only the specified twins are provisioned. When omitted, all available twins (both backend and frontend) are included by default for full-coverage sandbox runs. Only valid twin names from the [twin catalog](#get-list-available-twins) are accepted; unknown names are silently ignored. |
-| `ttl_minutes` | `integer` | No | Time-to-live in minutes for the validation run. Range: `1`–`480`. Free plan users are capped at 10 minutes. Team plan users default to 30 minutes when omitted. |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/validate/url \
-  -H "Authorization: Bearer $ARGA_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://staging.example.com",
-    "prompt": "test the login flow",
-    "twins": ["slack", "stripe"],
-    "ttl_minutes": 60
-  }'
-```
-
-**Response**
-
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "queued",
-  "session_id": "f0e1d2c3-b4a5-6789-0abc-def123456789"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `run_id` | `string` | Unique identifier for the validation run. |
-| `status` | `string` | Initial run status. Always `queued`. |
-| `session_id` | `string` | Chat session associated with this run. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `A valid public http(s) URL is required.` |
-| `400` | `A prompt is required.` |
-| `400` | `Email and password must both be provided.` |
-| `401` | Invalid or expired token. |
-| `403` | Free plan requires a test prompt. Describe what to test, e.g. 'verify the login flow works'. |
-| `403` | Free plan allows 1 twin per run. Upgrade to Team for unlimited twins per run. |
-| `403` | Free plan runs are limited to {N} minutes. Upgrade to Team for custom TTL. |
-| `403` | Monthly free plan limit reached. Upgrade to Team for more runs per month. |
+The `POST /validate/url` endpoint was previously deprecated and has now been removed. Migrate to [`/validate/url-run`](#post-start-a-url-run), which supports both prompted and auto-planned runs.
 
 ### `POST` Probe a URL for twin suggestions
 
@@ -1078,76 +1014,11 @@ curl "https://api.argalabs.com/validation/runs?repo=acme/web-app&limit=5" \
 
 ## Red-team scans
 
-### `POST` Start a scan
+### `POST` Start a scan (removed)
 
-<Warning>The `/redteam/start` endpoint is deprecated. Use [`/validate/agent-run`](#post-start-a-sandbox-run) instead.</Warning>
+<Warning>The `/redteam/start` and `/redteam/start-branch` endpoints have been removed. Use [`/validate/agent-run`](#post-start-a-sandbox-run) instead.</Warning>
 
-<Note>Requires JWT authentication.</Note>
-
-```bash
-POST /redteam/start
-```
-
-Start a red-team scan against a deployed application.
-
-**Request body**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `url` | `string` | Yes | — | Target URL to scan. Must be a public HTTP or HTTPS URL. |
-| `focus` | `string` | No | — | Text description to narrow the scan scope. |
-| `action_budget` | `integer` | No | `200` | Maximum number of actions across all campaigns. |
-| `runner_mode` | `string` | No | — | Campaign runner type. Use `"dom"` for DOM-based campaigns or `"visual"` for screenshot-based visual campaigns. When omitted, both campaign types run in combined mode. |
-| `credentials` | `array` | No | — | Roles with login credentials for testing authenticated surfaces. |
-| `credentials[].name` | `string` | Yes | — | Role name (e.g. `admin`, `user`). |
-| `credentials[].credentials` | `object` | No | `{}` | Key-value pairs for login fields. |
-| `credentials[].permissions_description` | `string` | No | `""` | Description of what this role can access. |
-| `manifest` | `object` | No | — | Application manifest describing routes, roles, and invariants. |
-| `manifest.url` | `string` | Yes | — | Base URL of the application. |
-| `manifest.routes` | `array` | No | `[]` | List of route entries. Each includes `path`, `description`, `auth_required` (boolean), and `required_role`. |
-| `manifest.roles` | `array` | No | `[]` | List of role definitions. Each includes `name`, `credentials`, and `permissions_description`. |
-| `manifest.invariants` | `array` | No | `[]` | Security invariants. Each includes `rule` (text) and `category` (one of `auth`, `xss`, `data_leak`, `500`, `access_control`, `csrf`, `injection`, `idor`, `open_redirect`). |
-
-**Example request**
-
-```bash
-curl -X POST https://api.argalabs.com/redteam/start \
-  -H "Authorization: Bearer $JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://staging.example.com",
-    "focus": "authentication and payment flows",
-    "action_budget": 150,
-    "credentials": [
-      {
-        "name": "admin",
-        "credentials": {"email": "admin@example.com", "password": "test123"},
-        "permissions_description": "Full admin access"
-      }
-    ]
-  }'
-```
-
-**Response**
-
-```json
-{
-  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "planning"
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `run_id` | `string` | Unique identifier for the scan run. |
-| `status` | `string` | Initial status. Always `planning`. |
-
-**Errors**
-
-| Status | Detail |
-|--------|--------|
-| `400` | `A valid public http(s) URL is required.` |
-| `401` | Invalid or expired token. |
+The `POST /redteam/start` and `POST /redteam/start-branch` endpoints were previously deprecated and have now been removed. Migrate to [`/validate/agent-run`](#post-start-a-sandbox-run), which supports both URL-based and branch-based sandbox runs.
 
 ### `GET` Get the scan report
 
