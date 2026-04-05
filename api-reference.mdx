@@ -172,7 +172,7 @@ Start a validation run against a pull request or branch. The server deploys the 
 | `context_notes` | `string` | No | Additional instructions or context for the validation. |
 | `scenario_prompt` | `string` | No | Natural-language prompt to customize the generated test scenarios. |
 | `scenario_id` | `string` | No | UUID of a saved [scenario](/features/custom-scenarios) to pre-seed twins with sample data. When provided without `scenario_prompt`, the scenario's own prompt is used. |
-| `twins` | `array of string` | No | Digital twin services to include in the run. |
+| `twins` | `array of string` | No | Reserved for future use. Twins are currently auto-detected from the repository's runtime profile and this field has no effect. |
 | `frontend_url` | `string` | No | Base URL of the frontend under test. Defaults to `http://localhost:3000`. |
 | `session_id` | `string` | No | UUID of an existing chat session to attach this run to. When omitted, a new session is created. |
 
@@ -200,9 +200,11 @@ The endpoint returns a `text/event-stream` response with SSE events as the serve
 | `400` | `A branch or PR URL is required.` |
 | `400` | `GitHub integration required for validation.` |
 | `400` | Invalid repository format. |
+| `400` | `Invalid scenario_id format` |
 | `401` | Invalid or expired token. |
 | `403` | Plan limit errors. |
 | `404` | `Session not found` |
+| `404` | `Scenario not found` |
 
 ### `POST` Start a sandbox run
 
@@ -715,7 +717,6 @@ The response includes the full run state. Key fields:
 | `frontend_url` | `string` | Base URL of the frontend under test. |
 | `run_type` | `string` | Type of run. Canonical values: `url_run`, `pr_run`, `agent_run`. Legacy values such as `url`, `staging`, `pr`, `branch`, and `redteam` may appear on older runs. |
 | `mode` | `string \| null` | Validation mode for the run (e.g. `validation`, `auto_visual`, `redteam`). |
-| `trigger` | `string \| null` | How the run was initiated: `manual` for runs started from the UI or API, `ci` for runs triggered by CI integrations. |
 | `prompt` | `string \| null` | The prompt that initiated the run. |
 | `environment_url` | `string \| null` | URL of the sandbox environment, if applicable. |
 | `twins` | `array \| null` | List of digital twin services used in the run. |
@@ -1229,6 +1230,7 @@ curl -X POST https://api.argalabs.com/scenarios \
 | `401` | Invalid or expired token. |
 | `422` | `Either 'prompt' or 'seed_config' must be provided` |
 | `422` | `'twins' is required when 'seed_config' is provided without 'prompt'` |
+| `422` | Seed config generation failed. Returned when the prompt cannot be resolved into a valid twin configuration. |
 
 ### `GET` List scenarios
 
