@@ -1,0 +1,226 @@
+---
+title: "TypeScript SDK"
+description: "Install and use the Arga TypeScript SDK"
+---
+
+## Installation
+
+```bash
+npm install arga-sdk
+```
+
+Requires Node 18+ (uses native `fetch`). Zero runtime dependencies.
+
+## Quick start
+
+```typescript
+import { Arga } from 'arga-sdk';
+
+const client = new Arga({ apiKey: 'arga_sk_...' });
+
+// Start a URL validation with Stripe and Slack twins
+const run = await client.runs.createUrlRun({
+  url: 'https://staging.myapp.com',
+  twins: ['stripe', 'slack'],
+});
+
+// Wait for completion (polls every 2.5s)
+const detail = await client.runs.wait(run.runId);
+console.log(detail.status, detail.resultsJson);
+```
+
+## Runs
+
+### Create a URL run
+
+Test a live URL with browser validation and optional digital twins.
+
+```typescript
+const run = await client.runs.createUrlRun({
+  url: 'https://staging.myapp.com',
+  prompt: 'Test the checkout flow',                          // optional
+  twins: ['stripe', 'slack'],                                // optional
+  credentials: { email: 'test@example.com', password: 'pass' },  // optional
+  runnerMode: 'visual',                                      // optional
+  sessionId: 'abc-123',                                      // optional
+});
+// run.runId, run.status, run.sessionId
+```
+
+### Create a PR run
+
+Validate code changes from a branch or pull request.
+
+```typescript
+const run = await client.runs.createPrRun({
+  repo: 'myorg/myrepo',
+  branch: 'feature/checkout',                                // optional
+  prUrl: 'https://github.com/org/repo/pull/42',              // optional
+  twins: ['stripe'],                                         // optional
+  contextNotes: 'Changed the payment flow',                  // optional
+  scenarioPrompt: 'Customer with active subscription',       // optional
+});
+```
+
+### Create an agent run
+
+Deploy an autonomous agent to explore your app and find issues.
+
+```typescript
+const run = await client.runs.createAgentRun({
+  url: 'https://staging.myapp.com',
+  focus: 'authentication and authorization',                 // optional
+  actionBudget: 200,                                         // optional, default 200
+  credentials: [{ role: 'admin', email: 'admin@test.com', password: 'pass' }],  // optional
+});
+```
+
+### Get run details
+
+```typescript
+const detail = await client.runs.get('run-id');
+console.log(detail.status);         // "completed", "running", "failed", etc.
+console.log(detail.resultsJson);    // step results array
+console.log(detail.stepSummaries);  // grouped summaries
+console.log(detail.eventLogJson);   // timeline events
+```
+
+### Stream results
+
+Stream live results via server-sent events:
+
+```typescript
+for await (const event of client.runs.streamResults('run-id')) {
+  console.log(event);
+}
+```
+
+### Wait for completion
+
+Block until the run reaches a terminal status (`completed`, `failed`, or `cancelled`):
+
+```typescript
+const detail = await client.runs.wait('run-id', {
+  pollInterval: 2500,  // ms between polls (default 2500)
+  timeout: 600000,     // max ms to wait (default 600000)
+});
+```
+
+### Cancel a run
+
+```typescript
+await client.runs.cancel('run-id');
+```
+
+## Twins
+
+### List available twins
+
+```typescript
+const twins = await client.twins.list();
+for (const twin of twins) {
+  console.log(twin.name, twin.label, twin.kind);
+}
+// e.g. "stripe", "Stripe", "frontend"
+```
+
+### Provision a twin environment
+
+Spin up standalone twins for agent testing or local development:
+
+```typescript
+const { runId } = await client.twins.provision({
+  twins: ['stripe', 'slack'],
+  ttlMinutes: 60,                    // 1-480 minutes
+  scenarioId: 'scenario-uuid',       // optional — pre-seed twin data
+});
+```
+
+### Check provisioning status
+
+```typescript
+const status = await client.twins.getStatus(runId);
+console.log(status.status); // "provisioning", "ready", or "failed"
+
+if (status.status === 'ready') {
+  for (const [name, twin] of Object.entries(status.twins)) {
+    console.log(`${name}: ${twin.baseUrl}`);
+    console.log(`  Admin: ${twin.adminUrl}`);
+    console.log(`  Env vars:`, twin.envVars);
+  }
+}
+```
+
+### Extend TTL
+
+```typescript
+await client.twins.extend(runId, { ttlMinutes: 30 });
+```
+
+## Scenarios
+
+### Create a scenario
+
+Create with a natural language prompt (Arga generates the seed config):
+
+```typescript
+const scenario = await client.scenarios.create({
+  name: 'E-commerce checkout',
+  prompt: 'A Stripe account with 3 customers on different plans',
+  description: 'For testing checkout flows',  // optional
+  tags: ['checkout', 'stripe'],               // optional
+});
+```
+
+Or with an explicit seed config:
+
+```typescript
+const scenario = await client.scenarios.create({
+  name: 'Support channel',
+  twins: ['slack'],
+  seedConfig: {
+    slack: {
+      channels: [{ name: 'support', messages: ['Help needed'] }],
+    },
+  },
+});
+```
+
+### List scenarios
+
+```typescript
+// All scenarios
+const scenarios = await client.scenarios.list();
+
+// Filter by twin or tag
+const stripeScenarios = await client.scenarios.list({ twin: 'stripe' });
+const checkoutScenarios = await client.scenarios.list({ tag: 'checkout' });
+```
+
+### Get a scenario
+
+```typescript
+const scenario = await client.scenarios.get('scenario-id');
+console.log(scenario.name, scenario.twins, scenario.seedConfig);
+```
+
+## Error handling
+
+```typescript
+import { Arga, ArgaAPIError } from 'arga-sdk';
+
+const client = new Arga({ apiKey: 'arga_sk_...' });
+
+try {
+  await client.runs.get('nonexistent');
+} catch (err) {
+  if (err instanceof ArgaAPIError) {
+    console.error(err.statusCode); // 404
+    console.error(err.message);    // "Not found"
+  }
+}
+```
+
+## Source
+
+[github.com/ArgaLabs/arga-typescript-sdk](https://github.com/ArgaLabs/arga-typescript-sdk)
