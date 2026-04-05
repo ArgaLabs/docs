@@ -1,0 +1,269 @@
+---
+title: "Python SDK"
+description: "Install and use the Arga Python SDK"
+---
+
+## Installation
+
+```bash
+pip install arga-sdk
+```
+
+## Quick start
+
+```python
+from arga_sdk import Arga
+
+client = Arga(api_key="arga_sk_...")
+
+# Start a URL validation with Stripe and Slack twins
+run = client.runs.create_url_run(
+    url="https://staging.myapp.com",
+    twins=["stripe", "slack"],
+)
+
+# Wait for completion (polls every 2.5s)
+detail = client.runs.wait(run.run_id, timeout=300)
+print(detail.status, detail.results_json)
+```
+
+## Async usage
+
+Every method is available in async form via `AsyncArga`:
+
+```python
+import asyncio
+from arga_sdk import AsyncArga
+
+async def main():
+    async with AsyncArga(api_key="arga_sk_...") as client:
+        run = await client.runs.create_url_run(url="https://staging.myapp.com")
+        detail = await client.runs.wait(run.run_id)
+        print(detail.status)
+
+asyncio.run(main())
+```
+
+## Runs
+
+### Create a URL run
+
+Test a live URL with browser validation and optional digital twins.
+
+```python
+run = client.runs.create_url_run(
+    url="https://staging.myapp.com",
+    prompt="Test the checkout flow",         # optional
+    twins=["stripe", "slack"],               # optional
+    credentials={"email": "test@example.com", "password": "pass"},  # optional
+    runner_mode="visual",                    # optional
+    session_id="abc-123",                    # optional
+)
+# run.run_id, run.status, run.session_id
+```
+
+### Create a PR run
+
+Validate code changes from a branch or pull request.
+
+```python
+run = client.runs.create_pr_run(
+    repo="myorg/myrepo",
+    branch="feature/checkout",               # optional (or use pr_url)
+    pr_url="https://github.com/org/repo/pull/42",  # optional
+    twins=["stripe"],                        # optional
+    context_notes="Changed the payment flow", # optional
+    scenario_prompt="Customer with active subscription",  # optional
+)
+```
+
+### Create an agent run
+
+Deploy an autonomous agent to explore your app and find issues.
+
+```python
+run = client.runs.create_agent_run(
+    url="https://staging.myapp.com",
+    focus="authentication and authorization",  # optional
+    action_budget=200,                         # optional, default 200
+    credentials=[{"role": "admin", "email": "admin@test.com", "password": "pass"}],  # optional
+)
+```
+
+### Get run details
+
+```python
+detail = client.runs.get("run-id")
+print(detail.status)          # "completed", "running", "failed", etc.
+print(detail.results_json)    # list of step results
+print(detail.step_summaries)  # grouped summaries
+print(detail.event_log_json)  # timeline events
+```
+
+### Stream results
+
+Stream live results via server-sent events:
+
+```python
+for event in client.runs.stream_results("run-id"):
+    print(event)
+
+# Async
+async for event in client.runs.stream_results("run-id"):
+    print(event)
+```
+
+### Wait for completion
+
+Block until the run reaches a terminal status (`completed`, `failed`, or `cancelled`):
+
+```python
+detail = client.runs.wait(
+    "run-id",
+    poll_interval=2.5,  # seconds between polls (default 2.5)
+    timeout=600,         # max seconds to wait (default 600)
+)
+```
+
+### Cancel a run
+
+```python
+client.runs.cancel("run-id")
+```
+
+## Twins
+
+### List available twins
+
+```python
+twins = client.twins.list()
+for twin in twins:
+    print(twin.name, twin.label, twin.kind)
+# e.g. "stripe", "Stripe", "frontend"
+```
+
+### Provision a twin environment
+
+Spin up standalone twins for agent testing or local development:
+
+```python
+result = client.twins.provision(
+    twins=["stripe", "slack"],
+    ttl_minutes=60,                  # 1-480 minutes
+    scenario_id="scenario-uuid",     # optional — pre-seed twin data
+)
+run_id = result["run_id"]
+```
+
+### Check provisioning status
+
+```python
+status = client.twins.get_status(run_id)
+print(status.status)  # "provisioning", "ready", or "failed"
+
+if status.status == "ready":
+    for name, twin in status.twins.items():
+        print(f"{name}: {twin.base_url}")
+        print(f"  Admin: {twin.admin_url}")
+        print(f"  Env vars: {twin.env_vars}")
+```
+
+### Extend TTL
+
+```python
+client.twins.extend(run_id, ttl_minutes=30)
+```
+
+## Scenarios
+
+### Create a scenario
+
+Create with a natural language prompt (Arga generates the seed config):
+
+```python
+scenario = client.scenarios.create(
+    name="E-commerce checkout",
+    prompt="A Stripe account with 3 customers on different plans",
+    description="For testing checkout flows",  # optional
+    tags=["checkout", "stripe"],               # optional
+)
+```
+
+Or with an explicit seed config:
+
+```python
+scenario = client.scenarios.create(
+    name="Support channel",
+    twins=["slack"],
+    seed_config={
+        "slack": {
+            "channels": [{"name": "support", "messages": ["Help needed"]}]
+        }
+    },
+)
+```
+
+### List scenarios
+
+```python
+# All scenarios
+scenarios = client.scenarios.list()
+
+# Filter by twin or tag
+scenarios = client.scenarios.list(twin="stripe")
+scenarios = client.scenarios.list(tag="checkout")
+
+# Include built-in preset scenarios in results
+scenarios = client.scenarios.list(include_presets=True)
+```
+
+### List preset scenarios
+
+```python
+# All presets (no authentication required)
+presets = client.scenarios.list_presets()
+
+# Filter presets by twin or tag
+presets = client.scenarios.list_presets(twin="stripe")
+presets = client.scenarios.list_presets(tag="payments")
+```
+
+### Get a scenario
+
+```python
+scenario = client.scenarios.get("scenario-id")
+print(scenario.name, scenario.twins, scenario.seed_config)
+```
+
+## Error handling
+
+```python
+from arga_sdk import Arga, ArgaAPIError, ArgaError
+
+client = Arga(api_key="arga_sk_...")
+
+try:
+    detail = client.runs.get("nonexistent")
+except ArgaAPIError as e:
+    print(e.status_code)  # 404
+    print(e.message)      # "Not found"
+except ArgaError as e:
+    # Base class for all SDK errors (network issues, etc.)
+    print(e.message)
+```
+
+## Context managers
+
+Both clients support `with` blocks for automatic cleanup:
+
+```python
+with Arga(api_key="arga_sk_...") as client:
+    run = client.runs.create_url_run(url="https://staging.myapp.com")
+
+async with AsyncArga(api_key="arga_sk_...") as client:
+    run = await client.runs.create_url_run(url="https://staging.myapp.com")
+```
+
+## Source
+
+[github.com/ArgaLabs/arga-python-sdk](https://github.com/ArgaLabs/arga-python-sdk)

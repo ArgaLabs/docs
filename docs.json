@@ -49,7 +49,15 @@
             ]
           },
           {
-            "group": "Tools",
+            "group": "SDKs",
+            "pages": [
+              "sdks/overview",
+              "sdks/python",
+              "sdks/typescript"
+            ]
+          },
+          {
+            "group": "Setup",
             "pages": [
               "cli-and-mcp",
               "web-app",

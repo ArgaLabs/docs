@@ -1,0 +1,63 @@
+---
+title: "SDKs"
+description: "Official client libraries for the Arga API"
+---
+
+Arga provides official SDKs for Python and TypeScript. Both cover the same API surface — choose whichever fits your stack.
+
+<CardGroup cols={2}>
+  <Card title="Python" icon="python" href="/sdks/python">
+    Sync and async support. Works with any Python 3.10+ project.
+  </Card>
+  <Card title="TypeScript" icon="js" href="/sdks/typescript">
+    Zero dependencies. Uses native fetch (Node 18+).
+  </Card>
+</CardGroup>
+
+## What the SDKs cover
+
+Both SDKs wrap the same set of endpoints:
+
+| Namespace | What it does |
+|-----------|-------------|
+| **Runs** | Start URL, PR, and agent validation runs. Poll or stream results. Cancel runs. |
+| **Twins** | Provision standalone digital twin environments. Check readiness. Extend TTL. |
+| **Scenarios** | Create and list reusable twin seed configurations. |
+
+## Authentication
+
+All SDK methods require an API key. Get one by running:
+
+```bash
+arga login
+```
+
+The CLI stores your key locally. To use it in the SDK, copy the key from your Arga dashboard or pass it directly:
+
+<CodeGroup>
+```python Python
+from arga_sdk import Arga
+
+client = Arga(api_key="arga_sk_...")
+```
+
+```typescript TypeScript
+import { Arga } from 'arga-sdk';
+
+const client = new Arga({ apiKey: 'arga_sk_...' });
+```
+</CodeGroup>
+
+## Base URL
+
+Both SDKs default to `https://app.argalabs.com`. Override this if you're targeting a different environment:
+
+<CodeGroup>
+```python Python
+client = Arga(api_key="...", base_url="https://your-instance.example.com")
+```
+
+```typescript TypeScript
+const client = new Arga({ apiKey: '...', baseUrl: 'https://your-instance.example.com' });
+```
+</CodeGroup>

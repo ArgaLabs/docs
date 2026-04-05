@@ -23,6 +23,25 @@ Arga currently supports the following context sources for generating user storie
 | **Error monitoring** | Sentry                                                |
 | **Observability**    | Grafana, PostHog                                      |
 
+## Integration settings
+
+Some integrations support user-configurable settings that control automatic behaviors during validation runs.
+
+### Linear
+
+When you connect Linear, Arga automatically creates issues in your default Linear team for failed validation steps. You can toggle this off from the [Integrations page](https://app.argalabs.com/integrations) by unchecking **Auto-create issues for failed runs** on the Linear card.
+
+You can also update this setting via the API:
+
+```bash
+curl -X PATCH https://api.argalabs.com/integrations/linear/settings \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"auto_create_linear_issues": false}'
+```
+
+See the [API reference](/api-reference#patch-update-integration-settings) for full details.
+
 ## Sandbox twins
 
 Context integrations help Arga understand your stack. Sandbox twins help Arga safely stand in for external services during validation runs.
