@@ -58,6 +58,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/me` | `GET` | Yes | Yes | |
 | `/auth/email/request-verification` | `POST` | — | Yes | |
 | `/auth/email/verify` | `POST` | — | Yes | |
+| `/integrations/{provider}/settings` | `PATCH` | — | Yes | |
 | `/auth/cli/devices` | `GET` | — | Yes | |
 | `/auth/cli/devices/{cli_api_key_id}/revoke` | `POST` | Yes | Yes | |
 
@@ -1288,6 +1289,67 @@ Delete a scenario.
 |--------|--------|
 | `401` | Invalid or expired token. |
 | `404` | `Scenario not found` |
+
+---
+
+## Integrations
+
+### `PATCH` Update integration settings
+
+<Note>Requires JWT authentication.</Note>
+
+```bash
+PATCH /integrations/{provider}/settings
+```
+
+Update user-facing settings for a connected integration. Currently used to control automatic behavior such as Linear issue creation on failed validation runs.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `provider` | `string` | Integration provider name (e.g. `linear`). |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `auto_create_linear_issues` | `boolean` | No | When `false`, Arga will not automatically create Linear issues for failed validation runs. Defaults to `true` when the Linear integration is first connected. Only applies to the `linear` provider. |
+
+**Example request**
+
+```bash
+curl -X PATCH https://api.argalabs.com/integrations/linear/settings \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"auto_create_linear_issues": false}'
+```
+
+**Response**
+
+```json
+{
+  "provider": "linear",
+  "metadata": {
+    "default_team_id": "a1b2c3d4",
+    "default_team_key": "ENG",
+    "default_team_name": "Engineering",
+    "auto_create_linear_issues": false
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider` | `string` | The integration provider name. |
+| `metadata` | `object` | Updated integration metadata. Sensitive fields such as tokens are excluded. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `401` | Invalid or expired token. |
+| `404` | `{provider} not connected` |
 
 ---
 
