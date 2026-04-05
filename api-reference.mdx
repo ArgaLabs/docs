@@ -47,6 +47,7 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/redteam/start-branch` | `POST` | — | Yes | **Removed** — use [`/validate/agent-run`](#post-start-a-sandbox-run) |
 | `/redteam/{run_id}/report` | `GET` | — | Yes | |
 | `/redteam/{run_id}/cancel` | `POST` | — | Yes | |
+| `/scenarios/presets` | `GET` | — | — | No auth required |
 | `/scenarios` | `POST` | Yes | Yes | |
 | `/scenarios` | `GET` | Yes | Yes | |
 | `/scenarios/{scenario_id}` | `GET` | Yes | Yes | |
@@ -1092,6 +1093,72 @@ Cancel a running scan.
 
 Scenarios define pre-seeded twin configurations that you can reuse across validation runs. You can create a scenario by providing an explicit seed configuration, a natural-language prompt (which generates the configuration automatically), or both.
 
+Arga also ships with built-in **preset scenarios** — ready-to-use templates covering common use cases like e-commerce checkout, SaaS billing, DevOps CI/CD, and more. Presets are available without authentication and can be mixed into your own scenario list.
+
+### `GET` List preset scenarios
+
+```bash
+GET /scenarios/presets
+```
+
+Return built-in preset scenario templates. No authentication required.
+
+**Query parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `twin` | `string` | No | Filter presets that include this twin name. |
+| `tag` | `string` | No | Filter presets that include this tag. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/scenarios/presets?twin=stripe"
+```
+
+**Response**
+
+An array of scenario objects. Preset scenarios have `is_preset` set to `true` and empty `created_at` / `updated_at` timestamps.
+
+```json
+[
+  {
+    "id": "d4f5a6b7-...",
+    "name": "E-commerce Checkout",
+    "description": "End-to-end checkout flow with three customer tiers...",
+    "prompt": "Simulate an e-commerce checkout experience...",
+    "twins": ["stripe", "slack"],
+    "seed_config": {"stripe": {...}, "slack": {...}},
+    "tags": ["ecommerce", "payments", "functional"],
+    "created_at": "",
+    "updated_at": "",
+    "is_preset": true
+  }
+]
+```
+
+**Available preset tags**
+
+| Tag | Description |
+|-----|-------------|
+| `ecommerce` | E-commerce and checkout flows |
+| `payments` | Payment processing scenarios |
+| `saas` | SaaS billing and subscription management |
+| `billing` | Billing-related scenarios |
+| `devops` | DevOps and CI/CD pipelines |
+| `ci-cd` | Continuous integration and deployment |
+| `support` | Customer support workflows |
+| `customer-service` | Customer service scenarios |
+| `collaboration` | Document and team collaboration |
+| `documents` | Document management flows |
+| `security` | Security and access control |
+| `fraud` | Fraud detection and prevention |
+| `auth` | Authentication and authorization |
+| `access-control` | Access control boundaries |
+| `functional` | General functional testing |
+
+---
+
 ### `POST` Create a scenario
 
 <Note>Accepts both API key and JWT authentication.</Note>
@@ -1136,6 +1203,7 @@ curl -X POST https://api.argalabs.com/scenarios \
   "twins": ["stripe"],
   "seed_config": {"stripe": {"products": [...], "subscriptions": [...]}},
   "tags": [],
+  "is_preset": false,
   "created_at": "2026-03-21T12:00:00",
   "updated_at": "2026-03-21T12:00:00"
 }
@@ -1150,8 +1218,9 @@ curl -X POST https://api.argalabs.com/scenarios \
 | `twins` | `array of string` | Twin names included in this scenario. |
 | `seed_config` | `object` | The resolved seed configuration. |
 | `tags` | `array of string` | Tags for organizing scenarios. |
-| `created_at` | `string` | ISO 8601 timestamp. |
-| `updated_at` | `string` | ISO 8601 timestamp. |
+| `is_preset` | `boolean` | Whether this is a built-in preset scenario. Defaults to `false` for user-created scenarios. |
+| `created_at` | `string` | ISO 8601 timestamp. Empty string for preset scenarios. |
+| `updated_at` | `string` | ISO 8601 timestamp. Empty string for preset scenarios. |
 
 **Errors**
 
@@ -1169,7 +1238,7 @@ curl -X POST https://api.argalabs.com/scenarios \
 GET /scenarios
 ```
 
-List all scenarios for the authenticated user.
+List all scenarios for the authenticated user. You can optionally include built-in preset scenarios in the response.
 
 **Query parameters**
 
@@ -1177,17 +1246,18 @@ List all scenarios for the authenticated user.
 |-----------|------|----------|-------------|
 | `twin` | `string` | No | Filter scenarios that include this twin name. |
 | `tag` | `string` | No | Filter scenarios that include this tag. |
+| `include_presets` | `boolean` | No | When `true`, prepend built-in [preset scenarios](#get-list-preset-scenarios) to the results. Defaults to `false`. |
 
 **Example request**
 
 ```bash
-curl "https://api.argalabs.com/scenarios?twin=stripe" \
+curl "https://api.argalabs.com/scenarios?twin=stripe&include_presets=true" \
   -H "Authorization: Bearer $ARGA_API_KEY"
 ```
 
 **Response**
 
-An array of scenario objects (same shape as the [create response](#post-create-a-scenario)), sorted by creation date (newest first).
+An array of scenario objects (same shape as the [create response](#post-create-a-scenario)), sorted by creation date (newest first). When `include_presets` is `true`, preset scenarios (with `is_preset: true`) appear before user-created scenarios.
 
 **Errors**
 

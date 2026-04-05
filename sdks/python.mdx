@@ -212,6 +212,20 @@ scenarios = client.scenarios.list()
 # Filter by twin or tag
 scenarios = client.scenarios.list(twin="stripe")
 scenarios = client.scenarios.list(tag="checkout")
+
+# Include built-in preset scenarios in results
+scenarios = client.scenarios.list(include_presets=True)
+```
+
+### List preset scenarios
+
+```python
+# All presets (no authentication required)
+presets = client.scenarios.list_presets()
+
+# Filter presets by twin or tag
+presets = client.scenarios.list_presets(twin="stripe")
+presets = client.scenarios.list_presets(tag="payments")
 ```
 
 ### Get a scenario

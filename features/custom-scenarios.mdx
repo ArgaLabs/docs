@@ -5,10 +5,51 @@ description: "Create reusable test scenarios with pre-configured digital twin da
 
 Custom scenarios let you define reusable twin seed configurations for your validation runs. Instead of starting each run with empty twins, you can pre-populate them with realistic data — Slack channels with message history, Stripe customers with active subscriptions, GitHub repos with open PRs, and more.
 
+## Preset scenarios
+
+Arga ships with built-in preset scenarios — ready-to-use templates covering common use cases. Presets are available without authentication and give you a starting point for common validation patterns.
+
+Available presets include:
+
+| Preset | Twins | Tags |
+|--------|-------|------|
+| E-commerce Checkout | `stripe`, `slack` | `ecommerce`, `payments`, `functional` |
+| SaaS Billing & Upgrades | `stripe`, `slack`, `notion` | `saas`, `billing`, `functional` |
+| DevOps CI/CD Pipeline | `unified`, `slack`, `discord` | `devops`, `ci-cd`, `functional` |
+| Customer Support Portal | `slack`, `stripe`, `notion` | `support`, `customer-service`, `functional` |
+| Document Collaboration | `google_drive`, `slack`, `notion` | `collaboration`, `documents`, `functional` |
+| Payment Fraud & Edge Cases | `stripe`, `slack` | `security`, `payments`, `fraud` |
+| Access Control & Auth Boundaries | `unified`, `slack`, `notion` | `security`, `auth`, `access-control` |
+| Project Management Sprint | `unified`, `slack`, `notion` | `project-management`, `agile`, `functional` |
+| Calendar & Scheduling | `google_calendar`, `slack`, `notion` | `calendar`, `scheduling`, `functional` |
+| Multi-channel Notifications | `slack`, `discord`, `notion` | `notifications`, `messaging`, `functional` |
+
+To list all presets:
+
+```bash
+curl "https://api.argalabs.com/scenarios/presets"
+```
+
+Filter by twin or tag:
+
+```bash
+curl "https://api.argalabs.com/scenarios/presets?twin=stripe&tag=payments"
+```
+
+You can also include presets when listing your own scenarios by passing `include_presets=true`:
+
+```bash
+curl "https://api.argalabs.com/scenarios?include_presets=true" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+Preset scenarios have `is_preset` set to `true` in the response. You can clone a preset by creating a new scenario with the same seed configuration.
+
 ## How it works
 
-A scenario is a saved configuration that tells Arga how to seed your digital twins before a validation run begins. You can create scenarios in two ways:
+A scenario is a saved configuration that tells Arga how to seed your digital twins before a validation run begins. You can create scenarios in three ways:
 
+- **Preset templates** — use a built-in preset scenario as-is, or clone it as a starting point for customization
 - **Natural language** — describe the data you want (e.g. "3 GitHub repos, each with 3 files and 2 open PRs") and Arga generates the twin configuration automatically
 - **Explicit config** — provide the exact JSON seed configuration for each twin
 

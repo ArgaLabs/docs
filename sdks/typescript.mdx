@@ -195,6 +195,20 @@ const scenarios = await client.scenarios.list();
 // Filter by twin or tag
 const stripeScenarios = await client.scenarios.list({ twin: 'stripe' });
 const checkoutScenarios = await client.scenarios.list({ tag: 'checkout' });
+
+// Include built-in preset scenarios in results
+const allScenarios = await client.scenarios.list({ includePresets: true });
+```
+
+### List preset scenarios
+
+```typescript
+// All presets (no authentication required)
+const presets = await client.scenarios.listPresets();
+
+// Filter presets by twin or tag
+const stripePresets = await client.scenarios.listPresets({ twin: 'stripe' });
+const paymentPresets = await client.scenarios.listPresets({ tag: 'payments' });
 ```
 
 ### Get a scenario
