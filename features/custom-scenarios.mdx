@@ -111,6 +111,24 @@ curl -X DELETE https://api.argalabs.com/scenarios/<scenario_id> \
 
 Pass a `scenario_id` when starting a validation run to seed twins with your saved configuration. The scenario's twins are provisioned and populated before test execution begins.
 
+You can attach a scenario to:
+
+- **PR runs** (`/validate/pr-run`) — pass `scenario_id` and optionally `scenario_prompt` to override the scenario's default prompt.
+- **Twin provisioning** (`/validate/twins/provision`) — pass `scenario_id` to pre-seed standalone twin instances.
+
+```bash
+curl -X POST https://api.argalabs.com/validate/pr-run \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repo": "acme/web-app",
+    "branch": "feature/checkout",
+    "scenario_id": "<scenario_id>"
+  }'
+```
+
+When you provide `scenario_id` without a `scenario_prompt`, the scenario's own prompt is used as the test prompt. If you supply both, `scenario_prompt` takes precedence.
+
 ## Tags
 
 Organize scenarios with tags for easy filtering. Tags are free-form strings you define when creating or updating a scenario.
