@@ -60,9 +60,14 @@
           {
             "group": "Reference",
             "pages": [
-              "sdks/overview",
-              "sdks/python",
-              "sdks/typescript",
+              {
+                "group": "SDKs",
+                "pages": [
+                  "sdks/overview",
+                  "sdks/python",
+                  "sdks/typescript"
+                ]
+              },
               "api-reference",
               "plans",
               "troubleshooting"
