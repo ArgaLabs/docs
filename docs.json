@@ -23,43 +23,48 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get started",
             "pages": [
               "index",
               "quickstart",
-              "agent-testing-quickstart",
-              "features/twins-quickstart"
+              "concepts/how-it-works"
             ]
           },
           {
-            "group": "Context",
-            "icon": "circle-arrow-right",
+            "group": "Validate",
             "pages": [
-              "concepts/how-it-works",
+              "features/validate-modes",
+              "features/pr-validation",
+              "features/agent-security-testing",
+              "features/custom-scenarios",
+              "features/local-testing"
+            ]
+          },
+          {
+            "group": "Digital twins",
+            "pages": [
               "concepts/digital-twins",
+              "features/twins-quickstart",
               "concepts/session-replay"
             ]
           },
           {
-            "group": "Features",
-            "pages": [
-              "features/validate-modes",
-              "features/pr-validation",
-              "features/custom-scenarios",
-              "features/agent-testing",
-              "features/local-testing",
-              "features/red-teaming",
-              "features/bots"
-            ]
-          },
-          {
-            "group": "Setup",
+            "group": "Tools",
             "pages": [
               "cli-and-mcp",
               "web-app",
-              "integrations",
-              "plans",
+              "features/bots",
+              "integrations"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "sdks/overview",
+              "sdks/python",
+              "sdks/typescript",
               "api-reference",
+              "plans",
               "troubleshooting"
             ]
           }
