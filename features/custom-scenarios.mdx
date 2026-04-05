@@ -1,67 +1,84 @@
 ---
-title: "Custom scenarios"
-description: "Create reusable test scenarios with pre-configured digital twin data"
+title: "Scenarios"
+description: "Pre-configured digital twin data for your validation runs"
 ---
 
-Custom scenarios let you define reusable twin seed configurations for your validation runs. Instead of starting each run with empty twins, you can pre-populate them with realistic data — Slack channels with message history, Stripe customers with active subscriptions, GitHub repos with open PRs, and more.
+Scenarios let you start validation runs with realistic, pre-populated twin data instead of empty services. A scenario defines what data each digital twin should contain — Slack channels with message history, Stripe customers with subscriptions, GitHub repos with open PRs, and more.
+
+When you attach a scenario to a run, Arga provisions the selected twins and seeds them with the scenario's data before executing any test steps.
 
 ## Preset scenarios
 
-Arga ships with built-in preset scenarios — ready-to-use templates covering common use cases. Presets are available without authentication and give you a starting point for common validation patterns.
+Arga ships with 10 built-in scenario templates covering common testing patterns. These are available to all users and can be cloned to customize.
 
-Available presets include:
+### Functionality
 
-| Preset | Twins | Tags |
-|--------|-------|------|
-| E-commerce Checkout | `stripe`, `slack` | `ecommerce`, `payments`, `functional` |
-| SaaS Billing & Upgrades | `stripe`, `slack`, `notion` | `saas`, `billing`, `functional` |
-| DevOps CI/CD Pipeline | `unified`, `slack`, `discord` | `devops`, `ci-cd`, `functional` |
-| Customer Support Portal | `slack`, `stripe`, `notion` | `support`, `customer-service`, `functional` |
-| Document Collaboration | `google_drive`, `slack`, `notion` | `collaboration`, `documents`, `functional` |
-| Payment Fraud & Edge Cases | `stripe`, `slack` | `security`, `payments`, `fraud` |
-| Access Control & Auth Boundaries | `unified`, `slack`, `notion` | `security`, `auth`, `access-control` |
-| Project Management Sprint | `unified`, `slack`, `notion` | `project-management`, `agile`, `functional` |
-| Calendar & Scheduling | `google_calendar`, `slack`, `notion` | `calendar`, `scheduling`, `functional` |
-| Multi-channel Notifications | `slack`, `discord`, `notion` | `notifications`, `messaging`, `functional` |
+| Scenario | Twins | What's inside |
+|----------|-------|---------------|
+| **E-commerce Checkout** | Stripe, Slack | 3 customers on free/pro/enterprise plans, #orders channel with purchase confirmations, #support with billing questions |
+| **SaaS Billing & Upgrades** | Stripe, Slack, Notion | Trial user expiring in 2 days, free/pro/enterprise customers, monthly+annual pricing, #billing alerts, pricing docs |
+| **DevOps CI/CD Pipeline** | GitHub, Slack, Discord | 2 repos (passing and failing CI), merged and open PRs, #deploys and #incidents channels, #dev-alerts Discord |
+| **Customer Support Portal** | Slack, Stripe, Notion | #support-tier1 with 8 open tickets, #support-escalated with 2 critical issues, disputed charges, knowledge base articles |
+| **Document Collaboration** | Google Drive, Slack, Notion | Q2 Planning shared folder with 4 docs, #team-docs with file share notifications, project wiki pages |
 
-To list all presets:
+### Security
+
+| Scenario | Twins | What's inside |
+|----------|-------|---------------|
+| **Payment Fraud & Edge Cases** | Stripe, Slack | Declined cards (insufficient funds, expired, stolen), $500 chargeback, partial refunds, #fraud-alerts channel |
+| **Access Control & Auth Boundaries** | GitHub, Slack, Notion | Protected branches, outside contributor PRs, confidential issues, admin/member/guest Slack roles, mixed-permission Notion pages |
+
+### Edge cases
+
+| Scenario | Twins | What's inside |
+|----------|-------|---------------|
+| **High Volume Messaging** | Slack, Discord | 50+ messages in #general, 20 threaded discussions, 5 DM conversations, 30+ Discord messages per channel with embeds |
+| **Internationalization & Unicode** | Slack, Stripe, Notion | Messages in Japanese/Arabic/Portuguese, emoji-heavy content, international addresses (JP, DE, BR), multi-currency (USD/EUR/JPY), RTL text |
+| **Calendar Scheduling Conflicts** | Google Calendar, Slack | Overlapping meetings, back-to-back events, all-day events across timezones, cancelled-but-visible meetings, #scheduling channel |
+
+### Using presets
+
+**From the web app:** Open **Scenarios** in the sidebar. Preset templates appear at the top — click **Use in Run** to start a validation run with that scenario, or **Clone** to copy it into your own scenarios for customization.
+
+**From the API:**
 
 ```bash
-curl "https://api.argalabs.com/scenarios/presets"
+# List all presets
+curl https://api.argalabs.com/scenarios/presets
+
+# Filter presets by twin
+curl "https://api.argalabs.com/scenarios/presets?twin=stripe"
 ```
 
-Filter by twin or tag:
+**From the CLI:**
 
 ```bash
-curl "https://api.argalabs.com/scenarios/presets?twin=stripe&tag=payments"
+# List presets
+arga scenarios list --presets
+
+# Start a scan with a preset
+arga scan https://myapp.com --scenario <preset-id>
 ```
 
-You can also include presets when listing your own scenarios by passing `include_presets=true`:
+## Custom scenarios
 
-```bash
-curl "https://api.argalabs.com/scenarios?include_presets=true" \
-  -H "Authorization: Bearer <api-key>"
-```
+Create your own scenarios tailored to your application. There are two ways to define the twin data:
 
-Preset scenarios have `is_preset` set to `true` in the response. You can clone a preset by creating a new scenario with the same seed configuration.
+- **Natural language** — describe what you want and Arga generates the seed configuration automatically
+- **Explicit config** — provide the exact JSON for each twin
 
-## How it works
+### From the web app
 
-A scenario is a saved configuration that tells Arga how to seed your digital twins before a validation run begins. You can create scenarios in three ways:
+1. Open **Scenarios** in the sidebar
+2. Click **Create Scenario**
+3. Enter a name and either a natural language prompt or raw JSON config
+4. Save — Arga generates and stores the twin configuration
 
-- **Preset templates** — use a built-in preset scenario as-is, or clone it as a starting point for customization
-- **Natural language** — describe the data you want (e.g. "3 GitHub repos, each with 3 files and 2 open PRs") and Arga generates the twin configuration automatically
-- **Explicit config** — provide the exact JSON seed configuration for each twin
-
-When you start a validation run with a scenario attached, Arga provisions the selected twins and seeds them with the scenario's data before executing any test steps.
-
-## Creating a scenario
+You can also save scenarios from validation runs: after configuring twins in the run wizard, click **Save as Scenario** to reuse that configuration later.
 
 ### From the API
 
-Create a scenario by providing a name and either a natural language prompt or an explicit seed configuration.
-
-**With a prompt:**
+**With a natural language prompt:**
 
 ```bash
 curl -X POST https://api.argalabs.com/scenarios \
@@ -74,8 +91,6 @@ curl -X POST https://api.argalabs.com/scenarios \
   }'
 ```
 
-Arga's AI generates the full seed configuration from your description.
-
 **With explicit config:**
 
 ```bash
@@ -87,7 +102,9 @@ curl -X POST https://api.argalabs.com/scenarios \
     "twins": ["slack", "stripe"],
     "seed_config": {
       "slack": {
-        "channels": [{"name": "general", "messages": ["Welcome to the team!"]}]
+        "channels": [
+          {"name": "general", "messages": [{"text": "Welcome to the team!", "user": "admin"}]}
+        ]
       },
       "stripe": {
         "customers": [{"name": "Test User", "email": "test@example.com"}]
@@ -96,27 +113,25 @@ curl -X POST https://api.argalabs.com/scenarios \
   }'
 ```
 
-### Supported twins
+### From the CLI
 
-Scenarios can seed any of the following digital twins:
+```bash
+# Create from a prompt
+arga scenarios create --name "Checkout flow" --prompt "Stripe with 3 customers on different plans"
 
-| Twin | What you can seed |
-|------|-------------------|
-| `slack` | Workspaces, channels, messages, threads |
-| `discord` | Guilds, channels, messages, members |
-| `github` | Repos, pull requests, issues, branches, commits, check runs |
-| `stripe` | Customers, subscriptions, products, invoices |
-| `notion` | Pages, databases, blocks |
-| `google_drive` | Files, folders, permissions |
-| `google_calendar` | Calendars, events |
-| `box` | Files, folders |
-| `dropbox` | Files, folders |
-| `unified` | Unified API data |
-| `unstructured` | Documents, workflows |
+# Create from a JSON file
+arga scenarios create --name "Checkout flow" --config scenario.json
+
+# List your scenarios
+arga scenarios list
+
+# View details
+arga scenarios show <scenario-id>
+```
 
 ## Managing scenarios
 
-### List scenarios
+### List
 
 ```bash
 curl https://api.argalabs.com/scenarios \
@@ -126,14 +141,21 @@ curl https://api.argalabs.com/scenarios \
 Filter by twin or tag:
 
 ```bash
-curl "https://api.argalabs.com/scenarios?twin=slack&tag=onboarding" \
+curl "https://api.argalabs.com/scenarios?twin=slack&tag=billing" \
   -H "Authorization: Bearer <api-key>"
 ```
 
-### Update a scenario
+Include presets alongside your scenarios:
 
 ```bash
-curl -X PUT https://api.argalabs.com/scenarios/<scenario_id> \
+curl "https://api.argalabs.com/scenarios?include_presets=true" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+### Update
+
+```bash
+curl -X PUT https://api.argalabs.com/scenarios/<scenario-id> \
   -H "Authorization: Bearer <api-key>" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Updated description of the data I want"}'
@@ -141,38 +163,81 @@ curl -X PUT https://api.argalabs.com/scenarios/<scenario_id> \
 
 If you update the prompt without providing a new `seed_config`, Arga regenerates the configuration from the updated prompt.
 
-### Delete a scenario
+### Delete
 
 ```bash
-curl -X DELETE https://api.argalabs.com/scenarios/<scenario_id> \
+curl -X DELETE https://api.argalabs.com/scenarios/<scenario-id> \
   -H "Authorization: Bearer <api-key>"
 ```
 
-## Using scenarios in validation runs
+## Using scenarios in runs
 
-Pass a `scenario_id` when starting a validation run to seed twins with your saved configuration. The scenario's twins are provisioned and populated before test execution begins.
+Attach a scenario to any validation run to seed twins before test execution.
 
-You can attach a scenario to:
+**URL runs:**
 
-- **PR runs** (`/validate/pr-run`) — pass `scenario_id` and optionally `scenario_prompt` to override the scenario's default prompt.
-- **Twin provisioning** (`/validate/twins/provision`) — pass `scenario_id` to pre-seed standalone twin instances.
+```bash
+curl -X POST https://api.argalabs.com/validate/url-run \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://myapp.com",
+    "prompt": "Test the checkout flow",
+    "scenario_id": "<scenario-id>"
+  }'
+```
+
+**PR runs:**
 
 ```bash
 curl -X POST https://api.argalabs.com/validate/pr-run \
-  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Authorization: Bearer <api-key>" \
   -H "Content-Type: application/json" \
   -d '{
     "repo": "acme/web-app",
     "branch": "feature/checkout",
-    "scenario_id": "<scenario_id>"
+    "scenario_id": "<scenario-id>"
   }'
 ```
 
-When you provide `scenario_id` without a `scenario_prompt`, the scenario's own prompt is used as the test prompt. If you supply both, `scenario_prompt` takes precedence.
+**Agent runs:**
+
+```bash
+curl -X POST https://api.argalabs.com/validate/agent-run \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://myapp.com",
+    "scenario_id": "<scenario-id>"
+  }'
+```
+
+**CLI:**
+
+```bash
+arga test url https://myapp.com --prompt "Test checkout" --scenario <scenario-id>
+arga scan https://myapp.com --scenario <scenario-id>
+```
+
+When you provide `scenario_id` without a `scenario_prompt`, the scenario's own prompt is used. If you supply both, your `scenario_prompt` takes precedence.
+
+## Supported twins
+
+| Twin | What you can seed |
+|------|-------------------|
+| `slack` | Channels, messages, threads, users |
+| `discord` | Guilds, channels, messages, members |
+| `github` | Repos, pull requests, issues, branches |
+| `stripe` | Customers, products, prices, subscriptions |
+| `notion` | Pages, databases, blocks |
+| `google_drive` | Folders, files |
+| `google_calendar` | Calendars, events |
+| `box` | Folders, files |
+| `dropbox` | Folders, files |
 
 ## Tags
 
-Organize scenarios with tags for easy filtering. Tags are free-form strings you define when creating or updating a scenario.
+Organize scenarios with free-form tags for filtering:
 
 ```json
 {
@@ -180,3 +245,5 @@ Organize scenarios with tags for easy filtering. Tags are free-form strings you 
   "tags": ["billing", "edge-cases", "stripe"]
 }
 ```
+
+Filter by tag in the API (`?tag=billing`), CLI (`--tag billing`), or web app.
