@@ -60,6 +60,8 @@ Both token types use the same `Authorization: Bearer <token>` header. Endpoints 
 | `/auth/email/request-verification` | `POST` | — | Yes | |
 | `/auth/email/verify` | `POST` | — | Yes | |
 | `/integrations/{provider}/settings` | `PATCH` | — | Yes | |
+| `/validate/{run_id}/env/discord/_frontend/state` | `GET` | Yes | Yes | Discord twin must be active on the run |
+| `/validate/{run_id}/env/discord/_frontend/messages` | `POST` | Yes | Yes | Discord twin must be active on the run |
 | `/auth/cli/devices` | `GET` | — | Yes | |
 | `/auth/cli/devices/{cli_api_key_id}/revoke` | `POST` | Yes | Yes | |
 
@@ -881,6 +883,136 @@ curl -L "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/
 | `404` | `Validation run not found` |
 | `404` | `Artifact not found` |
 | `500` | `Failed to retrieve artifact` |
+
+---
+
+## Discord twin controls
+
+These endpoints proxy requests to the Discord digital twin running inside a sandbox. Use them to inspect twin state and send messages to Discord channels during a validation run.
+
+### `GET` Get Discord twin state
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+GET /validate/{run_id}/env/discord/_frontend/state
+```
+
+Return the current state of the Discord twin for a validation run, including available channels and the bot user. The run must have a deployed environment with an active Discord twin.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Example request**
+
+```bash
+curl "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/env/discord/_frontend/state" \
+  -H "Authorization: Bearer $ARGA_API_KEY"
+```
+
+**Response**
+
+```json
+{
+  "channels": {
+    "1234567890": {
+      "id": "1234567890",
+      "name": "general"
+    },
+    "9876543210": {
+      "id": "9876543210",
+      "name": "random"
+    }
+  },
+  "bot_user": {
+    "id": "1111111111",
+    "username": "TestBot",
+    "discriminator": "0001",
+    "bot": true
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `channels` | `object` | Map of channel ID to channel details. Each entry includes `id` and `name`. |
+| `bot_user` | `object \| null` | The bot user object from the Discord twin, or `null` if the bot user could not be retrieved. |
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `Run has no deployed environment` |
+| `400` | `Discord twin not configured` |
+| `401` | Invalid or expired token. |
+| `404` | `Run not found` |
+| `502` | `Failed to reach Discord twin` |
+
+### `POST` Send a message to Discord twin
+
+<Note>Accepts both API key and JWT authentication.</Note>
+
+```bash
+POST /validate/{run_id}/env/discord/_frontend/messages
+```
+
+Send a message to a channel in the Discord twin. The run must have a deployed environment with an active Discord twin.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `run_id` | `string` | UUID of the validation run. |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `channel_id` | `string` | Yes | ID of the Discord channel to send the message to. Use the [state endpoint](#get-get-discord-twin-state) to discover available channels. |
+| `content` | `string` | Yes | Message content to send. Must not be empty after trimming whitespace. |
+
+**Example request**
+
+```bash
+curl -X POST "https://api.argalabs.com/validate/a1b2c3d4-e5f6-7890-abcd-ef1234567890/env/discord/_frontend/messages" \
+  -H "Authorization: Bearer $ARGA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel_id": "1234567890",
+    "content": "Hello from the API!"
+  }'
+```
+
+**Response**
+
+The response is the message object created in the Discord twin channel.
+
+```json
+{
+  "id": "9999999999",
+  "channel_id": "1234567890",
+  "content": "Hello from the API!",
+  "author": {
+    "id": "1111111111",
+    "username": "TestBot",
+    "bot": true
+  },
+  "timestamp": "2026-03-21T12:00:00.000000+00:00"
+}
+```
+
+**Errors**
+
+| Status | Detail |
+|--------|--------|
+| `400` | `channel_id and content are required` |
+| `400` | `Run has no deployed environment` |
+| `400` | `Discord twin not configured` |
+| `401` | Invalid or expired token. |
+| `404` | `Run not found` |
 
 ---
 
